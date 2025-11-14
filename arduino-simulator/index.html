@@ -738,15 +738,17 @@
                 return Math.floor((Date.now() - this.startTime) * this.speedMultiplier);
             }
 
-            Serial = {
+            // Create Serial object with proper 'this' binding
+            const self = this;
+            this.Serial = {
                 begin: (baud) => {
-                    this.addToSerial(`Serial initialized at ${baud} baud`);
+                    self.addToSerial(`Serial initialized at ${baud} baud`);
                 },
                 print: (text) => {
-                    this.addToSerial(text, false);
+                    self.addToSerial(text, false);
                 },
                 println: (text) => {
-                    this.addToSerial(text, true);
+                    self.addToSerial(text, true);
                 }
             };
 
@@ -878,6 +880,32 @@ void loop() {
                 return code;
             }
 
+            // Helper function to replace text outside of string literals
+            function replaceOutsideStrings(code, search, replace) {
+                const strings = [];
+                let stringIndex = 0;
+
+                // Temporarily replace string literals with placeholders
+                code = code.replace(/(["'`])(?:(?=(\\?))\2.)*?\1/g, (match) => {
+                    strings.push(match);
+                    return `__STRING_${stringIndex++}__`;
+                });
+
+                // Perform the replacement
+                if (typeof search === 'string') {
+                    code = code.replace(new RegExp(search, 'g'), replace);
+                } else {
+                    code = code.replace(search, replace);
+                }
+
+                // Restore string literals
+                code = code.replace(/__STRING_(\d+)__/g, (match, index) => {
+                    return strings[parseInt(index)];
+                });
+
+                return code;
+            }
+
             // Extract global variables
             let globalVars = '';
             const lines = code.split('\n');
@@ -907,32 +935,32 @@ void loop() {
             // Convert C++ types in global variables
             globalVars = convertCppTypes(globalVars);
 
-            // Replace Arduino constants
-            code = code.replace(/\bHIGH\b/g, 'arduino.HIGH');
-            code = code.replace(/\bLOW\b/g, 'arduino.LOW');
-            code = code.replace(/\bINPUT\b/g, 'arduino.INPUT');
-            code = code.replace(/\bOUTPUT\b/g, 'arduino.OUTPUT');
-            code = code.replace(/\bLED_BUILTIN\b/g, 'arduino.LED_BUILTIN');
-            code = code.replace(/\bA0\b/g, 'arduino.A0');
-            code = code.replace(/\bA1\b/g, 'arduino.A1');
-            code = code.replace(/\bA2\b/g, 'arduino.A2');
-            code = code.replace(/\bA3\b/g, 'arduino.A3');
-            code = code.replace(/\bA4\b/g, 'arduino.A4');
-            code = code.replace(/\bA5\b/g, 'arduino.A5');
+            // Replace Arduino constants (avoiding string literals)
+            code = replaceOutsideStrings(code, /\bHIGH\b/g, 'arduino.HIGH');
+            code = replaceOutsideStrings(code, /\bLOW\b/g, 'arduino.LOW');
+            code = replaceOutsideStrings(code, /\bINPUT\b/g, 'arduino.INPUT');
+            code = replaceOutsideStrings(code, /\bOUTPUT\b/g, 'arduino.OUTPUT');
+            code = replaceOutsideStrings(code, /\bLED_BUILTIN\b/g, 'arduino.LED_BUILTIN');
+            code = replaceOutsideStrings(code, /\bA0\b/g, 'arduino.A0');
+            code = replaceOutsideStrings(code, /\bA1\b/g, 'arduino.A1');
+            code = replaceOutsideStrings(code, /\bA2\b/g, 'arduino.A2');
+            code = replaceOutsideStrings(code, /\bA3\b/g, 'arduino.A3');
+            code = replaceOutsideStrings(code, /\bA4\b/g, 'arduino.A4');
+            code = replaceOutsideStrings(code, /\bA5\b/g, 'arduino.A5');
 
-            // Replace Arduino functions
-            code = code.replace(/\bpinMode\s*\(/g, 'arduino.pinMode(');
-            code = code.replace(/\bdigitalWrite\s*\(/g, 'arduino.digitalWrite(');
-            code = code.replace(/\bdigitalRead\s*\(/g, 'arduino.digitalRead(');
-            code = code.replace(/\banalogRead\s*\(/g, 'arduino.analogRead(');
-            code = code.replace(/\banalogWrite\s*\(/g, 'arduino.analogWrite(');
-            code = code.replace(/\bdelay\s*\(/g, 'await arduino.delay(');
-            code = code.replace(/\bmillis\s*\(/g, 'arduino.millis(');
+            // Replace Arduino functions (avoiding string literals)
+            code = replaceOutsideStrings(code, /\bpinMode\s*\(/g, 'arduino.pinMode(');
+            code = replaceOutsideStrings(code, /\bdigitalWrite\s*\(/g, 'arduino.digitalWrite(');
+            code = replaceOutsideStrings(code, /\bdigitalRead\s*\(/g, 'arduino.digitalRead(');
+            code = replaceOutsideStrings(code, /\banalogRead\s*\(/g, 'arduino.analogRead(');
+            code = replaceOutsideStrings(code, /\banalogWrite\s*\(/g, 'arduino.analogWrite(');
+            code = replaceOutsideStrings(code, /\bdelay\s*\(/g, 'await arduino.delay(');
+            code = replaceOutsideStrings(code, /\bmillis\s*\(/g, 'arduino.millis(');
 
-            // Replace Serial functions
-            code = code.replace(/\bSerial\.begin\s*\(/g, 'arduino.Serial.begin(');
-            code = code.replace(/\bSerial\.print\s*\(/g, 'arduino.Serial.print(');
-            code = code.replace(/\bSerial\.println\s*\(/g, 'arduino.Serial.println(');
+            // Replace Serial functions (avoiding string literals)
+            code = replaceOutsideStrings(code, /\bSerial\.begin\s*\(/g, 'arduino.Serial.begin(');
+            code = replaceOutsideStrings(code, /\bSerial\.print\s*\(/g, 'arduino.Serial.print(');
+            code = replaceOutsideStrings(code, /\bSerial\.println\s*\(/g, 'arduino.Serial.println(');
 
             // Extract setup and loop functions
             const setupMatch = code.match(/void\s+setup\s*\(\s*\)\s*{([^}]*)}/s);
