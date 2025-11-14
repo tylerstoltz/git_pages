@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hex ↔ Decimal Converter - Code Tools</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: #2d2d30;
+            padding: 15px 20px;
+            border-bottom: 1px solid #3e3e42;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .header h1 {
+            font-size: 20px;
+            font-weight: 500;
+            color: #569cd6;
+        }
+
+        .back-link {
+            color: #569cd6;
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover {
+            color: #4ec9b0;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 51px);
+            padding: 20px;
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .converter-section {
+            background: #252526;
+            padding: 25px;
+            border-radius: 8px;
+            border: 1px solid #3e3e42;
+            flex-shrink: 0;
+        }
+
+        .section-title {
+            font-size: 16px;
+            color: #4ec9b0;
+            font-weight: 600;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        label {
+            font-size: 14px;
+            color: #569cd6;
+            font-weight: 600;
+            min-width: 80px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            background: #2d2d30;
+            color: #d4d4d4;
+            border: 1px solid #3e3e42;
+            border-radius: 4px;
+            padding: 12px 16px;
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            transition: border-color 0.2s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #569cd6;
+        }
+
+        input[type="text"].error {
+            border-color: #f48771;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background: #0e639c;
+            color: #ffffff;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+
+        button:hover {
+            background: #1177bb;
+            transform: translateY(-1px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button.secondary {
+            background: #3c3c3c;
+        }
+
+        button.secondary:hover {
+            background: #4a4a4a;
+        }
+
+        .error-message {
+            color: #f48771;
+            font-size: 13px;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .info-section {
+            background: #252526;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #3e3e42;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .info-card {
+            background: #2d2d30;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #3e3e42;
+        }
+
+        .info-card h3 {
+            font-size: 14px;
+            color: #569cd6;
+            margin-bottom: 8px;
+        }
+
+        .info-card p {
+            font-size: 13px;
+            color: #858585;
+            line-height: 1.6;
+        }
+
+        .info-card code {
+            background: #1e1e1e;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            color: #ce9178;
+        }
+
+        .conversion-examples {
+            margin-top: 15px;
+        }
+
+        .example-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: #2d2d30;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+
+        .example-row:hover {
+            background: #3e3e42;
+            cursor: pointer;
+        }
+
+        .example-hex {
+            color: #4ec9b0;
+        }
+
+        .example-dec {
+            color: #569cd6;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            .input-wrapper {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            label {
+                min-width: auto;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔢 Hex ↔ Decimal Converter</h1>
+        <a href="../" class="back-link">← Back to Tools</a>
+    </div>
+
+    <div class="container">
+        <div class="converter-section">
+            <div class="section-title">Converter</div>
+
+            <div class="input-group">
+                <div class="input-wrapper">
+                    <label for="hexInput">Hex:</label>
+                    <input type="text" id="hexInput" placeholder="Enter hexadecimal value (e.g., 0x1A3F or 1A3F)" />
+                </div>
+                <div class="error-message" id="hexError">Invalid hexadecimal value</div>
+
+                <div class="input-wrapper">
+                    <label for="decInput">Decimal:</label>
+                    <input type="text" id="decInput" placeholder="Enter decimal value (e.g., 255)" />
+                </div>
+                <div class="error-message" id="decError">Invalid decimal value</div>
+            </div>
+
+            <div class="buttons">
+                <button onclick="clearAll()">🗑️ Clear All</button>
+                <button class="secondary" onclick="copyHex()">📋 Copy Hex</button>
+                <button class="secondary" onclick="copyDec()">📋 Copy Dec</button>
+            </div>
+        </div>
+
+        <div class="info-section">
+            <div class="section-title">Information & Quick Reference</div>
+
+            <div class="info-grid">
+                <div class="info-card">
+                    <h3>About Hexadecimal</h3>
+                    <p>Hexadecimal (hex) is a base-16 number system using digits 0-9 and letters A-F. It's commonly used in programming for representing binary data in a more compact form.</p>
+                </div>
+
+                <div class="info-card">
+                    <h3>Hex Format</h3>
+                    <p>You can enter hex values with or without the <code>0x</code> prefix. Both <code>FF</code> and <code>0xFF</code> are valid and equal to 255 in decimal.</p>
+                </div>
+
+                <div class="info-card">
+                    <h3>Common Uses</h3>
+                    <p>Hex is used for memory addresses, color codes (#FFFFFF), byte representation, and low-level programming. It's more compact than binary and easier to read.</p>
+                </div>
+
+                <div class="info-card">
+                    <h3>Case Insensitive</h3>
+                    <p>Hex digits A-F can be uppercase or lowercase. <code>0xFF</code>, <code>0xff</code>, and <code>0xFf</code> all represent the same value: 255.</p>
+                </div>
+            </div>
+
+            <div class="conversion-examples">
+                <div class="section-title" style="font-size: 14px; margin-top: 20px;">Quick Examples (click to use)</div>
+                <div class="example-row" onclick="useExample('0x00', '0')">
+                    <span class="example-hex">0x00</span>
+                    <span>→</span>
+                    <span class="example-dec">0</span>
+                </div>
+                <div class="example-row" onclick="useExample('0x0F', '15')">
+                    <span class="example-hex">0x0F</span>
+                    <span>→</span>
+                    <span class="example-dec">15</span>
+                </div>
+                <div class="example-row" onclick="useExample('0x10', '16')">
+                    <span class="example-hex">0x10</span>
+                    <span>→</span>
+                    <span class="example-dec">16</span>
+                </div>
+                <div class="example-row" onclick="useExample('0xFF', '255')">
+                    <span class="example-hex">0xFF</span>
+                    <span>→</span>
+                    <span class="example-dec">255</span>
+                </div>
+                <div class="example-row" onclick="useExample('0x100', '256')">
+                    <span class="example-hex">0x100</span>
+                    <span>→</span>
+                    <span class="example-dec">256</span>
+                </div>
+                <div class="example-row" onclick="useExample('0x3FF', '1023')">
+                    <span class="example-hex">0x3FF</span>
+                    <span>→</span>
+                    <span class="example-dec">1023</span>
+                </div>
+                <div class="example-row" onclick="useExample('0x400', '1024')">
+                    <span class="example-hex">0x400</span>
+                    <span>→</span>
+                    <span class="example-dec">1024</span>
+                </div>
+                <div class="example-row" onclick="useExample('0xFFFF', '65535')">
+                    <span class="example-hex">0xFFFF</span>
+                    <span>→</span>
+                    <span class="example-dec">65535</span>
+                </div>
+                <div class="example-row" onclick="useExample('0xDEADBEEF', '3735928559')">
+                    <span class="example-hex">0xDEADBEEF</span>
+                    <span>→</span>
+                    <span class="example-dec">3735928559</span>
+                </div>
+                <div class="example-row" onclick="useExample('0xCAFEBABE', '3405691582')">
+                    <span class="example-hex">0xCAFEBABE</span>
+                    <span>→</span>
+                    <span class="example-dec">3405691582</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const hexInput = document.getElementById('hexInput');
+        const decInput = document.getElementById('decInput');
+        const hexError = document.getElementById('hexError');
+        const decError = document.getElementById('decError');
+
+        // Convert hex to decimal
+        hexInput.addEventListener('input', function() {
+            const value = this.value.trim();
+
+            if (value === '') {
+                decInput.value = '';
+                hexError.classList.remove('show');
+                hexInput.classList.remove('error');
+                return;
+            }
+
+            // Remove 0x prefix if present
+            const cleanValue = value.replace(/^0x/i, '');
+
+            // Validate hex
+            if (!/^[0-9A-Fa-f]+$/.test(cleanValue)) {
+                hexError.classList.add('show');
+                hexInput.classList.add('error');
+                decInput.value = '';
+                return;
+            }
+
+            hexError.classList.remove('show');
+            hexInput.classList.remove('error');
+
+            // Convert to decimal
+            const decimal = parseInt(cleanValue, 16);
+            decInput.value = decimal;
+        });
+
+        // Convert decimal to hex
+        decInput.addEventListener('input', function() {
+            const value = this.value.trim();
+
+            if (value === '') {
+                hexInput.value = '';
+                decError.classList.remove('show');
+                decInput.classList.remove('error');
+                return;
+            }
+
+            // Validate decimal
+            if (!/^\d+$/.test(value)) {
+                decError.classList.add('show');
+                decInput.classList.add('error');
+                hexInput.value = '';
+                return;
+            }
+
+            decError.classList.remove('show');
+            decInput.classList.remove('error');
+
+            // Convert to hex
+            const decimal = parseInt(value, 10);
+            if (isNaN(decimal) || decimal < 0) {
+                decError.classList.add('show');
+                decInput.classList.add('error');
+                hexInput.value = '';
+                return;
+            }
+
+            const hex = '0x' + decimal.toString(16).toUpperCase();
+            hexInput.value = hex;
+        });
+
+        function clearAll() {
+            hexInput.value = '';
+            decInput.value = '';
+            hexError.classList.remove('show');
+            decError.classList.remove('show');
+            hexInput.classList.remove('error');
+            decInput.classList.remove('error');
+        }
+
+        function copyHex() {
+            if (hexInput.value) {
+                hexInput.select();
+                document.execCommand('copy');
+
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = '✓ Copied!';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                }, 2000);
+            }
+        }
+
+        function copyDec() {
+            if (decInput.value) {
+                decInput.select();
+                document.execCommand('copy');
+
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = '✓ Copied!';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                }, 2000);
+            }
+        }
+
+        function useExample(hex, dec) {
+            hexInput.value = hex;
+            decInput.value = dec;
+            hexError.classList.remove('show');
+            decError.classList.remove('show');
+            hexInput.classList.remove('error');
+            decInput.classList.remove('error');
+        }
+    </script>
+</body>
+</html>
