@@ -1,0 +1,1456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQLite Query Builder</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: #2d2d30;
+            padding: 15px 20px;
+            border-bottom: 1px solid #3e3e42;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            color: #4ec9b0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .back-link {
+            color: #569cd6;
+            text-decoration: none;
+            transition: color 0.2s;
+            font-size: 14px;
+        }
+
+        .back-link:hover {
+            color: #4ec9b0;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #3e3e42;
+            padding-bottom: 5px;
+        }
+
+        .tab-btn {
+            background: transparent;
+            color: #d4d4d4;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 4px 4px 0 0;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+
+        .tab-btn:hover {
+            background: #2d2d30;
+        }
+
+        .tab-btn.active {
+            background: #0e639c;
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .panel {
+            background: #252526;
+            border: 1px solid #3e3e42;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .panel h2 {
+            color: #4ec9b0;
+            font-size: 18px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .panel h3 {
+            color: #569cd6;
+            font-size: 16px;
+            margin-bottom: 10px;
+            margin-top: 15px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            color: #569cd6;
+            font-size: 13px;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        input[type="text"],
+        select,
+        textarea {
+            width: 100%;
+            background: #1e1e1e;
+            border: 1px solid #3e3e42;
+            color: #d4d4d4;
+            border-radius: 4px;
+            padding: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            transition: border-color 0.2s;
+        }
+
+        input[type="text"]:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #569cd6;
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+            font-family: 'Courier New', monospace;
+        }
+
+        button {
+            background: #0e639c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 10px 18px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        button:hover {
+            background: #1177bb;
+            transform: translateY(-1px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button.secondary {
+            background: #2d2d30;
+        }
+
+        button.secondary:hover {
+            background: #3e3e42;
+        }
+
+        button.danger {
+            background: #d16969;
+        }
+
+        button.danger:hover {
+            background: #e07777;
+        }
+
+        button.success {
+            background: #4ec9b0;
+        }
+
+        button.success:hover {
+            background: #5dd9c0;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .table-designer {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+        }
+
+        .table-card {
+            background: #2d2d30;
+            border: 1px solid #3e3e42;
+            border-radius: 6px;
+            padding: 15px;
+        }
+
+        .table-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #3e3e42;
+        }
+
+        .table-card-header h4 {
+            color: #4ec9b0;
+            font-size: 14px;
+        }
+
+        .column-list {
+            list-style: none;
+            margin: 10px 0;
+        }
+
+        .column-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 8px;
+            background: #1e1e1e;
+            border-radius: 4px;
+            margin-bottom: 5px;
+            font-size: 12px;
+        }
+
+        .column-name {
+            font-family: 'Courier New', monospace;
+            color: #dcdcaa;
+        }
+
+        .column-type {
+            color: #569cd6;
+            font-size: 11px;
+        }
+
+        .small-btn {
+            padding: 4px 8px;
+            font-size: 11px;
+            margin-left: 5px;
+        }
+
+        .join-builder {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .join-item {
+            background: #2d2d30;
+            border: 1px solid #3e3e42;
+            border-radius: 6px;
+            padding: 15px;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr auto auto;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .join-controls {
+            display: flex;
+            gap: 5px;
+        }
+
+        .filter-builder {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .filter-item {
+            background: #2d2d30;
+            border: 1px solid #3e3e42;
+            border-radius: 6px;
+            padding: 15px;
+            display: grid;
+            grid-template-columns: 200px 120px 1fr auto;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .select-builder {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .select-field {
+            background: #2d2d30;
+            border: 1px solid #569cd6;
+            border-radius: 4px;
+            padding: 8px 12px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .select-field .remove {
+            color: #d16969;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .query-display {
+            background: #1e1e1e;
+            border: 1px solid #3e3e42;
+            border-radius: 6px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            color: #dcdcaa;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            margin: 15px 0;
+            min-height: 100px;
+        }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            background: #252526;
+            border: 1px solid #3e3e42;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .results-table th {
+            background: #2d2d30;
+            color: #4ec9b0;
+            padding: 12px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 600;
+            border-bottom: 2px solid #3e3e42;
+        }
+
+        .results-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #3e3e42;
+            font-size: 12px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .results-table tr:hover {
+            background: #2d2d30;
+        }
+
+        .status-bar {
+            background: #2d2d30;
+            border: 1px solid #3e3e42;
+            border-radius: 6px;
+            padding: 12px 15px;
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+        }
+
+        .status-success {
+            color: #4ec9b0;
+        }
+
+        .status-error {
+            color: #f48771;
+        }
+
+        .status-info {
+            color: #569cd6;
+        }
+
+        .info-card {
+            background: #2d2d30;
+            border-left: 3px solid #569cd6;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .info-card h4 {
+            color: #569cd6;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .info-card p {
+            font-size: 13px;
+            color: #d4d4d4;
+            line-height: 1.5;
+        }
+
+        .info-card code {
+            background: #1e1e1e;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            color: #dcdcaa;
+            font-size: 12px;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #858585;
+            font-style: italic;
+        }
+
+        .sample-queries {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .sample-query {
+            background: #2d2d30;
+            border: 1px solid #3e3e42;
+            border-radius: 6px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .sample-query:hover {
+            border-color: #569cd6;
+            background: #323233;
+        }
+
+        .sample-query h4 {
+            color: #4ec9b0;
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+
+        .sample-query pre {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #dcdcaa;
+            white-space: pre-wrap;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #252526;
+            border: 1px solid #3e3e42;
+            border-radius: 8px;
+            padding: 25px;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h3 {
+            color: #4ec9b0;
+            font-size: 18px;
+        }
+
+        .close-modal {
+            background: transparent;
+            color: #d4d4d4;
+            font-size: 24px;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+        }
+
+        .close-modal:hover {
+            color: #f48771;
+            transform: none;
+        }
+
+        .inline-input {
+            display: inline-flex;
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        .inline-input input {
+            flex: 1;
+        }
+
+        .inline-input select {
+            width: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🗄️ SQLite Query Builder</h1>
+        <a href="../" class="back-link">← Back to Tools</a>
+    </div>
+
+    <div class="container">
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('designer')">📊 Table Designer</button>
+            <button class="tab-btn" onclick="switchTab('query')">🔨 Query Builder</button>
+            <button class="tab-btn" onclick="switchTab('execute')">▶️ Execute & Test</button>
+            <button class="tab-btn" onclick="switchTab('help')">❓ Help</button>
+        </div>
+
+        <!-- Tab 1: Table Designer -->
+        <div id="tab-designer" class="tab-content active">
+            <div class="panel">
+                <h2>📋 Define Your Tables</h2>
+                <div class="button-group">
+                    <button onclick="showAddTableModal()">+ Add Table</button>
+                    <button class="secondary" onclick="loadSampleDatabase()">📦 Load Sample Database</button>
+                    <button class="danger" onclick="clearAllTables()">🗑️ Clear All</button>
+                </div>
+
+                <div id="tablesContainer" class="table-designer" style="margin-top: 20px;">
+                    <div class="empty-state">No tables defined yet. Click "Add Table" to get started!</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 2: Query Builder -->
+        <div id="tab-query" class="tab-content">
+            <div class="panel">
+                <h2>🔍 SELECT Fields</h2>
+                <p style="font-size: 13px; margin-bottom: 15px; color: #858585;">Choose which columns to include in your query results</p>
+
+                <div class="form-group">
+                    <label>Add Field:</label>
+                    <div class="grid-2">
+                        <select id="selectTableField">
+                            <option value="">-- Select Table --</option>
+                        </select>
+                        <select id="selectColumnField">
+                            <option value="">-- Select Column --</option>
+                        </select>
+                    </div>
+                    <button onclick="addSelectField()" style="margin-top: 10px;">+ Add to SELECT</button>
+                </div>
+
+                <div id="selectFieldsContainer" class="select-builder">
+                    <div class="empty-state" style="padding: 20px;">No fields selected</div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h2>🔗 JOIN Tables</h2>
+                <p style="font-size: 13px; margin-bottom: 15px; color: #858585;">Link tables by specifying relationships between columns</p>
+
+                <button onclick="addJoin()">+ Add JOIN</button>
+
+                <div id="joinsContainer" class="join-builder" style="margin-top: 15px;">
+                    <div class="empty-state">No joins defined</div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h2>🎯 WHERE Filters</h2>
+                <p style="font-size: 13px; margin-bottom: 15px; color: #858585;">Add conditions to filter your results</p>
+
+                <button onclick="addFilter()">+ Add Filter</button>
+
+                <div id="filtersContainer" class="filter-builder" style="margin-top: 15px;">
+                    <div class="empty-state">No filters defined</div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h2>⚙️ Additional Options</h2>
+
+                <div class="form-group">
+                    <label>GROUP BY:</label>
+                    <input type="text" id="groupByInput" placeholder="e.g., users.department">
+                </div>
+
+                <div class="form-group">
+                    <label>ORDER BY:</label>
+                    <input type="text" id="orderByInput" placeholder="e.g., users.name ASC">
+                </div>
+
+                <div class="form-group">
+                    <label>LIMIT:</label>
+                    <input type="text" id="limitInput" placeholder="e.g., 100">
+                </div>
+            </div>
+
+            <div class="panel">
+                <h2>📝 Generated SQL</h2>
+                <div id="generatedQuery" class="query-display">-- Your query will appear here --</div>
+                <div class="button-group">
+                    <button onclick="generateQuery()">🔄 Refresh Query</button>
+                    <button class="success" onclick="copyQuery()">📋 Copy Query</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 3: Execute & Test -->
+        <div id="tab-execute" class="tab-content">
+            <div class="panel">
+                <h2>⚡ Execute SQL Query</h2>
+
+                <div class="form-group">
+                    <label>SQL Query:</label>
+                    <textarea id="sqlQueryInput" placeholder="Enter your SQL query here or use the Query Builder...">SELECT * FROM users LIMIT 10;</textarea>
+                </div>
+
+                <div class="button-group">
+                    <button class="success" onclick="executeQuery()">▶️ Run Query</button>
+                    <button class="secondary" onclick="loadQueryFromBuilder()">📥 Load from Builder</button>
+                    <button class="secondary" onclick="clearResults()">🗑️ Clear Results</button>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h2>📊 Query Results</h2>
+                <div id="resultsContainer">
+                    <div class="empty-state">No results yet. Execute a query to see results here.</div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h2>💡 Sample Queries</h2>
+                <div class="sample-queries" id="sampleQueriesContainer">
+                    <div class="empty-state">Load sample database to see example queries</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 4: Help -->
+        <div id="tab-help" class="tab-content">
+            <div class="panel">
+                <h2>📚 How to Use SQLite Query Builder</h2>
+
+                <div class="info-card">
+                    <h4>1. Define Your Tables</h4>
+                    <p>Start by creating tables in the <strong>Table Designer</strong> tab. Add columns with their data types. You can also load a sample database to experiment with pre-populated data.</p>
+                </div>
+
+                <div class="info-card">
+                    <h4>2. Build Your Query</h4>
+                    <p>Use the <strong>Query Builder</strong> tab to visually construct your SQL query:</p>
+                    <ul style="margin-left: 20px; margin-top: 8px;">
+                        <li><strong>SELECT:</strong> Choose which columns to retrieve</li>
+                        <li><strong>JOIN:</strong> Link tables by specifying matching columns</li>
+                        <li><strong>WHERE:</strong> Add filters to narrow down results</li>
+                        <li><strong>GROUP BY / ORDER BY:</strong> Organize your results</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h4>3. Execute & Test</h4>
+                    <p>Go to the <strong>Execute & Test</strong> tab to run your query against the database. You can edit the SQL directly or load it from the query builder.</p>
+                </div>
+
+                <div class="info-card">
+                    <h4>🔗 JOIN Types</h4>
+                    <p>
+                        <code>INNER JOIN</code> - Returns only matching rows from both tables<br>
+                        <code>LEFT JOIN</code> - Returns all rows from left table, matching rows from right<br>
+                        <code>RIGHT JOIN</code> - Returns all rows from right table, matching rows from left<br>
+                        <code>FULL OUTER JOIN</code> - Returns all rows when there's a match in either table
+                    </p>
+                </div>
+
+                <div class="info-card">
+                    <h4>🎯 WHERE Operators</h4>
+                    <p>
+                        <code>=</code> Equal to |
+                        <code>!=</code> Not equal to |
+                        <code>&gt;</code> Greater than |
+                        <code>&lt;</code> Less than |
+                        <code>LIKE</code> Pattern matching |
+                        <code>IN</code> Match any in list
+                    </p>
+                </div>
+
+                <div class="info-card">
+                    <h4>💾 Sample Database</h4>
+                    <p>The sample database includes three tables: <code>users</code>, <code>orders</code>, and <code>products</code>. Use them to practice joins and complex queries!</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="status-bar">
+            <span id="statusMessage" class="status-info">Ready</span>
+            <span id="statusDetails">SQLite Query Builder v1.0</span>
+        </div>
+    </div>
+
+    <!-- Modal for Adding Tables -->
+    <div id="addTableModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add New Table</h3>
+                <button class="close-modal" onclick="closeModal()">&times;</button>
+            </div>
+
+            <div class="form-group">
+                <label>Table Name:</label>
+                <input type="text" id="newTableName" placeholder="e.g., users">
+            </div>
+
+            <div class="form-group">
+                <label>Columns:</label>
+                <div id="columnsInputContainer"></div>
+                <button class="secondary" onclick="addColumnInput()" style="margin-top: 10px;">+ Add Column</button>
+            </div>
+
+            <div class="button-group" style="margin-top: 20px;">
+                <button class="success" onclick="saveTable()">Save Table</button>
+                <button class="secondary" onclick="closeModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
+    <script>
+        // Global state
+        let db = null;
+        let SQL = null;
+        let tables = {};
+        let selectFields = [];
+        let joins = [];
+        let filters = [];
+        let generatedSQL = '';
+
+        // Initialize SQL.js
+        async function initSqlJs() {
+            try {
+                SQL = await initSqlJs({
+                    locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${file}`
+                });
+                db = new SQL.Database();
+                setStatus('success', 'Database initialized successfully');
+            } catch (error) {
+                setStatus('error', 'Failed to initialize database: ' + error.message);
+            }
+        }
+
+        // Initialize on page load
+        window.addEventListener('DOMContentLoaded', initSqlJs);
+
+        // Tab switching
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            event.target.classList.add('active');
+            document.getElementById('tab-' + tabName).classList.add('active');
+
+            if (tabName === 'query') {
+                updateTableSelects();
+                generateQuery();
+            }
+        }
+
+        // Modal functions
+        function showAddTableModal() {
+            document.getElementById('addTableModal').classList.add('active');
+            document.getElementById('newTableName').value = '';
+            document.getElementById('columnsInputContainer').innerHTML = '';
+            addColumnInput();
+            addColumnInput();
+        }
+
+        function closeModal() {
+            document.getElementById('addTableModal').classList.remove('active');
+        }
+
+        function addColumnInput() {
+            const container = document.getElementById('columnsInputContainer');
+            const div = document.createElement('div');
+            div.className = 'inline-input';
+            div.innerHTML = `
+                <input type="text" placeholder="Column name" class="col-name">
+                <select class="col-type">
+                    <option value="TEXT">TEXT</option>
+                    <option value="INTEGER">INTEGER</option>
+                    <option value="REAL">REAL</option>
+                    <option value="BLOB">BLOB</option>
+                    <option value="NULL">NULL</option>
+                </select>
+                <button class="danger small-btn" onclick="this.parentElement.remove()">×</button>
+            `;
+            container.appendChild(div);
+        }
+
+        // Table management
+        function saveTable() {
+            const tableName = document.getElementById('newTableName').value.trim();
+            if (!tableName) {
+                setStatus('error', 'Please enter a table name');
+                return;
+            }
+
+            const columnInputs = document.querySelectorAll('#columnsInputContainer .inline-input');
+            const columns = [];
+
+            columnInputs.forEach(input => {
+                const name = input.querySelector('.col-name').value.trim();
+                const type = input.querySelector('.col-type').value;
+                if (name) {
+                    columns.push({ name, type });
+                }
+            });
+
+            if (columns.length === 0) {
+                setStatus('error', 'Please add at least one column');
+                return;
+            }
+
+            // Create table in database
+            const columnDefs = columns.map(col => `${col.name} ${col.type}`).join(', ');
+            const createSQL = `CREATE TABLE IF NOT EXISTS ${tableName} (${columnDefs})`;
+
+            try {
+                db.run(createSQL);
+                tables[tableName] = columns;
+                renderTables();
+                closeModal();
+                setStatus('success', `Table "${tableName}" created successfully`);
+            } catch (error) {
+                setStatus('error', 'Error creating table: ' + error.message);
+            }
+        }
+
+        function renderTables() {
+            const container = document.getElementById('tablesContainer');
+
+            if (Object.keys(tables).length === 0) {
+                container.innerHTML = '<div class="empty-state">No tables defined yet. Click "Add Table" to get started!</div>';
+                return;
+            }
+
+            container.innerHTML = Object.entries(tables).map(([tableName, columns]) => `
+                <div class="table-card">
+                    <div class="table-card-header">
+                        <h4>📋 ${tableName}</h4>
+                        <button class="danger small-btn" onclick="deleteTable('${tableName}')">Delete</button>
+                    </div>
+                    <ul class="column-list">
+                        ${columns.map(col => `
+                            <li class="column-item">
+                                <span class="column-name">${col.name}</span>
+                                <span class="column-type">${col.type}</span>
+                            </li>
+                        `).join('')}
+                    </ul>
+                    <button class="secondary small-btn" onclick="addSampleData('${tableName}')">+ Add Sample Row</button>
+                </div>
+            `).join('');
+        }
+
+        function deleteTable(tableName) {
+            if (confirm(`Are you sure you want to delete table "${tableName}"?`)) {
+                try {
+                    db.run(`DROP TABLE IF EXISTS ${tableName}`);
+                    delete tables[tableName];
+                    renderTables();
+                    setStatus('success', `Table "${tableName}" deleted`);
+                } catch (error) {
+                    setStatus('error', 'Error deleting table: ' + error.message);
+                }
+            }
+        }
+
+        function clearAllTables() {
+            if (confirm('Are you sure you want to delete all tables?')) {
+                Object.keys(tables).forEach(tableName => {
+                    try {
+                        db.run(`DROP TABLE IF EXISTS ${tableName}`);
+                    } catch (error) {
+                        console.error('Error dropping table:', error);
+                    }
+                });
+                tables = {};
+                selectFields = [];
+                joins = [];
+                filters = [];
+                renderTables();
+                setStatus('success', 'All tables cleared');
+            }
+        }
+
+        function addSampleData(tableName) {
+            const columns = tables[tableName];
+            const values = columns.map(col => {
+                if (col.type === 'INTEGER') return Math.floor(Math.random() * 100);
+                if (col.type === 'REAL') return (Math.random() * 100).toFixed(2);
+                return `'Sample ${col.name}'`;
+            }).join(', ');
+
+            try {
+                db.run(`INSERT INTO ${tableName} VALUES (${values})`);
+                setStatus('success', `Sample row added to ${tableName}`);
+            } catch (error) {
+                setStatus('error', 'Error adding sample data: ' + error.message);
+            }
+        }
+
+        // Load sample database
+        function loadSampleDatabase() {
+            try {
+                // Clear existing tables
+                Object.keys(tables).forEach(tableName => {
+                    try {
+                        db.run(`DROP TABLE IF EXISTS ${tableName}`);
+                    } catch (e) {}
+                });
+                tables = {};
+
+                // Create users table
+                db.run(`CREATE TABLE users (
+                    id INTEGER,
+                    name TEXT,
+                    email TEXT,
+                    department TEXT,
+                    salary INTEGER
+                )`);
+
+                db.run(`INSERT INTO users VALUES
+                    (1, 'Alice Johnson', 'alice@example.com', 'Engineering', 95000),
+                    (2, 'Bob Smith', 'bob@example.com', 'Sales', 75000),
+                    (3, 'Carol White', 'carol@example.com', 'Engineering', 105000),
+                    (4, 'David Brown', 'david@example.com', 'Marketing', 70000),
+                    (5, 'Eve Davis', 'eve@example.com', 'Sales', 80000)`);
+
+                tables['users'] = [
+                    { name: 'id', type: 'INTEGER' },
+                    { name: 'name', type: 'TEXT' },
+                    { name: 'email', type: 'TEXT' },
+                    { name: 'department', type: 'TEXT' },
+                    { name: 'salary', type: 'INTEGER' }
+                ];
+
+                // Create orders table
+                db.run(`CREATE TABLE orders (
+                    order_id INTEGER,
+                    user_id INTEGER,
+                    product_id INTEGER,
+                    quantity INTEGER,
+                    order_date TEXT
+                )`);
+
+                db.run(`INSERT INTO orders VALUES
+                    (101, 1, 1, 2, '2024-01-15'),
+                    (102, 2, 2, 1, '2024-01-16'),
+                    (103, 1, 3, 5, '2024-01-17'),
+                    (104, 3, 1, 1, '2024-01-18'),
+                    (105, 2, 3, 3, '2024-01-19')`);
+
+                tables['orders'] = [
+                    { name: 'order_id', type: 'INTEGER' },
+                    { name: 'user_id', type: 'INTEGER' },
+                    { name: 'product_id', type: 'INTEGER' },
+                    { name: 'quantity', type: 'INTEGER' },
+                    { name: 'order_date', type: 'TEXT' }
+                ];
+
+                // Create products table
+                db.run(`CREATE TABLE products (
+                    product_id INTEGER,
+                    product_name TEXT,
+                    price REAL,
+                    category TEXT
+                )`);
+
+                db.run(`INSERT INTO products VALUES
+                    (1, 'Laptop', 1299.99, 'Electronics'),
+                    (2, 'Mouse', 29.99, 'Electronics'),
+                    (3, 'Notebook', 4.99, 'Office Supplies'),
+                    (4, 'Desk Chair', 299.99, 'Furniture'),
+                    (5, 'Monitor', 399.99, 'Electronics')`);
+
+                tables['products'] = [
+                    { name: 'product_id', type: 'INTEGER' },
+                    { name: 'product_name', type: 'TEXT' },
+                    { name: 'price', type: 'REAL' },
+                    { name: 'category', type: 'TEXT' }
+                ];
+
+                renderTables();
+                loadSampleQueries();
+                setStatus('success', 'Sample database loaded successfully with 3 tables');
+            } catch (error) {
+                setStatus('error', 'Error loading sample database: ' + error.message);
+            }
+        }
+
+        function loadSampleQueries() {
+            const sampleQueries = [
+                {
+                    title: 'Simple SELECT - All Users',
+                    sql: 'SELECT * FROM users;'
+                },
+                {
+                    title: 'Filter by Department',
+                    sql: "SELECT name, email, salary FROM users WHERE department = 'Engineering';"
+                },
+                {
+                    title: 'Users with Orders (INNER JOIN)',
+                    sql: 'SELECT users.name, users.email, orders.order_id, orders.order_date FROM users INNER JOIN orders ON users.id = orders.user_id;'
+                },
+                {
+                    title: 'Order Details with Product Info',
+                    sql: 'SELECT users.name, products.product_name, products.price, orders.quantity, (products.price * orders.quantity) as total FROM orders INNER JOIN users ON orders.user_id = users.id INNER JOIN products ON orders.product_id = products.product_id;'
+                },
+                {
+                    title: 'Department Salary Statistics',
+                    sql: 'SELECT department, COUNT(*) as employee_count, AVG(salary) as avg_salary, MAX(salary) as max_salary FROM users GROUP BY department ORDER BY avg_salary DESC;'
+                },
+                {
+                    title: 'High Value Orders',
+                    sql: 'SELECT order_id, product_name, (price * quantity) as total FROM orders INNER JOIN products ON orders.product_id = products.product_id WHERE (price * quantity) > 100 ORDER BY total DESC;'
+                }
+            ];
+
+            const container = document.getElementById('sampleQueriesContainer');
+            container.innerHTML = sampleQueries.map((query, idx) => `
+                <div class="sample-query" onclick="loadSampleQuery(${idx})">
+                    <h4>${query.title}</h4>
+                    <pre>${query.sql}</pre>
+                </div>
+            `).join('');
+
+            // Store in global scope for easy access
+            window.sampleQueriesData = sampleQueries;
+        }
+
+        function loadSampleQuery(index) {
+            const query = window.sampleQueriesData[index];
+            document.getElementById('sqlQueryInput').value = query.sql;
+            switchTab('execute');
+            setStatus('info', 'Sample query loaded. Click "Run Query" to execute.');
+        }
+
+        // Query Builder - SELECT fields
+        function updateTableSelects() {
+            const tableSelect = document.getElementById('selectTableField');
+            const tableNames = Object.keys(tables);
+
+            tableSelect.innerHTML = '<option value="">-- Select Table --</option>' +
+                tableNames.map(name => `<option value="${name}">${name}</option>`).join('');
+
+            // Update join and filter selects
+            updateJoinSelects();
+            updateFilterSelects();
+        }
+
+        document.getElementById('selectTableField')?.addEventListener('change', function() {
+            const tableName = this.value;
+            const columnSelect = document.getElementById('selectColumnField');
+
+            if (!tableName) {
+                columnSelect.innerHTML = '<option value="">-- Select Column --</option>';
+                return;
+            }
+
+            const columns = tables[tableName] || [];
+            columnSelect.innerHTML = '<option value="">-- Select Column --</option>' +
+                columns.map(col => `<option value="${col.name}">${col.name} (${col.type})</option>`).join('');
+        });
+
+        function addSelectField() {
+            const table = document.getElementById('selectTableField').value;
+            const column = document.getElementById('selectColumnField').value;
+
+            if (!table || !column) {
+                setStatus('error', 'Please select both table and column');
+                return;
+            }
+
+            const field = `${table}.${column}`;
+            if (selectFields.includes(field)) {
+                setStatus('error', 'Field already added');
+                return;
+            }
+
+            selectFields.push(field);
+            renderSelectFields();
+            generateQuery();
+            setStatus('success', `Added ${field} to SELECT`);
+        }
+
+        function renderSelectFields() {
+            const container = document.getElementById('selectFieldsContainer');
+
+            if (selectFields.length === 0) {
+                container.innerHTML = '<div class="empty-state" style="padding: 20px;">No fields selected</div>';
+                return;
+            }
+
+            container.innerHTML = selectFields.map((field, idx) => `
+                <div class="select-field">
+                    <span>${field}</span>
+                    <span class="remove" onclick="removeSelectField(${idx})">×</span>
+                </div>
+            `).join('');
+        }
+
+        function removeSelectField(index) {
+            selectFields.splice(index, 1);
+            renderSelectFields();
+            generateQuery();
+        }
+
+        // Query Builder - JOINs
+        function addJoin() {
+            joins.push({
+                type: 'INNER JOIN',
+                leftTable: '',
+                leftColumn: '',
+                rightTable: '',
+                rightColumn: ''
+            });
+            renderJoins();
+        }
+
+        function renderJoins() {
+            const container = document.getElementById('joinsContainer');
+
+            if (joins.length === 0) {
+                container.innerHTML = '<div class="empty-state">No joins defined</div>';
+                return;
+            }
+
+            const tableNames = Object.keys(tables);
+
+            container.innerHTML = joins.map((join, idx) => {
+                const leftColumns = join.leftTable ? tables[join.leftTable].map(c => c.name) : [];
+                const rightColumns = join.rightTable ? tables[join.rightTable].map(c => c.name) : [];
+
+                return `
+                    <div class="join-item">
+                        <div>
+                            <select onchange="updateJoin(${idx}, 'leftTable', this.value)">
+                                <option value="">-- Left Table --</option>
+                                ${tableNames.map(t => `<option value="${t}" ${t === join.leftTable ? 'selected' : ''}>${t}</option>`).join('')}
+                            </select>
+                            <select onchange="updateJoin(${idx}, 'leftColumn', this.value)" style="margin-top: 5px;">
+                                <option value="">-- Column --</option>
+                                ${leftColumns.map(c => `<option value="${c}" ${c === join.leftColumn ? 'selected' : ''}>${c}</option>`).join('')}
+                            </select>
+                        </div>
+
+                        <div style="text-align: center;">
+                            <select onchange="updateJoin(${idx}, 'type', this.value)">
+                                <option value="INNER JOIN" ${join.type === 'INNER JOIN' ? 'selected' : ''}>INNER</option>
+                                <option value="LEFT JOIN" ${join.type === 'LEFT JOIN' ? 'selected' : ''}>LEFT</option>
+                                <option value="RIGHT JOIN" ${join.type === 'RIGHT JOIN' ? 'selected' : ''}>RIGHT</option>
+                                <option value="FULL OUTER JOIN" ${join.type === 'FULL OUTER JOIN' ? 'selected' : ''}>FULL</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <select onchange="updateJoin(${idx}, 'rightTable', this.value)">
+                                <option value="">-- Right Table --</option>
+                                ${tableNames.map(t => `<option value="${t}" ${t === join.rightTable ? 'selected' : ''}>${t}</option>`).join('')}
+                            </select>
+                            <select onchange="updateJoin(${idx}, 'rightColumn', this.value)" style="margin-top: 5px;">
+                                <option value="">-- Column --</option>
+                                ${rightColumns.map(c => `<option value="${c}" ${c === join.rightColumn ? 'selected' : ''}>${c}</option>`).join('')}
+                            </select>
+                        </div>
+
+                        <div class="join-controls">
+                            <button class="danger small-btn" onclick="removeJoin(${idx})">Delete</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateJoin(index, field, value) {
+            joins[index][field] = value;
+            renderJoins();
+            generateQuery();
+        }
+
+        function removeJoin(index) {
+            joins.splice(index, 1);
+            renderJoins();
+            generateQuery();
+        }
+
+        function updateJoinSelects() {
+            renderJoins();
+        }
+
+        // Query Builder - WHERE filters
+        function addFilter() {
+            filters.push({
+                field: '',
+                operator: '=',
+                value: ''
+            });
+            renderFilters();
+        }
+
+        function renderFilters() {
+            const container = document.getElementById('filtersContainer');
+
+            if (filters.length === 0) {
+                container.innerHTML = '<div class="empty-state">No filters defined</div>';
+                return;
+            }
+
+            const allFields = [];
+            Object.entries(tables).forEach(([tableName, columns]) => {
+                columns.forEach(col => {
+                    allFields.push(`${tableName}.${col.name}`);
+                });
+            });
+
+            container.innerHTML = filters.map((filter, idx) => `
+                <div class="filter-item">
+                    <select onchange="updateFilter(${idx}, 'field', this.value)">
+                        <option value="">-- Select Field --</option>
+                        ${allFields.map(f => `<option value="${f}" ${f === filter.field ? 'selected' : ''}>${f}</option>`).join('')}
+                    </select>
+
+                    <select onchange="updateFilter(${idx}, 'operator', this.value)">
+                        <option value="=" ${filter.operator === '=' ? 'selected' : ''}>=</option>
+                        <option value="!=" ${filter.operator === '!=' ? 'selected' : ''}>!=</option>
+                        <option value=">" ${filter.operator === '>' ? 'selected' : ''}>&gt;</option>
+                        <option value="<" ${filter.operator === '<' ? 'selected' : ''}>&lt;</option>
+                        <option value=">=" ${filter.operator === '>=' ? 'selected' : ''}>&gt;=</option>
+                        <option value="<=" ${filter.operator === '<=' ? 'selected' : ''}>&lt;=</option>
+                        <option value="LIKE" ${filter.operator === 'LIKE' ? 'selected' : ''}>LIKE</option>
+                        <option value="IN" ${filter.operator === 'IN' ? 'selected' : ''}>IN</option>
+                    </select>
+
+                    <input type="text" value="${filter.value}" onchange="updateFilter(${idx}, 'value', this.value)" placeholder="Value">
+
+                    <button class="danger small-btn" onclick="removeFilter(${idx})">Delete</button>
+                </div>
+            `).join('');
+        }
+
+        function updateFilter(index, field, value) {
+            filters[index][field] = value;
+            generateQuery();
+        }
+
+        function removeFilter(index) {
+            filters.splice(index, 1);
+            renderFilters();
+            generateQuery();
+        }
+
+        function updateFilterSelects() {
+            renderFilters();
+        }
+
+        // Generate SQL query
+        function generateQuery() {
+            try {
+                let query = 'SELECT ';
+
+                // SELECT clause
+                if (selectFields.length === 0) {
+                    query += '*';
+                } else {
+                    query += selectFields.join(', ');
+                }
+
+                // FROM clause - get first table from select fields or joins
+                let fromTable = '';
+                if (selectFields.length > 0) {
+                    fromTable = selectFields[0].split('.')[0];
+                } else if (joins.length > 0) {
+                    fromTable = joins[0].leftTable || Object.keys(tables)[0];
+                } else {
+                    fromTable = Object.keys(tables)[0] || '';
+                }
+
+                if (fromTable) {
+                    query += `\nFROM ${fromTable}`;
+                }
+
+                // JOIN clauses
+                joins.forEach(join => {
+                    if (join.leftTable && join.rightTable && join.leftColumn && join.rightColumn) {
+                        query += `\n${join.type} ${join.rightTable} ON ${join.leftTable}.${join.leftColumn} = ${join.rightTable}.${join.rightColumn}`;
+                    }
+                });
+
+                // WHERE clause
+                const validFilters = filters.filter(f => f.field && f.value);
+                if (validFilters.length > 0) {
+                    query += '\nWHERE ';
+                    query += validFilters.map(f => {
+                        const value = f.operator === 'IN' ? f.value : `'${f.value}'`;
+                        return `${f.field} ${f.operator} ${value}`;
+                    }).join(' AND ');
+                }
+
+                // GROUP BY
+                const groupBy = document.getElementById('groupByInput')?.value.trim();
+                if (groupBy) {
+                    query += `\nGROUP BY ${groupBy}`;
+                }
+
+                // ORDER BY
+                const orderBy = document.getElementById('orderByInput')?.value.trim();
+                if (orderBy) {
+                    query += `\nORDER BY ${orderBy}`;
+                }
+
+                // LIMIT
+                const limit = document.getElementById('limitInput')?.value.trim();
+                if (limit) {
+                    query += `\nLIMIT ${limit}`;
+                }
+
+                query += ';';
+                generatedSQL = query;
+                document.getElementById('generatedQuery').textContent = query;
+            } catch (error) {
+                setStatus('error', 'Error generating query: ' + error.message);
+            }
+        }
+
+        function copyQuery() {
+            navigator.clipboard.writeText(generatedSQL).then(() => {
+                setStatus('success', 'Query copied to clipboard');
+            }).catch(() => {
+                setStatus('error', 'Failed to copy query');
+            });
+        }
+
+        function loadQueryFromBuilder() {
+            generateQuery();
+            document.getElementById('sqlQueryInput').value = generatedSQL;
+            setStatus('success', 'Query loaded from builder');
+        }
+
+        // Execute query
+        function executeQuery() {
+            const sql = document.getElementById('sqlQueryInput').value.trim();
+
+            if (!sql) {
+                setStatus('error', 'Please enter a SQL query');
+                return;
+            }
+
+            try {
+                const results = db.exec(sql);
+                displayResults(results);
+                setStatus('success', 'Query executed successfully');
+            } catch (error) {
+                setStatus('error', 'Query error: ' + error.message);
+                displayResults([]);
+            }
+        }
+
+        function displayResults(results) {
+            const container = document.getElementById('resultsContainer');
+
+            if (!results || results.length === 0) {
+                container.innerHTML = '<div class="empty-state">No results returned</div>';
+                return;
+            }
+
+            const result = results[0];
+            const columns = result.columns;
+            const values = result.values;
+
+            let html = `
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            ${columns.map(col => `<th>${col}</th>`).join('')}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${values.map(row => `
+                            <tr>
+                                ${row.map(cell => `<td>${cell !== null ? cell : '<i>NULL</i>'}</td>`).join('')}
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+                <p style="margin-top: 10px; font-size: 12px; color: #858585;">
+                    ${values.length} row(s) returned
+                </p>
+            `;
+
+            container.innerHTML = html;
+        }
+
+        function clearResults() {
+            document.getElementById('resultsContainer').innerHTML = '<div class="empty-state">No results yet. Execute a query to see results here.</div>';
+            setStatus('info', 'Results cleared');
+        }
+
+        // Status bar
+        function setStatus(type, message) {
+            const statusEl = document.getElementById('statusMessage');
+            statusEl.textContent = message;
+            statusEl.className = 'status-' + type;
+        }
+    </script>
+</body>
+</html>
