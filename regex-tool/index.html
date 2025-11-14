@@ -448,6 +448,148 @@
             color: #9cdcfe;
         }
 
+        .mode-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            background: #1e1e1e;
+            padding: 5px;
+            border-radius: 6px;
+            border: 1px solid #3e3e42;
+        }
+
+        .mode-option {
+            flex: 1;
+            background: transparent;
+            color: #d4d4d4;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.2s;
+        }
+
+        .mode-option:hover {
+            background: #2d2d30;
+        }
+
+        .mode-option.active {
+            background: #569cd6;
+            color: #ffffff;
+            font-weight: bold;
+        }
+
+        .dual-selection-container {
+            display: none;
+        }
+
+        .dual-selection-container.active {
+            display: block;
+        }
+
+        .token-selection-container {
+            display: block;
+        }
+
+        .token-selection-container.hidden {
+            display: none;
+        }
+
+        .selection-step {
+            background: #1e1e1e;
+            border: 2px solid #3e3e42;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .selection-step.active {
+            border-color: #4ec9b0;
+        }
+
+        .step-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .step-number {
+            background: #569cd6;
+            color: #ffffff;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        .step-title {
+            color: #9cdcfe;
+            font-weight: bold;
+        }
+
+        .step-description {
+            color: #858585;
+            font-size: 0.85em;
+            margin-bottom: 10px;
+        }
+
+        .context-display {
+            background: #252526;
+            border: 2px solid #3e3e42;
+            border-radius: 4px;
+            padding: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            cursor: text;
+            user-select: text;
+            min-height: 100px;
+        }
+
+        .context-display.selecting {
+            border-color: #4ec9b0;
+            box-shadow: 0 0 0 2px #4ec9b044;
+        }
+
+        .context-highlight {
+            background: #569cd644;
+            border-bottom: 2px solid #569cd6;
+            padding: 2px 0;
+        }
+
+        .changing-bit-highlight {
+            background: #4ec9b088;
+            border-bottom: 2px solid #4ec9b0;
+            font-weight: bold;
+            padding: 2px 0;
+        }
+
+        .selection-info {
+            background: #2d2d30;
+            border-left: 3px solid #4ec9b0;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+            font-size: 0.85em;
+            color: #d4d4d4;
+        }
+
+        .selection-info code {
+            background: #1e1e1e;
+            color: #4ec9b0;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+
         .generated-pattern-display {
             background: #1e1e1e;
             border: 2px solid #4ec9b0;
@@ -510,46 +652,138 @@
                 </div>
 
                 <div id="generator-mode">
-                    <textarea id="sample-text" placeholder="Paste your sample text here...">Contact us at support@example.com
+                    <!-- Mode Selector -->
+                    <div class="mode-selector">
+                        <button class="mode-option" id="token-mode-btn" onclick="switchToTokenMode()">
+                            Token Selection
+                        </button>
+                        <button class="mode-option active" id="dual-mode-btn" onclick="switchToDualMode()">
+                            Dual Selection (Context-Based)
+                        </button>
+                    </div>
+
+                    <!-- Dual Selection Mode -->
+                    <div id="dual-selection-container" class="dual-selection-container active">
+                        <textarea id="dual-sample-text" placeholder="Paste your sample text with context here...
+Example:
+Order ID: 12345 Date: 2023-10-01
+Order ID: 67890 Date: 2023-10-02
+Order ID: 54321 Date: 2023-10-03">Order ID: 12345 Date: 2023-10-01
+Order ID: 67890 Date: 2023-10-02
+Order ID: 54321 Date: 2023-10-03</textarea>
+
+                        <!-- Step 1: Select Context -->
+                        <div class="selection-step" id="context-step">
+                            <div class="step-header">
+                                <div class="step-number">1</div>
+                                <div class="step-title">Select Context Block</div>
+                            </div>
+                            <div class="step-description">
+                                Select the entire block of text that contains both changing and unchanging parts
+                            </div>
+                            <div class="generator-controls">
+                                <button class="generator-button" onclick="startContextSelection()">
+                                    Select Context
+                                </button>
+                                <button class="generator-button secondary" onclick="clearDualSelections()">
+                                    Clear All
+                                </button>
+                            </div>
+                            <div id="context-selection-info" class="selection-info" style="display: none;">
+                                Context selected: <code id="context-text-display"></code>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Select Changing Bit -->
+                        <div class="selection-step" id="changing-bit-step">
+                            <div class="step-header">
+                                <div class="step-number">2</div>
+                                <div class="step-title">Select Changing Bit</div>
+                            </div>
+                            <div class="step-description">
+                                Within the context, select the part that changes (e.g., numbers, dates, specific words)
+                            </div>
+                            <div class="generator-controls">
+                                <button class="generator-button" onclick="startChangingBitSelection()" id="select-changing-btn" disabled>
+                                    Select Changing Bit
+                                </button>
+                            </div>
+                            <div id="changing-bit-selection-info" class="selection-info" style="display: none;">
+                                Changing bit selected: <code id="changing-bit-text-display"></code>
+                            </div>
+                        </div>
+
+                        <!-- Generate Button -->
+                        <div class="generator-controls">
+                            <button class="generator-button" onclick="generateDualPattern()" id="generate-dual-btn" disabled>
+                                Generate Pattern
+                            </button>
+                        </div>
+
+                        <div id="dual-generated-pattern-display" class="generated-pattern-display">
+                            <div class="pattern-label">Generated Pattern:</div>
+                            <div id="dual-generated-pattern-text"></div>
+                        </div>
+
+                        <div class="generator-info">
+                            <strong>How to use Dual Selection Mode:</strong>
+                            <ol style="margin: 8px 0 0 20px; line-height: 1.6;">
+                                <li>Paste sample text with repeating patterns (like log entries, structured data, etc.)</li>
+                                <li>Click "Select Context" and highlight the entire block containing both changing and fixed parts</li>
+                                <li>Click "Select Changing Bit" and highlight just the part that varies (numbers, dates, etc.)</li>
+                                <li>Click "Generate Pattern" to create a regex that captures the changing bit with context</li>
+                                <li>The pattern will include surrounding text for context and capture only the variable part</li>
+                            </ol>
+                            <div style="margin-top: 10px; font-size: 0.9em;">
+                                <strong>Example:</strong> If you select "Order ID: 12345 Date: 2023-10-01" as context and "12345" as the changing bit,
+                                it will generate a pattern like <code style="background: #1e1e1e; padding: 2px 6px; border-radius: 3px;">Order ID: (\d+)</code>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Token Selection Mode -->
+                    <div id="token-selection-container" class="token-selection-container hidden">
+                        <textarea id="sample-text" placeholder="Paste your sample text here...">Contact us at support@example.com
 Call: (555) 123-4567
 Visit: https://example.com
 Date: 12/15/2024</textarea>
 
-                    <div class="generator-controls">
-                        <button class="generator-button" onclick="enableSelectionMode()">
-                            Select Text to Extract
-                        </button>
-                        <button class="generator-button secondary" onclick="clearSelections()">
-                            Clear Selections
-                        </button>
-                    </div>
-
-                    <div id="selection-display" style="display: none;">
-                        <div class="sample-text-display" id="selectable-display"></div>
                         <div class="generator-controls">
-                            <button class="generator-button" onclick="generatePattern()">
-                                Generate Pattern
+                            <button class="generator-button" onclick="enableSelectionMode()">
+                                Select Text to Extract
                             </button>
-                            <button class="generator-button secondary" onclick="backToEdit()">
-                                Back to Edit
+                            <button class="generator-button secondary" onclick="clearSelections()">
+                                Clear Selections
                             </button>
                         </div>
-                    </div>
 
-                    <div id="generated-pattern-display" class="generated-pattern-display">
-                        <div class="pattern-label">Generated Pattern:</div>
-                        <div id="generated-pattern-text"></div>
-                    </div>
+                        <div id="selection-display" style="display: none;">
+                            <div class="sample-text-display" id="selectable-display"></div>
+                            <div class="generator-controls">
+                                <button class="generator-button" onclick="generatePattern()">
+                                    Generate Pattern
+                                </button>
+                                <button class="generator-button secondary" onclick="backToEdit()">
+                                    Back to Edit
+                                </button>
+                            </div>
+                        </div>
 
-                    <div class="generator-info">
-                        <strong>How to use:</strong>
-                        <ol style="margin: 8px 0 0 20px; line-height: 1.6;">
-                            <li>Paste or type sample text containing patterns you want to extract</li>
-                            <li>Click "Select Text to Extract" to enter selection mode</li>
-                            <li>Click on the parts of the text you want to match (like emails, phone numbers, etc.)</li>
-                            <li>Click "Generate Pattern" to create a regex that matches your selections</li>
-                            <li>The generated pattern will appear below and in the pattern input</li>
-                        </ol>
+                        <div id="generated-pattern-display" class="generated-pattern-display">
+                            <div class="pattern-label">Generated Pattern:</div>
+                            <div id="generated-pattern-text"></div>
+                        </div>
+
+                        <div class="generator-info">
+                            <strong>How to use Token Selection Mode:</strong>
+                            <ol style="margin: 8px 0 0 20px; line-height: 1.6;">
+                                <li>Paste or type sample text containing patterns you want to extract</li>
+                                <li>Click "Select Text to Extract" to enter selection mode</li>
+                                <li>Click on the parts of the text you want to match (like emails, phone numbers, etc.)</li>
+                                <li>Click "Generate Pattern" to create a regex that matches your selections</li>
+                                <li>The generated pattern will appear below and in the pattern input</li>
+                            </ol>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1147,6 +1381,359 @@ Border: #333`,
 
         function escapeRegex(str) {
             return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
+
+        // Dual Selection Mode functionality
+        let dualModeActive = true;
+        let contextSelection = null;
+        let changingBitSelection = null;
+        let isSelectingContext = false;
+        let isSelectingChangingBit = false;
+
+        function switchToTokenMode() {
+            document.getElementById('token-mode-btn').classList.add('active');
+            document.getElementById('dual-mode-btn').classList.remove('active');
+            document.getElementById('dual-selection-container').classList.remove('active');
+            document.getElementById('token-selection-container').classList.remove('hidden');
+            dualModeActive = false;
+        }
+
+        function switchToDualMode() {
+            document.getElementById('token-mode-btn').classList.remove('active');
+            document.getElementById('dual-mode-btn').classList.add('active');
+            document.getElementById('dual-selection-container').classList.add('active');
+            document.getElementById('token-selection-container').classList.add('hidden');
+            dualModeActive = true;
+        }
+
+        function startContextSelection() {
+            const textarea = document.getElementById('dual-sample-text');
+            textarea.focus();
+
+            alert('Please select the context block in the text area above, then click OK.');
+
+            setTimeout(() => {
+                const selectedText = textarea.value.substring(textarea.selectionStart, textarea.selectionEnd);
+
+                if (selectedText && selectedText.trim().length > 0) {
+                    contextSelection = {
+                        text: selectedText,
+                        start: textarea.selectionStart,
+                        end: textarea.selectionEnd
+                    };
+
+                    // Update UI
+                    document.getElementById('context-text-display').textContent =
+                        selectedText.length > 50 ? selectedText.substring(0, 50) + '...' : selectedText;
+                    document.getElementById('context-selection-info').style.display = 'block';
+                    document.getElementById('select-changing-btn').disabled = false;
+                    document.getElementById('context-step').classList.add('active');
+
+                    // Clear changing bit selection if any
+                    changingBitSelection = null;
+                    document.getElementById('changing-bit-selection-info').style.display = 'none';
+                    document.getElementById('changing-bit-step').classList.remove('active');
+                    document.getElementById('generate-dual-btn').disabled = true;
+                } else {
+                    alert('Please select some text first!');
+                }
+            }, 100);
+        }
+
+        function startChangingBitSelection() {
+            if (!contextSelection) {
+                alert('Please select the context first!');
+                return;
+            }
+
+            const textarea = document.getElementById('dual-sample-text');
+            textarea.focus();
+
+            // Set selection to context range to help user
+            textarea.setSelectionRange(contextSelection.start, contextSelection.end);
+
+            alert('Now select just the changing bit (the part that varies) within the highlighted context, then click OK.');
+
+            setTimeout(() => {
+                const selectedText = textarea.value.substring(textarea.selectionStart, textarea.selectionEnd);
+                const selectionStart = textarea.selectionStart;
+                const selectionEnd = textarea.selectionEnd;
+
+                if (selectedText && selectedText.trim().length > 0) {
+                    // Verify that the changing bit is within the context
+                    if (selectionStart >= contextSelection.start && selectionEnd <= contextSelection.end) {
+                        changingBitSelection = {
+                            text: selectedText,
+                            start: selectionStart,
+                            end: selectionEnd,
+                            relativeStart: selectionStart - contextSelection.start,
+                            relativeEnd: selectionEnd - contextSelection.start
+                        };
+
+                        // Update UI
+                        document.getElementById('changing-bit-text-display').textContent =
+                            selectedText.length > 50 ? selectedText.substring(0, 50) + '...' : selectedText;
+                        document.getElementById('changing-bit-selection-info').style.display = 'block';
+                        document.getElementById('changing-bit-step').classList.add('active');
+                        document.getElementById('generate-dual-btn').disabled = false;
+                    } else {
+                        alert('The changing bit must be within the selected context! Please try again.');
+                    }
+                } else {
+                    alert('Please select some text first!');
+                }
+            }, 100);
+        }
+
+        function clearDualSelections() {
+            contextSelection = null;
+            changingBitSelection = null;
+            document.getElementById('context-selection-info').style.display = 'none';
+            document.getElementById('changing-bit-selection-info').style.display = 'none';
+            document.getElementById('context-step').classList.remove('active');
+            document.getElementById('changing-bit-step').classList.remove('active');
+            document.getElementById('select-changing-btn').disabled = true;
+            document.getElementById('generate-dual-btn').disabled = true;
+            document.getElementById('dual-generated-pattern-display').classList.remove('visible');
+        }
+
+        function generateDualPattern() {
+            if (!contextSelection || !changingBitSelection) {
+                alert('Please select both context and changing bit first!');
+                return;
+            }
+
+            const context = contextSelection.text;
+            const changingBit = changingBitSelection.text;
+            const relativeStart = changingBitSelection.relativeStart;
+            const relativeEnd = changingBitSelection.relativeEnd;
+
+            // Get the parts before, during, and after the changing bit
+            const before = context.substring(0, relativeStart);
+            const after = context.substring(relativeEnd);
+
+            // Analyze the changing bit to determine its pattern
+            const changingBitPattern = analyzeChangingBit(changingBit);
+
+            // Build the full pattern
+            let pattern = '';
+
+            // Add before part (escaped)
+            if (before.trim().length > 0) {
+                pattern += escapeRegex(before);
+            }
+
+            // Add capture group for changing bit
+            pattern += '(' + changingBitPattern + ')';
+
+            // Add after part (escaped) - but only include relevant context
+            // We'll try to be smart about how much context to include
+            if (after.trim().length > 0) {
+                // Take up to the next whitespace or special character, or first few characters
+                const afterContext = getRelevantContext(after);
+                if (afterContext.length > 0) {
+                    pattern += escapeRegex(afterContext);
+                }
+            }
+
+            // Display the generated pattern
+            document.getElementById('dual-generated-pattern-text').textContent = pattern;
+            document.getElementById('dual-generated-pattern-display').classList.add('visible');
+
+            // Update the main pattern input
+            patternInput.value = pattern;
+
+            // Copy sample text to test string
+            testString.value = document.getElementById('dual-sample-text').value;
+
+            // Enable global and multiline flags for better matching
+            flagCheckboxes.g.checked = true;
+            flagCheckboxes.m.checked = true;
+
+            // Run the test
+            testRegex();
+
+            // Scroll to results
+            setTimeout(() => {
+                document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 100);
+        }
+
+        function analyzeChangingBit(text) {
+            // Email pattern
+            if (/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(text)) {
+                return '[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}';
+            }
+
+            // Phone number patterns
+            if (/^\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}$/.test(text)) {
+                return '\\(?\\d{3}\\)?[-.\\s]?\\d{3}[-.\\s]?\\d{4}';
+            }
+
+            // URL pattern
+            if (/^https?:\/\/.+/.test(text)) {
+                return 'https?://[\\w\\-./?#&=]+';
+            }
+
+            // ISO Date (YYYY-MM-DD)
+            if (/^\d{4}-\d{2}-\d{2}$/.test(text)) {
+                return '\\d{4}-\\d{2}-\\d{2}';
+            }
+
+            // Date patterns (MM/DD/YYYY or similar)
+            if (/^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}$/.test(text)) {
+                const separator = text.match(/[\/\-]/)[0];
+                return '\\d{1,2}' + escapeRegex(separator) + '\\d{1,2}' + escapeRegex(separator) + '\\d{2,4}';
+            }
+
+            // Time pattern (HH:MM or HH:MM:SS)
+            if (/^\d{1,2}:\d{2}(:\d{2})?$/.test(text)) {
+                return '\\d{1,2}:\\d{2}(:\\d{2})?';
+            }
+
+            // IP address
+            if (/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(text)) {
+                return '\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}';
+            }
+
+            // Hex color
+            if (/^#[0-9A-Fa-f]{3,6}$/.test(text)) {
+                return '#[0-9A-Fa-f]{3,6}';
+            }
+
+            // Decimal number
+            if (/^-?\d+\.\d+$/.test(text)) {
+                const parts = text.split('.');
+                const intDigits = parts[0].replace('-', '').length;
+                const decDigits = parts[1].length;
+                return '-?\\d+\\.\\d+';
+            }
+
+            // Integer
+            if (/^-?\d+$/.test(text)) {
+                const digitCount = text.replace('-', '').length;
+                // Use exact digit count if reasonable, otherwise use +
+                if (digitCount <= 10) {
+                    return '-?\\d{' + digitCount + '}';
+                }
+                return '-?\\d+';
+            }
+
+            // Word (letters only)
+            if (/^[a-zA-Z]+$/.test(text)) {
+                const wordLength = text.length;
+                // Check case patterns
+                if (text === text.toUpperCase()) {
+                    return '[A-Z]+';
+                } else if (text === text.toLowerCase()) {
+                    return '[a-z]+';
+                } else {
+                    // Mixed case - check if it's title case
+                    if (/^[A-Z][a-z]*$/.test(text)) {
+                        return '[A-Z][a-z]*';
+                    }
+                    return '[a-zA-Z]+';
+                }
+            }
+
+            // Alphanumeric (no special chars)
+            if (/^[a-zA-Z0-9]+$/.test(text)) {
+                return '[a-zA-Z0-9]+';
+            }
+
+            // Word characters (including underscore)
+            if (/^\w+$/.test(text)) {
+                return '\\w+';
+            }
+
+            // Complex pattern with mixed characters - try to find structure
+            const structure = analyzeStructure(text);
+            if (structure) {
+                return structure;
+            }
+
+            // Default: match the exact length with any character
+            return '.{' + text.length + '}';
+        }
+
+        function analyzeStructure(text) {
+            // Build a pattern based on character types
+            let pattern = '';
+            let i = 0;
+
+            while (i < text.length) {
+                const char = text[i];
+                let charType = getCharType(char);
+                let count = 1;
+
+                // Count consecutive characters of the same type
+                while (i + count < text.length && getCharType(text[i + count]) === charType) {
+                    count++;
+                }
+
+                // Build pattern segment
+                if (charType === 'digit') {
+                    pattern += '\\d';
+                } else if (charType === 'letter') {
+                    if (char === char.toUpperCase()) {
+                        pattern += '[A-Z]';
+                    } else {
+                        pattern += '[a-z]';
+                    }
+                } else if (charType === 'space') {
+                    pattern += '\\s';
+                } else if (charType === 'word') {
+                    pattern += '\\w';
+                } else {
+                    pattern += escapeRegex(char);
+                }
+
+                // Add quantifier if more than one
+                if (count > 1) {
+                    if (count === 2) {
+                        pattern += pattern.substring(pattern.length - (pattern.endsWith(']') ? 5 : 2));
+                    } else {
+                        pattern += '{' + count + '}';
+                    }
+                }
+
+                i += count;
+            }
+
+            return pattern;
+        }
+
+        function getCharType(char) {
+            if (/\d/.test(char)) return 'digit';
+            if (/[a-zA-Z]/.test(char)) return 'letter';
+            if (/\s/.test(char)) return 'space';
+            if (/\w/.test(char)) return 'word';
+            return 'other';
+        }
+
+        function getRelevantContext(afterText) {
+            // Return relevant context after the changing bit
+            // We want to include enough to disambiguate but not too much
+
+            // If there's a space, take everything before it
+            const spaceIndex = afterText.indexOf(' ');
+            if (spaceIndex > 0 && spaceIndex < 20) {
+                return afterText.substring(0, spaceIndex);
+            }
+
+            // If there's a newline, take everything before it
+            const newlineIndex = afterText.indexOf('\n');
+            if (newlineIndex > 0 && newlineIndex < 20) {
+                return afterText.substring(0, newlineIndex);
+            }
+
+            // Take first few characters if they're not spaces
+            const firstPart = afterText.substring(0, Math.min(10, afterText.length));
+            if (firstPart.trim().length > 0) {
+                return firstPart;
+            }
+
+            return '';
         }
     </script>
 </body>
