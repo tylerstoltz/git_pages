@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arduino Simulator - Developer Tools</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: #2d2d30;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid #404040;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .back-link {
+            color: #569cd6;
+            text-decoration: none;
+            font-size: 1.2rem;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover {
+            color: #6ab0de;
+        }
+
+        h1 {
+            color: #d4d4d4;
+            font-size: 1.5rem;
+            font-weight: 500;
+        }
+
+        .container {
+            padding: 2rem;
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .panel {
+            background: #252526;
+            border: 1px solid #404040;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            background: #2d2d30;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #404040;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-title {
+            font-weight: 500;
+            font-size: 0.95rem;
+            color: #d4d4d4;
+        }
+
+        .panel-content {
+            padding: 1rem;
+        }
+
+        /* Editor Styles */
+        #codeEditor {
+            width: 100%;
+            min-height: 400px;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            border: 1px solid #404040;
+            border-radius: 4px;
+            padding: 1rem;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            resize: vertical;
+            tab-size: 2;
+        }
+
+        #codeEditor:focus {
+            outline: 1px solid #569cd6;
+        }
+
+        .example-selector {
+            margin-bottom: 1rem;
+        }
+
+        .example-selector label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #858585;
+            font-size: 0.9rem;
+        }
+
+        .example-selector select {
+            width: 100%;
+            padding: 0.5rem;
+            background: #2d2d30;
+            color: #d4d4d4;
+            border: 1px solid #404040;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+
+        .example-selector select:focus {
+            outline: 1px solid #569cd6;
+        }
+
+        /* Control Panel */
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            align-items: center;
+            margin-top: 1rem;
+        }
+
+        .btn {
+            padding: 0.5rem 1.25rem;
+            background: #0e639c;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            background: #1177bb;
+        }
+
+        .btn:disabled {
+            background: #404040;
+            color: #858585;
+            cursor: not-allowed;
+        }
+
+        .btn-stop {
+            background: #d16969;
+        }
+
+        .btn-stop:hover:not(:disabled) {
+            background: #e07979;
+        }
+
+        .btn-reset {
+            background: #858585;
+        }
+
+        .btn-reset:hover:not(:disabled) {
+            background: #959595;
+        }
+
+        .speed-control {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-left: auto;
+        }
+
+        .speed-control label {
+            color: #858585;
+            font-size: 0.9rem;
+        }
+
+        .speed-control input[type="range"] {
+            width: 120px;
+        }
+
+        .speed-value {
+            color: #4ec9b0;
+            font-weight: 500;
+            min-width: 40px;
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: #2d2d30;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #858585;
+        }
+
+        .status-indicator.running {
+            background: #4ec9b0;
+            box-shadow: 0 0 8px #4ec9b0;
+        }
+
+        .status-indicator.error {
+            background: #f48771;
+            box-shadow: 0 0 8px #f48771;
+        }
+
+        /* Arduino Board */
+        .board-container {
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .arduino-board {
+            background: #2b7a9c;
+            padding: 2rem 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .board-label {
+            text-align: center;
+            color: #fff;
+            font-weight: 500;
+            margin-bottom: 1.5rem;
+            font-size: 1.1rem;
+        }
+
+        .builtin-led-section {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .builtin-led-label {
+            color: #fff;
+            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .builtin-led {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #3a3a3a;
+            margin: 0 auto;
+            transition: all 0.2s;
+            border: 2px solid #1a1a1a;
+        }
+
+        .builtin-led.on {
+            background: #ff0000;
+            box-shadow: 0 0 20px #ff0000, 0 0 40px rgba(255, 0, 0, 0.5);
+        }
+
+        .digital-pins {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .pin-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .pin-label {
+            color: #fff;
+            font-size: 0.7rem;
+        }
+
+        .led {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #3a3a3a;
+            transition: all 0.2s;
+            border: 1px solid #1a1a1a;
+        }
+
+        .led.on {
+            background: #ff0000;
+            box-shadow: 0 0 10px #ff0000;
+        }
+
+        .analog-inputs {
+            background: #1e4d5e;
+            padding: 1rem;
+            border-radius: 4px;
+        }
+
+        .analog-title {
+            color: #fff;
+            font-size: 0.85rem;
+            margin-bottom: 0.75rem;
+            text-align: center;
+        }
+
+        .analog-input {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .analog-input label {
+            color: #fff;
+            font-size: 0.8rem;
+            min-width: 25px;
+        }
+
+        .analog-input input[type="range"] {
+            flex: 1;
+        }
+
+        .analog-value {
+            color: #4ec9b0;
+            font-size: 0.8rem;
+            font-weight: 500;
+            min-width: 40px;
+            text-align: right;
+        }
+
+        .pin-states {
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .pin-states-title {
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+            color: #858585;
+        }
+
+        .pin-states-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+        }
+
+        .pin-state {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.4rem 0.75rem;
+            background: #2d2d30;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+
+        .pin-state-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #3a3a3a;
+        }
+
+        .pin-state-indicator.high {
+            background: #4ec9b0;
+        }
+
+        .pin-state-name {
+            color: #858585;
+            min-width: 30px;
+        }
+
+        .pin-state-value {
+            color: #d4d4d4;
+            margin-left: auto;
+        }
+
+        /* Serial Monitor */
+        .serial-monitor {
+            grid-column: 1 / -1;
+        }
+
+        #serialOutput {
+            width: 100%;
+            height: 200px;
+            background: #1e1e1e;
+            color: #4ec9b0;
+            border: 1px solid #404040;
+            border-radius: 4px;
+            padding: 1rem;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            overflow-y: auto;
+            resize: vertical;
+        }
+
+        .btn-clear {
+            background: #858585;
+            padding: 0.4rem 1rem;
+            font-size: 0.85rem;
+        }
+
+        .btn-clear:hover:not(:disabled) {
+            background: #959595;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .header {
+                padding: 1rem;
+            }
+
+            h1 {
+                font-size: 1.2rem;
+            }
+
+            .digital-pins {
+                grid-template-columns: repeat(4, 1fr);
+            }
+
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .speed-control {
+                margin-left: 0;
+                justify-content: space-between;
+            }
+
+            .pin-states-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .digital-pins {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="../index.html" class="back-link">←</a>
+        <h1>Arduino Simulator</h1>
+    </div>
+
+    <div class="container">
+        <div class="main-grid">
+            <!-- Code Editor Panel -->
+            <div class="panel editor-panel">
+                <div class="panel-header">
+                    <span class="panel-title">Code Editor</span>
+                </div>
+                <div class="panel-content">
+                    <div class="example-selector">
+                        <label for="exampleSelect">Load Example:</label>
+                        <select id="exampleSelect">
+                            <option value="">-- Select an example --</option>
+                            <option value="blink">Blink (LED on/off)</option>
+                            <option value="serial">Serial Hello World</option>
+                            <option value="analog">Analog Read</option>
+                            <option value="multiple">Multiple LEDs (Knight Rider)</option>
+                            <option value="fade">PWM Fade</option>
+                            <option value="button">Digital Read (Simulated)</option>
+                        </select>
+                    </div>
+                    <textarea id="codeEditor" spellcheck="false" placeholder="// Write your Arduino code here..."></textarea>
+                    <div class="controls">
+                        <button id="uploadBtn" class="btn">
+                            <span>📤</span>
+                            <span>Upload</span>
+                        </button>
+                        <button id="stopBtn" class="btn btn-stop" disabled>
+                            <span>⏹</span>
+                            <span>Stop</span>
+                        </button>
+                        <button id="resetBtn" class="btn btn-reset">
+                            <span>🔄</span>
+                            <span>Reset</span>
+                        </button>
+                        <div class="status">
+                            <div id="statusIndicator" class="status-indicator"></div>
+                            <span id="statusText">Ready</span>
+                        </div>
+                        <div class="speed-control">
+                            <label for="speedSlider">Speed:</label>
+                            <input type="range" id="speedSlider" min="0" max="4" value="2" step="1">
+                            <span class="speed-value" id="speedValue">1x</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Arduino Board Panel -->
+            <div class="panel board-panel">
+                <div class="panel-header">
+                    <span class="panel-title">Arduino UNO Board</span>
+                </div>
+                <div class="board-container">
+                    <div class="arduino-board">
+                        <div class="board-label">ARDUINO UNO</div>
+
+                        <div class="builtin-led-section">
+                            <div class="builtin-led-label">Built-in LED (Pin 13)</div>
+                            <div id="builtinLed" class="builtin-led"></div>
+                        </div>
+
+                        <div class="digital-pins">
+                            <div class="pin-container">
+                                <span class="pin-label">D0</span>
+                                <div class="led" data-pin="0"></div>
+                            </div>
+                            <div class="pin-container">
+                                <span class="pin-label">D1</span>
+                                <div class="led" data-pin="1"></div>
+                            </div>
+                            <div class="pin-container">
+                                <span class="pin-label">D2</span>
+                                <div class="led" data-pin="2"></div>
+                            </div>
+                            <div class="pin-container">
+                                <span class="pin-label">D3</span>
+                                <div class="led" data-pin="3"></div>
+                            </div>
+                            <div class="pin-container">
+                                <span class="pin-label">D4</span>
+                                <div class="led" data-pin="4"></div>
+                            </div>
+                            <div class="pin-container">
+                                <span class="pin-label">D5</span>
+                                <div class="led" data-pin="5"></div>
+                            </div>
+                            <div class="pin-container">
+                                <span class="pin-label">D6</span>
+                                <div class="led" data-pin="6"></div>
+                            </div>
+                            <div class="pin-container">
+                                <span class="pin-label">D7</span>
+                                <div class="led" data-pin="7"></div>
+                            </div>
+                            <div class="pin-container">
+                                <span class="pin-label">D8</span>
+                                <div class="led" data-pin="8"></div>
+                            </div>
+                            <div class="pin-container">
+                                <span class="pin-label">D9</span>
+                                <div class="led" data-pin="9"></div>
+                            </div>
+                            <div class="pin-container">
+                                <span class="pin-label">D10</span>
+                                <div class="led" data-pin="10"></div>
+                            </div>
+                            <div class="pin-container">
+                                <span class="pin-label">D11</span>
+                                <div class="led" data-pin="11"></div>
+                            </div>
+                            <div class="pin-container">
+                                <span class="pin-label">D12</span>
+                                <div class="led" data-pin="12"></div>
+                            </div>
+                        </div>
+
+                        <div class="analog-inputs">
+                            <div class="analog-title">Analog Inputs</div>
+                            <div class="analog-input">
+                                <label>A0:</label>
+                                <input type="range" min="0" max="1023" value="0" data-analog="0">
+                                <span class="analog-value" data-value="0">0</span>
+                            </div>
+                            <div class="analog-input">
+                                <label>A1:</label>
+                                <input type="range" min="0" max="1023" value="0" data-analog="1">
+                                <span class="analog-value" data-value="1">0</span>
+                            </div>
+                            <div class="analog-input">
+                                <label>A2:</label>
+                                <input type="range" min="0" max="1023" value="0" data-analog="2">
+                                <span class="analog-value" data-value="2">0</span>
+                            </div>
+                            <div class="analog-input">
+                                <label>A3:</label>
+                                <input type="range" min="0" max="1023" value="0" data-analog="3">
+                                <span class="analog-value" data-value="3">0</span>
+                            </div>
+                            <div class="analog-input">
+                                <label>A4:</label>
+                                <input type="range" min="0" max="1023" value="0" data-analog="4">
+                                <span class="analog-value" data-value="4">0</span>
+                            </div>
+                            <div class="analog-input">
+                                <label>A5:</label>
+                                <input type="range" min="0" max="1023" value="0" data-analog="5">
+                                <span class="analog-value" data-value="5">0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pin-states">
+                        <div class="pin-states-title">Pin States</div>
+                        <div class="pin-states-grid" id="pinStatesGrid">
+                            <!-- Generated dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Serial Monitor Panel -->
+            <div class="panel serial-monitor">
+                <div class="panel-header">
+                    <span class="panel-title">Serial Monitor</span>
+                    <button id="clearSerialBtn" class="btn btn-clear">🗑 Clear</button>
+                </div>
+                <div class="panel-content">
+                    <div id="serialOutput"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Arduino Simulator Implementation
+        class ArduinoSimulator {
+            constructor() {
+                this.pins = Array(14).fill(0); // Digital pins D0-D13
+                this.pinModes = Array(14).fill(0); // 0=INPUT, 1=OUTPUT
+                this.analogPins = Array(6).fill(0); // Analog pins A0-A5
+                this.pwmPins = Array(14).fill(0); // PWM values 0-255
+                this.serialBuffer = [];
+                this.startTime = Date.now();
+                this.isRunning = false;
+                this.loopInterval = null;
+                this.speedMultiplier = 1.0;
+
+                // Constants
+                this.HIGH = 1;
+                this.LOW = 0;
+                this.INPUT = 0;
+                this.OUTPUT = 1;
+                this.LED_BUILTIN = 13;
+                this.A0 = 14;
+                this.A1 = 15;
+                this.A2 = 16;
+                this.A3 = 17;
+                this.A4 = 18;
+                this.A5 = 19;
+            }
+
+            pinMode(pin, mode) {
+                if (pin >= 0 && pin < 14) {
+                    this.pinModes[pin] = mode;
+                }
+            }
+
+            digitalWrite(pin, value) {
+                if (pin >= 0 && pin < 14 && this.pinModes[pin] === this.OUTPUT) {
+                    this.pins[pin] = value ? 1 : 0;
+                    this.pwmPins[pin] = value ? 255 : 0;
+                    updateUI();
+                }
+            }
+
+            digitalRead(pin) {
+                if (pin >= 0 && pin < 14) {
+                    return this.pins[pin];
+                }
+                return 0;
+            }
+
+            analogRead(pin) {
+                // Convert A0-A5 constants to array index
+                let index = pin;
+                if (pin >= 14 && pin <= 19) {
+                    index = pin - 14;
+                }
+                if (index >= 0 && index < 6) {
+                    return this.analogPins[index];
+                }
+                return 0;
+            }
+
+            analogWrite(pin, value) {
+                if (pin >= 0 && pin < 14) {
+                    // PWM pins: 3, 5, 6, 9, 10, 11
+                    const pwmCapable = [3, 5, 6, 9, 10, 11];
+                    if (pwmCapable.includes(pin)) {
+                        value = Math.max(0, Math.min(255, value));
+                        this.pwmPins[pin] = value;
+                        this.pins[pin] = value > 127 ? 1 : 0;
+                        updateUI();
+                    }
+                }
+            }
+
+            delay(ms) {
+                return new Promise(resolve =>
+                    setTimeout(resolve, ms / this.speedMultiplier)
+                );
+            }
+
+            millis() {
+                return Math.floor((Date.now() - this.startTime) * this.speedMultiplier);
+            }
+
+            Serial = {
+                begin: (baud) => {
+                    this.addToSerial(`Serial initialized at ${baud} baud`);
+                },
+                print: (text) => {
+                    this.addToSerial(text, false);
+                },
+                println: (text) => {
+                    this.addToSerial(text, true);
+                }
+            };
+
+            addToSerial(text, newline = true) {
+                const output = document.getElementById('serialOutput');
+                if (newline) {
+                    output.textContent += text + '\n';
+                } else {
+                    output.textContent += text;
+                }
+                output.scrollTop = output.scrollHeight;
+
+                // Limit to last 1000 lines
+                const lines = output.textContent.split('\n');
+                if (lines.length > 1000) {
+                    output.textContent = lines.slice(-1000).join('\n');
+                }
+            }
+
+            reset() {
+                this.pins.fill(0);
+                this.pinModes.fill(0);
+                this.analogPins.fill(0);
+                this.pwmPins.fill(0);
+                this.serialBuffer = [];
+                this.startTime = Date.now();
+                this.isRunning = false;
+                if (this.loopInterval) {
+                    clearInterval(this.loopInterval);
+                    this.loopInterval = null;
+                }
+                document.getElementById('serialOutput').textContent = '';
+                updateUI();
+            }
+
+            setSpeedMultiplier(speed) {
+                this.speedMultiplier = speed;
+            }
+        }
+
+        // Global Arduino instance
+        const arduino = new ArduinoSimulator();
+
+        // Code Examples
+        const examples = {
+            blink: `void setup() {
+  pinMode(LED_BUILTIN, OUTPUT);
+}
+
+void loop() {
+  digitalWrite(LED_BUILTIN, HIGH);
+  delay(1000);
+  digitalWrite(LED_BUILTIN, LOW);
+  delay(1000);
+}`,
+            serial: `void setup() {
+  Serial.begin(9600);
+}
+
+void loop() {
+  Serial.println("Hello, Arduino!");
+  delay(2000);
+}`,
+            analog: `void setup() {
+  Serial.begin(9600);
+}
+
+void loop() {
+  int sensorValue = analogRead(A0);
+  Serial.print("Sensor A0: ");
+  Serial.println(sensorValue);
+  delay(500);
+}`,
+            multiple: `void setup() {
+  for (int i = 2; i <= 7; i++) {
+    pinMode(i, OUTPUT);
+  }
+}
+
+void loop() {
+  for (int i = 2; i <= 7; i++) {
+    digitalWrite(i, HIGH);
+    delay(100);
+    digitalWrite(i, LOW);
+  }
+  for (int i = 7; i >= 2; i--) {
+    digitalWrite(i, HIGH);
+    delay(100);
+    digitalWrite(i, LOW);
+  }
+}`,
+            fade: `int brightness = 0;
+int fadeAmount = 5;
+
+void setup() {
+  pinMode(9, OUTPUT);
+}
+
+void loop() {
+  analogWrite(9, brightness);
+  brightness = brightness + fadeAmount;
+  if (brightness <= 0 || brightness >= 255) {
+    fadeAmount = -fadeAmount;
+  }
+  delay(30);
+}`,
+            button: `void setup() {
+  pinMode(2, INPUT);
+  pinMode(13, OUTPUT);
+  Serial.begin(9600);
+}
+
+void loop() {
+  int buttonState = digitalRead(2);
+  digitalWrite(13, buttonState);
+  Serial.print("Button: ");
+  Serial.println(buttonState);
+  delay(100);
+}`
+        };
+
+        // Code Parser and Transpiler
+        function transpileCode(code) {
+            // Extract global variables
+            let globalVars = '';
+            const lines = code.split('\n');
+            const codeLines = [];
+
+            for (let line of lines) {
+                const trimmed = line.trim();
+                // Check if it's a global variable (before setup/loop)
+                if (trimmed && !trimmed.startsWith('//') &&
+                    !trimmed.includes('void setup()') &&
+                    !trimmed.includes('void loop()')) {
+                    // Check if line is before setup
+                    const beforeSetup = code.indexOf(line) < code.indexOf('void setup()');
+                    if (beforeSetup && (trimmed.includes('int ') || trimmed.includes('float ') ||
+                        trimmed.includes('long ') || trimmed.includes('bool ') ||
+                        trimmed.includes('char ') || trimmed.includes('byte '))) {
+                        globalVars += line + '\n';
+                        continue;
+                    }
+                }
+                codeLines.push(line);
+            }
+
+            code = codeLines.join('\n');
+
+            // Replace Arduino constants
+            code = code.replace(/\bHIGH\b/g, 'arduino.HIGH');
+            code = code.replace(/\bLOW\b/g, 'arduino.LOW');
+            code = code.replace(/\bINPUT\b/g, 'arduino.INPUT');
+            code = code.replace(/\bOUTPUT\b/g, 'arduino.OUTPUT');
+            code = code.replace(/\bLED_BUILTIN\b/g, 'arduino.LED_BUILTIN');
+            code = code.replace(/\bA0\b/g, 'arduino.A0');
+            code = code.replace(/\bA1\b/g, 'arduino.A1');
+            code = code.replace(/\bA2\b/g, 'arduino.A2');
+            code = code.replace(/\bA3\b/g, 'arduino.A3');
+            code = code.replace(/\bA4\b/g, 'arduino.A4');
+            code = code.replace(/\bA5\b/g, 'arduino.A5');
+
+            // Replace Arduino functions
+            code = code.replace(/\bpinMode\s*\(/g, 'arduino.pinMode(');
+            code = code.replace(/\bdigitalWrite\s*\(/g, 'arduino.digitalWrite(');
+            code = code.replace(/\bdigitalRead\s*\(/g, 'arduino.digitalRead(');
+            code = code.replace(/\banalogRead\s*\(/g, 'arduino.analogRead(');
+            code = code.replace(/\banalogWrite\s*\(/g, 'arduino.analogWrite(');
+            code = code.replace(/\bdelay\s*\(/g, 'await arduino.delay(');
+            code = code.replace(/\bmillis\s*\(/g, 'arduino.millis(');
+
+            // Replace Serial functions
+            code = code.replace(/\bSerial\.begin\s*\(/g, 'arduino.Serial.begin(');
+            code = code.replace(/\bSerial\.print\s*\(/g, 'arduino.Serial.print(');
+            code = code.replace(/\bSerial\.println\s*\(/g, 'arduino.Serial.println(');
+
+            // Extract setup and loop functions
+            const setupMatch = code.match(/void\s+setup\s*\(\s*\)\s*{([^}]*)}/s);
+            const loopMatch = code.match(/void\s+loop\s*\(\s*\)\s*{([^}]*)}/s);
+
+            if (!setupMatch || !loopMatch) {
+                throw new Error('Code must contain both setup() and loop() functions');
+            }
+
+            const setupBody = setupMatch[1];
+            const loopBody = loopMatch[1];
+
+            return {
+                globalVars,
+                setup: `async function setup() {\n${setupBody}\n}`,
+                loop: `async function loop() {\n${loopBody}\n}`
+            };
+        }
+
+        // Execution Engine
+        let isExecuting = false;
+        let stopExecution = false;
+
+        async function executeCode(code) {
+            try {
+                const transpiled = transpileCode(code);
+
+                // Create function context with global variables
+                const functionBody = `
+                    ${transpiled.globalVars}
+                    ${transpiled.setup}
+                    ${transpiled.loop}
+
+                    await setup();
+
+                    while (!stopExecution) {
+                        await loop();
+                        if (stopExecution) break;
+                        await new Promise(resolve => setTimeout(resolve, 1));
+                    }
+                `;
+
+                // Execute the code
+                const asyncFunc = new Function('arduino', 'stopExecution', functionBody);
+                await asyncFunc(arduino, false);
+
+            } catch (error) {
+                throw error;
+            }
+        }
+
+        // UI Updates
+        function updateUI() {
+            // Update LEDs
+            document.querySelectorAll('.led').forEach((led, index) => {
+                const pin = parseInt(led.getAttribute('data-pin'));
+                const pwmValue = arduino.pwmPins[pin];
+
+                if (pwmValue > 0) {
+                    led.classList.add('on');
+                    led.style.opacity = pwmValue / 255;
+                } else {
+                    led.classList.remove('on');
+                    led.style.opacity = 1;
+                }
+            });
+
+            // Update built-in LED
+            const builtinLed = document.getElementById('builtinLed');
+            const pin13Value = arduino.pwmPins[13];
+            if (pin13Value > 0) {
+                builtinLed.classList.add('on');
+                builtinLed.style.opacity = pin13Value / 255;
+            } else {
+                builtinLed.classList.remove('on');
+                builtinLed.style.opacity = 1;
+            }
+
+            // Update pin states
+            updatePinStates();
+        }
+
+        function updatePinStates() {
+            const grid = document.getElementById('pinStatesGrid');
+            grid.innerHTML = '';
+
+            for (let i = 0; i < 14; i++) {
+                const state = document.createElement('div');
+                state.className = 'pin-state';
+
+                const indicator = document.createElement('div');
+                indicator.className = 'pin-state-indicator';
+                if (arduino.pins[i] === 1) {
+                    indicator.classList.add('high');
+                }
+
+                const name = document.createElement('span');
+                name.className = 'pin-state-name';
+                name.textContent = `D${i}:`;
+
+                const value = document.createElement('span');
+                value.className = 'pin-state-value';
+                value.textContent = arduino.pins[i] === 1 ? 'HIGH' : 'LOW';
+
+                state.appendChild(indicator);
+                state.appendChild(name);
+                state.appendChild(value);
+                grid.appendChild(state);
+            }
+        }
+
+        function setStatus(status, text) {
+            const indicator = document.getElementById('statusIndicator');
+            const statusText = document.getElementById('statusText');
+
+            indicator.className = 'status-indicator';
+            if (status === 'running') {
+                indicator.classList.add('running');
+            } else if (status === 'error') {
+                indicator.classList.add('error');
+            }
+
+            statusText.textContent = text;
+        }
+
+        // Event Handlers
+        document.getElementById('uploadBtn').addEventListener('click', async () => {
+            if (isExecuting) return;
+
+            const code = document.getElementById('codeEditor').value.trim();
+            if (!code) {
+                alert('Please enter some code first');
+                return;
+            }
+
+            try {
+                arduino.reset();
+                arduino.addToSerial('=== Uploading sketch ===');
+                setStatus('running', 'Running...');
+
+                document.getElementById('uploadBtn').disabled = true;
+                document.getElementById('stopBtn').disabled = false;
+
+                isExecuting = true;
+                stopExecution = false;
+
+                await executeCode(code);
+
+            } catch (error) {
+                setStatus('error', 'Error');
+                arduino.addToSerial(`\n❌ Error: ${error.message}`);
+                console.error(error);
+            } finally {
+                if (!stopExecution) {
+                    setStatus('', 'Stopped');
+                }
+                isExecuting = false;
+                document.getElementById('uploadBtn').disabled = false;
+                document.getElementById('stopBtn').disabled = true;
+            }
+        });
+
+        document.getElementById('stopBtn').addEventListener('click', () => {
+            stopExecution = true;
+            isExecuting = false;
+            setStatus('', 'Stopped');
+            arduino.addToSerial('\n=== Execution stopped ===');
+            document.getElementById('uploadBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+        });
+
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            stopExecution = true;
+            isExecuting = false;
+            arduino.reset();
+            setStatus('', 'Ready');
+            document.getElementById('uploadBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+        });
+
+        document.getElementById('clearSerialBtn').addEventListener('click', () => {
+            document.getElementById('serialOutput').textContent = '';
+        });
+
+        document.getElementById('exampleSelect').addEventListener('change', (e) => {
+            const example = e.target.value;
+            if (example && examples[example]) {
+                const editor = document.getElementById('codeEditor');
+                if (editor.value.trim() && !confirm('Replace current code with example?')) {
+                    e.target.value = '';
+                    return;
+                }
+                editor.value = examples[example];
+                e.target.value = '';
+            }
+        });
+
+        // Speed control
+        const speedValues = [0.25, 0.5, 1, 2, 4];
+        document.getElementById('speedSlider').addEventListener('input', (e) => {
+            const speed = speedValues[e.target.value];
+            arduino.setSpeedMultiplier(speed);
+            document.getElementById('speedValue').textContent = speed + 'x';
+        });
+
+        // Analog input sliders
+        document.querySelectorAll('input[data-analog]').forEach(slider => {
+            slider.addEventListener('input', (e) => {
+                const pin = parseInt(e.target.getAttribute('data-analog'));
+                const value = parseInt(e.target.value);
+                arduino.analogPins[pin] = value;
+                document.querySelector(`[data-value="${pin}"]`).textContent = value;
+            });
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'Enter') {
+                e.preventDefault();
+                document.getElementById('uploadBtn').click();
+            } else if (e.key === 'Escape' && isExecuting) {
+                e.preventDefault();
+                document.getElementById('stopBtn').click();
+            } else if (e.ctrlKey && e.key === 'k') {
+                e.preventDefault();
+                document.getElementById('clearSerialBtn').click();
+            }
+        });
+
+        // Initialize
+        updatePinStates();
+        setStatus('', 'Ready');
+
+        // Load default example
+        document.getElementById('codeEditor').value = examples.blink;
+    </script>
+</body>
+</html>
