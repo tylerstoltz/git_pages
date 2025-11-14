@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaScript REPL - Claude Code Tools</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: #2d2d30;
+            padding: 15px 20px;
+            border-bottom: 1px solid #3e3e42;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 1.2em;
+            color: #ffffff;
+        }
+
+        .header a {
+            color: #569cd6;
+            text-decoration: none;
+            font-size: 0.9em;
+        }
+
+        .header a:hover {
+            text-decoration: underline;
+        }
+
+        .container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .editor-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            overflow: hidden;
+        }
+
+        .editor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .editor-header h2 {
+            font-size: 0.9em;
+            color: #9cdcfe;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            background: #0e639c;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: #1177bb;
+        }
+
+        button.secondary {
+            background: #3c3c3c;
+        }
+
+        button.secondary:hover {
+            background: #505050;
+        }
+
+        #code-editor {
+            width: 100%;
+            height: 200px;
+            background: #1e1e1e;
+            border: 1px solid #3e3e42;
+            border-radius: 4px;
+            padding: 15px;
+            color: #d4d4d4;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            resize: vertical;
+            outline: none;
+        }
+
+        #code-editor:focus {
+            border-color: #569cd6;
+        }
+
+        .output-container {
+            flex: 1;
+            padding: 20px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .output-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .output-header h2 {
+            font-size: 0.9em;
+            color: #9cdcfe;
+        }
+
+        #output {
+            flex: 1;
+            background: #252526;
+            border: 1px solid #3e3e42;
+            border-radius: 4px;
+            padding: 15px;
+            overflow-y: auto;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .output-line {
+            margin-bottom: 8px;
+            padding: 4px 0;
+        }
+
+        .output-line.log {
+            color: #d4d4d4;
+        }
+
+        .output-line.error {
+            color: #f48771;
+        }
+
+        .output-line.warn {
+            color: #dcdcaa;
+        }
+
+        .output-line.result {
+            color: #4ec9b0;
+        }
+
+        .output-line::before {
+            content: '> ';
+            opacity: 0.5;
+        }
+
+        .info {
+            text-align: center;
+            padding: 20px;
+            color: #858585;
+            font-size: 0.9em;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+
+            .editor-container, .output-container {
+                min-height: 250px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🟨 JavaScript REPL</h1>
+        <a href="../">← Back to Tools</a>
+    </div>
+
+    <div class="container">
+        <div class="editor-container">
+            <div class="editor-header">
+                <h2>Code Editor</h2>
+                <div class="button-group">
+                    <button onclick="runCode()">Run (Ctrl+Enter)</button>
+                    <button class="secondary" onclick="clearEditor()">Clear</button>
+                </div>
+            </div>
+            <textarea id="code-editor" placeholder="// Enter your JavaScript code here...
+// Try: console.log('Hello, World!')
+
+const greet = (name) => {
+  return `Hello, ${name}!`;
+};
+
+console.log(greet('Claude'));"></textarea>
+        </div>
+
+        <div class="output-container">
+            <div class="output-header">
+                <h2>Console Output</h2>
+                <button class="secondary" onclick="clearOutput()">Clear Output</button>
+            </div>
+            <div id="output">
+                <div class="info">Output will appear here after running code</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const editor = document.getElementById('code-editor');
+        const output = document.getElementById('output');
+
+        // Add keyboard shortcut for running code
+        editor.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                e.preventDefault();
+                runCode();
+            }
+        });
+
+        // Custom console implementation
+        const customConsole = {
+            log: (...args) => addOutput('log', args),
+            error: (...args) => addOutput('error', args),
+            warn: (...args) => addOutput('warn', args),
+            info: (...args) => addOutput('log', args),
+            clear: () => clearOutput()
+        };
+
+        function addOutput(type, args) {
+            const line = document.createElement('div');
+            line.className = `output-line ${type}`;
+            line.textContent = args.map(arg => {
+                if (typeof arg === 'object') {
+                    try {
+                        return JSON.stringify(arg, null, 2);
+                    } catch (e) {
+                        return String(arg);
+                    }
+                }
+                return String(arg);
+            }).join(' ');
+            output.appendChild(line);
+            output.scrollTop = output.scrollHeight;
+        }
+
+        function runCode() {
+            clearOutput();
+            const code = editor.value;
+
+            if (!code.trim()) {
+                addOutput('warn', ['No code to execute']);
+                return;
+            }
+
+            try {
+                // Create a function that uses our custom console
+                const wrappedCode = `
+                    (function(console) {
+                        ${code}
+                    })(customConsole);
+                `;
+
+                // Execute the code
+                const result = eval(wrappedCode);
+
+                // Show the result if it's not undefined
+                if (result !== undefined) {
+                    const resultLine = document.createElement('div');
+                    resultLine.className = 'output-line result';
+                    resultLine.textContent = '← ' + (typeof result === 'object' ?
+                        JSON.stringify(result, null, 2) : String(result));
+                    output.appendChild(resultLine);
+                }
+
+                // If nothing was logged and no result, show success message
+                if (output.children.length === 0) {
+                    addOutput('log', ['Code executed successfully (no output)']);
+                }
+
+            } catch (error) {
+                addOutput('error', [`${error.name}: ${error.message}`]);
+                if (error.stack) {
+                    const stackLines = error.stack.split('\n').slice(1, 3);
+                    stackLines.forEach(line => {
+                        addOutput('error', [line.trim()]);
+                    });
+                }
+            }
+        }
+
+        function clearOutput() {
+            output.innerHTML = '';
+        }
+
+        function clearEditor() {
+            editor.value = '';
+            editor.focus();
+        }
+
+        // Add sample code on first load
+        if (!editor.value.trim()) {
+            editor.value = `// Welcome to JavaScript REPL!
+// Press Ctrl+Enter or click Run to execute
+
+console.log('Hello, World!');
+
+const fibonacci = (n) => {
+  if (n <= 1) return n;
+  return fibonacci(n - 1) + fibonacci(n - 2);
+};
+
+console.log('Fibonacci sequence:');
+for (let i = 0; i < 10; i++) {
+  console.log(\`F(\${i}) = \${fibonacci(i)}\`);
+}`;
+        }
+    </script>
+</body>
+</html>

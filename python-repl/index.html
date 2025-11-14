@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python REPL - Claude Code Tools</title>
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: #2d2d30;
+            padding: 15px 20px;
+            border-bottom: 1px solid #3e3e42;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 1.2em;
+            color: #ffffff;
+        }
+
+        .header a {
+            color: #569cd6;
+            text-decoration: none;
+            font-size: 0.9em;
+        }
+
+        .header a:hover {
+            text-decoration: underline;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-left: 10px;
+            background: #ffa500;
+        }
+
+        .status-indicator.ready {
+            background: #4ec9b0;
+        }
+
+        .container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .editor-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            overflow: hidden;
+        }
+
+        .editor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .editor-header h2 {
+            font-size: 0.9em;
+            color: #9cdcfe;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            background: #0e639c;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background 0.2s;
+        }
+
+        button:hover:not(:disabled) {
+            background: #1177bb;
+        }
+
+        button:disabled {
+            background: #555;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        button.secondary {
+            background: #3c3c3c;
+        }
+
+        button.secondary:hover:not(:disabled) {
+            background: #505050;
+        }
+
+        #code-editor {
+            width: 100%;
+            height: 200px;
+            background: #1e1e1e;
+            border: 1px solid #3e3e42;
+            border-radius: 4px;
+            padding: 15px;
+            color: #d4d4d4;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            resize: vertical;
+            outline: none;
+        }
+
+        #code-editor:focus {
+            border-color: #569cd6;
+        }
+
+        .output-container {
+            flex: 1;
+            padding: 20px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .output-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .output-header h2 {
+            font-size: 0.9em;
+            color: #9cdcfe;
+        }
+
+        #output {
+            flex: 1;
+            background: #252526;
+            border: 1px solid #3e3e42;
+            border-radius: 4px;
+            padding: 15px;
+            overflow-y: auto;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .output-line {
+            margin-bottom: 8px;
+            padding: 4px 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .output-line.log {
+            color: #d4d4d4;
+        }
+
+        .output-line.error {
+            color: #f48771;
+        }
+
+        .output-line.warn {
+            color: #dcdcaa;
+        }
+
+        .output-line.result {
+            color: #4ec9b0;
+        }
+
+        .output-line.system {
+            color: #858585;
+            font-style: italic;
+        }
+
+        .output-line::before {
+            content: '>>> ';
+            opacity: 0.5;
+        }
+
+        .output-line.system::before {
+            content: '';
+        }
+
+        .info {
+            text-align: center;
+            padding: 20px;
+            color: #858585;
+            font-size: 0.9em;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px 20px;
+            color: #858585;
+        }
+
+        .spinner {
+            border: 3px solid #3e3e42;
+            border-top: 3px solid #569cd6;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+
+            .editor-container, .output-container {
+                min-height: 250px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div>
+            <h1>🐍 Python REPL</h1>
+            <span class="status-indicator" id="status-indicator"></span>
+            <span id="status-text" style="font-size: 0.8em; margin-left: 5px;">Loading Python...</span>
+        </div>
+        <a href="../">← Back to Tools</a>
+    </div>
+
+    <div class="container">
+        <div class="editor-container">
+            <div class="editor-header">
+                <h2>Code Editor</h2>
+                <div class="button-group">
+                    <button id="run-btn" onclick="runCode()" disabled>Run (Ctrl+Enter)</button>
+                    <button class="secondary" onclick="clearEditor()">Clear</button>
+                </div>
+            </div>
+            <textarea id="code-editor" placeholder="# Python is loading, please wait..."></textarea>
+        </div>
+
+        <div class="output-container">
+            <div class="output-header">
+                <h2>Console Output</h2>
+                <button class="secondary" onclick="clearOutput()">Clear Output</button>
+            </div>
+            <div id="output">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <div>Loading Python runtime (Pyodide)...</div>
+                    <div style="font-size: 0.8em; margin-top: 10px;">This may take a few seconds on first load</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let pyodide;
+        const editor = document.getElementById('code-editor');
+        const output = document.getElementById('output');
+        const runBtn = document.getElementById('run-btn');
+        const statusIndicator = document.getElementById('status-indicator');
+        const statusText = document.getElementById('status-text');
+
+        // Initialize Pyodide
+        async function initPyodide() {
+            try {
+                pyodide = await loadPyodide({
+                    indexURL: "https://cdn.jsdelivr.net/pyodide/v0.24.1/full/"
+                });
+
+                // Set up Python stdout/stderr capture
+                pyodide.runPython(`
+import sys
+import io
+
+class OutputCapture(io.StringIO):
+    def __init__(self, callback):
+        super().__init__()
+        self.callback = callback
+
+    def write(self, text):
+        if text and text.strip():
+            self.callback(text)
+        return super().write(text)
+
+def _js_print(text):
+    from js import addOutput
+    addOutput('log', [text])
+
+def _js_error(text):
+    from js import addOutput
+    addOutput('error', [text])
+
+sys.stdout = OutputCapture(_js_print)
+sys.stderr = OutputCapture(_js_error)
+                `);
+
+                // Update UI
+                statusIndicator.classList.add('ready');
+                statusText.textContent = 'Ready';
+                runBtn.disabled = false;
+                editor.disabled = false;
+                editor.placeholder = "# Enter your Python code here...\n# Try: print('Hello, World!')";
+
+                clearOutput();
+                addOutput('system', ['Python runtime ready! You can now execute Python code.']);
+                addOutput('system', ['Pyodide version: ' + pyodide.version]);
+
+            } catch (error) {
+                addOutput('error', ['Failed to load Python runtime:', error.message]);
+                statusText.textContent = 'Error';
+            }
+        }
+
+        // Add keyboard shortcut for running code
+        editor.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                e.preventDefault();
+                if (!runBtn.disabled) {
+                    runCode();
+                }
+            }
+        });
+
+        function addOutput(type, args) {
+            const line = document.createElement('div');
+            line.className = `output-line ${type}`;
+            line.textContent = args.map(arg => {
+                if (typeof arg === 'object' && arg !== null) {
+                    try {
+                        return JSON.stringify(arg, null, 2);
+                    } catch (e) {
+                        return String(arg);
+                    }
+                }
+                return String(arg);
+            }).join(' ');
+            output.appendChild(line);
+            output.scrollTop = output.scrollHeight;
+        }
+
+        async function runCode() {
+            if (!pyodide) {
+                addOutput('error', ['Python runtime not loaded yet']);
+                return;
+            }
+
+            const code = editor.value;
+
+            if (!code.trim()) {
+                addOutput('warn', ['No code to execute']);
+                return;
+            }
+
+            clearOutput();
+            runBtn.disabled = true;
+            runBtn.textContent = 'Running...';
+
+            try {
+                // Run the Python code
+                const result = await pyodide.runPythonAsync(code);
+
+                // Display result if it's not None
+                if (result !== undefined && result !== null) {
+                    const resultLine = document.createElement('div');
+                    resultLine.className = 'output-line result';
+                    const resultStr = String(result);
+                    resultLine.textContent = resultStr;
+                    output.appendChild(resultLine);
+                }
+
+                // If nothing was logged and no result, show success message
+                if (output.children.length === 0) {
+                    addOutput('system', ['Code executed successfully (no output)']);
+                }
+
+            } catch (error) {
+                // Parse Python traceback
+                const errorMsg = String(error);
+                const lines = errorMsg.split('\n');
+                lines.forEach(line => {
+                    if (line.trim()) {
+                        addOutput('error', [line]);
+                    }
+                });
+            } finally {
+                runBtn.disabled = false;
+                runBtn.textContent = 'Run (Ctrl+Enter)';
+            }
+        }
+
+        function clearOutput() {
+            output.innerHTML = '';
+        }
+
+        function clearEditor() {
+            editor.value = '';
+            editor.focus();
+        }
+
+        // Make addOutput available to Python
+        window.addOutput = addOutput;
+
+        // Initialize Pyodide on page load
+        initPyodide();
+
+        // Add sample code
+        setTimeout(() => {
+            if (!editor.value.trim() && pyodide) {
+                editor.value = `# Welcome to Python REPL!
+# Press Ctrl+Enter or click Run to execute
+
+print('Hello from Python!')
+
+# Fibonacci sequence
+def fibonacci(n):
+    if n <= 1:
+        return n
+    return fibonacci(n - 1) + fibonacci(n - 2)
+
+print('\\nFibonacci sequence:')
+for i in range(10):
+    print(f'F({i}) = {fibonacci(i)}')
+
+# List comprehension
+squares = [x**2 for x in range(1, 11)]
+print(f'\\nSquares: {squares}')`;
+            }
+        }, 1000);
+    </script>
+</body>
+</html>
