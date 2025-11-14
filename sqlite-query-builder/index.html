@@ -91,6 +91,46 @@
             display: block;
         }
 
+        .data-tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .data-tab {
+            background: #2d2d30;
+            color: #d4d4d4;
+            border: 1px solid #3e3e42;
+            padding: 8px 15px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.2s;
+            font-size: 12px;
+        }
+
+        .data-tab:hover {
+            background: #3e3e42;
+        }
+
+        .data-tab.active {
+            background: #0e639c;
+            color: white;
+            border-color: #0e639c;
+        }
+
+        .data-content {
+            min-height: 200px;
+        }
+
+        .data-table-view {
+            display: none;
+        }
+
+        .data-table-view.active {
+            display: block;
+        }
+
         .panel {
             background: #252526;
             border: 1px solid #3e3e42;
@@ -568,6 +608,15 @@
                     <div class="empty-state">No tables defined yet. Click "Add Table" to get started!</div>
                 </div>
             </div>
+
+            <div class="panel">
+                <h2>📊 Table Data Viewer</h2>
+                <div id="tableDataTabs" class="data-tabs">
+                    <div class="empty-state">No tables with data yet. Add a table and insert rows to view data here.</div>
+                </div>
+                <div id="tableDataContent" class="data-content">
+                </div>
+            </div>
         </div>
 
         <!-- Tab 2: Query Builder -->
@@ -886,6 +935,7 @@
                 db.run(createSQL);
                 tables[tableName] = columns;
                 renderTables();
+                renderTableData();
                 closeModal();
                 setStatus('success', `Table "${tableName}" created successfully`);
             } catch (error) {
@@ -929,6 +979,7 @@
                     db.run(`DROP TABLE IF EXISTS ${tableName}`);
                     delete tables[tableName];
                     renderTables();
+                    renderTableData();
                     setStatus('success', `Table "${tableName}" deleted`);
                 } catch (error) {
                     setStatus('error', 'Error deleting table: ' + error.message);
@@ -950,6 +1001,7 @@
                 joins = [];
                 filters = [];
                 renderTables();
+                renderTableData();
                 setStatus('success', 'All tables cleared');
             }
         }
@@ -965,6 +1017,7 @@
             try {
                 db.run(`INSERT INTO ${tableName} VALUES (${values})`);
                 setStatus('success', `Sample row added to ${tableName}`);
+                renderTableData();
             } catch (error) {
                 setStatus('error', 'Error adding sample data: ' + error.message);
             }
@@ -1045,9 +1098,111 @@
                 db.run(`INSERT INTO ${currentRowTable} VALUES (${valuesStr})`);
                 setStatus('success', `Custom row added to ${currentRowTable}`);
                 closeRowModal();
+                renderTableData(); // Refresh table data view
             } catch (error) {
                 setStatus('error', 'Error adding custom row: ' + error.message);
             }
+        }
+
+        // Table Data Viewer Functions
+        let activeDataTable = null;
+
+        function renderTableData() {
+            const tabsContainer = document.getElementById('tableDataTabs');
+            const contentContainer = document.getElementById('tableDataContent');
+            const tableNames = Object.keys(tables);
+
+            if (tableNames.length === 0) {
+                tabsContainer.innerHTML = '<div class="empty-state">No tables with data yet. Add a table and insert rows to view data here.</div>';
+                contentContainer.innerHTML = '';
+                activeDataTable = null;
+                return;
+            }
+
+            // Render tabs
+            tabsContainer.innerHTML = tableNames.map(tableName => `
+                <button class="data-tab ${activeDataTable === tableName ? 'active' : ''}"
+                        onclick="switchDataTable('${tableName}')">
+                    ${tableName}
+                </button>
+            `).join('');
+
+            // Set active table if none selected
+            if (!activeDataTable || !tableNames.includes(activeDataTable)) {
+                activeDataTable = tableNames[0];
+            }
+
+            // Render content for all tables
+            contentContainer.innerHTML = tableNames.map(tableName => {
+                const isActive = activeDataTable === tableName;
+                return `
+                    <div class="data-table-view ${isActive ? 'active' : ''}" id="data-view-${tableName}">
+                        ${renderSingleTableData(tableName)}
+                    </div>
+                `;
+            }).join('');
+
+            // Update tab active states
+            updateDataTabStates();
+        }
+
+        function renderSingleTableData(tableName) {
+            try {
+                const result = db.exec(`SELECT * FROM ${tableName}`);
+
+                if (!result || result.length === 0 || result[0].values.length === 0) {
+                    return '<div class="empty-state">No rows in this table yet. Click "+ Add Custom Row" or "+ Add Sample Row" to add data.</div>';
+                }
+
+                const columns = result[0].columns;
+                const values = result[0].values;
+
+                return `
+                    <table class="results-table">
+                        <thead>
+                            <tr>
+                                ${columns.map(col => `<th>${col}</th>`).join('')}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${values.map(row => `
+                                <tr>
+                                    ${row.map(cell => `<td>${cell !== null ? cell : '<i>NULL</i>'}</td>`).join('')}
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                    <p style="margin-top: 10px; font-size: 12px; color: #858585;">
+                        ${values.length} row(s) in ${tableName}
+                    </p>
+                `;
+            } catch (error) {
+                return `<div class="empty-state">Error loading table data: ${error.message}</div>`;
+            }
+        }
+
+        function switchDataTable(tableName) {
+            activeDataTable = tableName;
+
+            // Update tab active states
+            updateDataTabStates();
+
+            // Update content active states
+            document.querySelectorAll('.data-table-view').forEach(view => {
+                view.classList.remove('active');
+            });
+            document.getElementById('data-view-' + tableName)?.classList.add('active');
+        }
+
+        function updateDataTabStates() {
+            document.querySelectorAll('.data-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.data-tab').forEach(tab => {
+                if (tab.textContent.trim() === activeDataTable) {
+                    tab.classList.add('active');
+                }
+            });
         }
 
         // Load sample database
@@ -1132,6 +1287,7 @@
                 ];
 
                 renderTables();
+                renderTableData();
                 loadSampleQueries();
                 setStatus('success', 'Sample database loaded successfully with 3 tables');
             } catch (error) {
