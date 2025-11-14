@@ -313,6 +313,163 @@
             padding: 20px;
         }
 
+        /* Pattern Generator Styles */
+        .generator-section {
+            background: #2d2d30;
+            border: 2px solid #569cd6;
+        }
+
+        .generator-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .generator-mode-toggle {
+            background: #569cd6;
+            color: #ffffff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background 0.2s;
+        }
+
+        .generator-mode-toggle:hover {
+            background: #4a8bc2;
+        }
+
+        #sample-text {
+            width: 100%;
+            min-height: 120px;
+            background: #1e1e1e;
+            border: 2px solid #3e3e42;
+            border-radius: 4px;
+            padding: 12px;
+            color: #d4d4d4;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            resize: vertical;
+            outline: none;
+            line-height: 1.8;
+            user-select: text;
+        }
+
+        #sample-text:focus {
+            border-color: #569cd6;
+        }
+
+        .sample-text-display {
+            width: 100%;
+            min-height: 120px;
+            background: #1e1e1e;
+            border: 2px solid #3e3e42;
+            border-radius: 4px;
+            padding: 12px;
+            color: #d4d4d4;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            cursor: text;
+            user-select: none;
+        }
+
+        .sample-text-display:focus {
+            border-color: #569cd6;
+            outline: none;
+        }
+
+        .selectable-word {
+            display: inline;
+            cursor: pointer;
+            padding: 2px 0;
+            border-radius: 2px;
+            transition: background 0.2s;
+        }
+
+        .selectable-word:hover {
+            background: #3e3e4288;
+        }
+
+        .selectable-word.selected {
+            background: #569cd644;
+            border-bottom: 2px solid #569cd6;
+            font-weight: bold;
+        }
+
+        .generator-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .generator-button {
+            background: #4ec9b0;
+            color: #1e1e1e;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+
+        .generator-button:hover {
+            background: #42a890;
+        }
+
+        .generator-button.secondary {
+            background: #3e3e42;
+            color: #d4d4d4;
+        }
+
+        .generator-button.secondary:hover {
+            background: #4e4e52;
+        }
+
+        .generator-button:disabled {
+            background: #3e3e42;
+            color: #858585;
+            cursor: not-allowed;
+        }
+
+        .generator-info {
+            background: #569cd622;
+            border-left: 3px solid #569cd6;
+            padding: 12px;
+            border-radius: 4px;
+            margin-top: 15px;
+            font-size: 0.9em;
+            color: #9cdcfe;
+        }
+
+        .generated-pattern-display {
+            background: #1e1e1e;
+            border: 2px solid #4ec9b0;
+            border-radius: 4px;
+            padding: 12px;
+            margin-top: 15px;
+            font-family: 'Courier New', monospace;
+            color: #4ec9b0;
+            font-size: 16px;
+            display: none;
+        }
+
+        .generated-pattern-display.visible {
+            display: block;
+        }
+
+        .pattern-label {
+            font-size: 0.85em;
+            color: #858585;
+            margin-bottom: 5px;
+        }
+
         @media (max-width: 1024px) {
             .container {
                 grid-template-columns: 1fr;
@@ -343,6 +500,60 @@
 
     <div class="container">
         <div class="main-panel">
+            <!-- Pattern Generator Section -->
+            <div class="section generator-section">
+                <div class="generator-header">
+                    <div class="section-title">✨ Pattern Generator</div>
+                    <button class="generator-mode-toggle" id="toggle-mode" onclick="toggleGeneratorMode()">
+                        Switch to Manual Entry
+                    </button>
+                </div>
+
+                <div id="generator-mode">
+                    <textarea id="sample-text" placeholder="Paste your sample text here...">Contact us at support@example.com
+Call: (555) 123-4567
+Visit: https://example.com
+Date: 12/15/2024</textarea>
+
+                    <div class="generator-controls">
+                        <button class="generator-button" onclick="enableSelectionMode()">
+                            Select Text to Extract
+                        </button>
+                        <button class="generator-button secondary" onclick="clearSelections()">
+                            Clear Selections
+                        </button>
+                    </div>
+
+                    <div id="selection-display" style="display: none;">
+                        <div class="sample-text-display" id="selectable-display"></div>
+                        <div class="generator-controls">
+                            <button class="generator-button" onclick="generatePattern()">
+                                Generate Pattern
+                            </button>
+                            <button class="generator-button secondary" onclick="backToEdit()">
+                                Back to Edit
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="generated-pattern-display" class="generated-pattern-display">
+                        <div class="pattern-label">Generated Pattern:</div>
+                        <div id="generated-pattern-text"></div>
+                    </div>
+
+                    <div class="generator-info">
+                        <strong>How to use:</strong>
+                        <ol style="margin: 8px 0 0 20px; line-height: 1.6;">
+                            <li>Paste or type sample text containing patterns you want to extract</li>
+                            <li>Click "Select Text to Extract" to enter selection mode</li>
+                            <li>Click on the parts of the text you want to match (like emails, phone numbers, etc.)</li>
+                            <li>Click "Generate Pattern" to create a regex that matches your selections</li>
+                            <li>The generated pattern will appear below and in the pattern input</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+
             <!-- Pattern Input Section -->
             <div class="section">
                 <div class="section-title">Regular Expression Pattern</div>
@@ -690,6 +901,253 @@ Border: #333`,
 
         // Initial test
         testRegex();
+
+        // Pattern Generator functionality
+        let selectedTexts = [];
+        let generatorActive = true;
+
+        function toggleGeneratorMode() {
+            const toggleBtn = document.getElementById('toggle-mode');
+            const generatorMode = document.getElementById('generator-mode');
+
+            if (generatorActive) {
+                generatorMode.style.display = 'none';
+                toggleBtn.textContent = 'Switch to Pattern Generator';
+                generatorActive = false;
+            } else {
+                generatorMode.style.display = 'block';
+                toggleBtn.textContent = 'Switch to Manual Entry';
+                generatorActive = true;
+            }
+        }
+
+        function enableSelectionMode() {
+            const sampleText = document.getElementById('sample-text');
+            const selectionDisplay = document.getElementById('selection-display');
+            const selectableDisplay = document.getElementById('selectable-display');
+
+            sampleText.style.display = 'none';
+            selectionDisplay.style.display = 'block';
+
+            // Convert text to selectable elements
+            const text = sampleText.value;
+            renderSelectableText(text);
+        }
+
+        function backToEdit() {
+            const sampleText = document.getElementById('sample-text');
+            const selectionDisplay = document.getElementById('selection-display');
+
+            sampleText.style.display = 'block';
+            selectionDisplay.style.display = 'none';
+            selectedTexts = [];
+        }
+
+        function renderSelectableText(text) {
+            const selectableDisplay = document.getElementById('selectable-display');
+            selectableDisplay.innerHTML = '';
+
+            // Split text into tokens (words, punctuation, whitespace, etc.)
+            const tokens = text.split(/(\s+|[.,;:!?()[\]{}'"<>@#$%^&*+=\-_/\\|~`])/);
+
+            tokens.forEach((token, index) => {
+                if (token.length === 0) return;
+
+                if (token.trim().length > 0 && !/^[\s]+$/.test(token)) {
+                    // Create clickable element for non-whitespace tokens
+                    const span = document.createElement('span');
+                    span.className = 'selectable-word';
+                    span.textContent = token;
+                    span.dataset.index = index;
+                    span.dataset.token = token;
+                    span.onclick = function() {
+                        this.classList.toggle('selected');
+                        updateSelectedTexts();
+                    };
+                    selectableDisplay.appendChild(span);
+                } else {
+                    // Preserve whitespace
+                    const textNode = document.createTextNode(token);
+                    selectableDisplay.appendChild(textNode);
+                }
+            });
+        }
+
+        function updateSelectedTexts() {
+            const selected = document.querySelectorAll('.selectable-word.selected');
+            selectedTexts = Array.from(selected).map(el => el.dataset.token);
+        }
+
+        function clearSelections() {
+            const selected = document.querySelectorAll('.selectable-word.selected');
+            selected.forEach(el => el.classList.remove('selected'));
+            selectedTexts = [];
+
+            const generatedDisplay = document.getElementById('generated-pattern-display');
+            generatedDisplay.classList.remove('visible');
+        }
+
+        function generatePattern() {
+            if (selectedTexts.length === 0) {
+                alert('Please select some text first!');
+                return;
+            }
+
+            // Analyze the selected texts and generate a pattern
+            const pattern = analyzeAndGeneratePattern(selectedTexts);
+
+            // Display the generated pattern
+            const generatedDisplay = document.getElementById('generated-pattern-display');
+            const generatedText = document.getElementById('generated-pattern-text');
+            generatedText.textContent = pattern;
+            generatedDisplay.classList.add('visible');
+
+            // Update the pattern input field
+            patternInput.value = pattern;
+
+            // Copy sample text to test string
+            const sampleText = document.getElementById('sample-text').value;
+            testString.value = sampleText;
+
+            // Run the test
+            testRegex();
+        }
+
+        function analyzeAndGeneratePattern(texts) {
+            // If only one selection, analyze it deeply
+            if (texts.length === 1) {
+                return analyzeToken(texts[0]);
+            }
+
+            // Multiple selections - try to find common pattern
+            // First check if they're all the same type
+            const patterns = texts.map(t => analyzeToken(t));
+            const uniquePatterns = [...new Set(patterns)];
+
+            if (uniquePatterns.length === 1) {
+                // All same type, use that pattern
+                return uniquePatterns[0];
+            }
+
+            // Different types - create alternation pattern or generic pattern
+            // Try to find common structure
+            const commonPattern = findCommonPattern(texts);
+            if (commonPattern) {
+                return commonPattern;
+            }
+
+            // Fall back to OR pattern
+            return '(' + texts.map(escapeRegex).join('|') + ')';
+        }
+
+        function analyzeToken(token) {
+            // Email pattern
+            if (/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(token)) {
+                return '([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,})';
+            }
+
+            // Phone number patterns
+            if (/^\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}$/.test(token)) {
+                return '\\(?\\d{3}\\)?[-.\\s]?\\d{3}[-.\\s]?\\d{4}';
+            }
+
+            // URL pattern
+            if (/^https?:\/\/.+/.test(token)) {
+                return 'https?://[\\w\\-.]+(:\\d+)?(/[\\w\\-./?#&=]*)?';
+            }
+
+            // Date patterns (MM/DD/YYYY or similar)
+            if (/^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}$/.test(token)) {
+                const separator = token.match(/[\/\-]/)[0];
+                return '\\d{1,2}' + escapeRegex(separator) + '\\d{1,2}' + escapeRegex(separator) + '\\d{2,4}';
+            }
+
+            // Time pattern (HH:MM or HH:MM:SS)
+            if (/^\d{1,2}:\d{2}(:\d{2})?$/.test(token)) {
+                return '\\d{1,2}:\\d{2}(:\\d{2})?';
+            }
+
+            // IP address
+            if (/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(token)) {
+                return '\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}';
+            }
+
+            // Hex color
+            if (/^#[0-9A-Fa-f]{3,6}$/.test(token)) {
+                return '#[0-9A-Fa-f]{3,6}';
+            }
+
+            // Number (integer or decimal)
+            if (/^-?\d+(\.\d+)?$/.test(token)) {
+                if (token.includes('.')) {
+                    return '-?\\d+\\.\\d+';
+                }
+                return '-?\\d+';
+            }
+
+            // Word (letters only)
+            if (/^[a-zA-Z]+$/.test(token)) {
+                // Check if it's all uppercase, lowercase, or mixed
+                if (token === token.toUpperCase()) {
+                    return '[A-Z]+';
+                } else if (token === token.toLowerCase()) {
+                    return '[a-z]+';
+                } else {
+                    return '[a-zA-Z]+';
+                }
+            }
+
+            // Alphanumeric
+            if (/^[a-zA-Z0-9]+$/.test(token)) {
+                return '[a-zA-Z0-9]+';
+            }
+
+            // Word characters (including underscore)
+            if (/^\w+$/.test(token)) {
+                return '\\w+';
+            }
+
+            // Default: escape and match literally, but try to generalize
+            return escapeRegex(token);
+        }
+
+        function findCommonPattern(texts) {
+            // Check if all texts have similar structure
+            const structures = texts.map(t => getStructure(t));
+            const firstStructure = structures[0];
+
+            // If all have the same structure, use that
+            if (structures.every(s => s === firstStructure)) {
+                return analyzeToken(texts[0]);
+            }
+
+            // Try to find common length
+            const lengths = texts.map(t => t.length);
+            const avgLength = Math.round(lengths.reduce((a, b) => a + b) / lengths.length);
+            const lengthVariance = Math.max(...lengths) - Math.min(...lengths);
+
+            if (lengthVariance <= 2) {
+                // Similar lengths, might be same type
+                const structure = getStructure(texts[0]);
+                return structure;
+            }
+
+            return null;
+        }
+
+        function getStructure(text) {
+            // Return a pattern representing the structure
+            return text.split('').map(char => {
+                if (/\d/.test(char)) return '\\d';
+                if (/[a-z]/i.test(char)) return '\\w';
+                if (/\s/.test(char)) return '\\s';
+                return escapeRegex(char);
+            }).join('');
+        }
+
+        function escapeRegex(str) {
+            return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
     </script>
 </body>
 </html>
