@@ -764,6 +764,23 @@
         </div>
     </div>
 
+    <!-- Modal for Adding Custom Row -->
+    <div id="addRowModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add Custom Row</h3>
+                <button class="close-modal" onclick="closeRowModal()">&times;</button>
+            </div>
+
+            <div id="rowInputsContainer"></div>
+
+            <div class="button-group" style="margin-top: 20px;">
+                <button class="success" onclick="saveCustomRow()">Add Row</button>
+                <button class="secondary" onclick="closeRowModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
     <script>
         // Global state
@@ -774,6 +791,7 @@
         let joins = [];
         let filters = [];
         let generatedSQL = '';
+        let currentRowTable = null;
 
         // Initialize SQL.js
         async function initializeDatabase() {
@@ -897,7 +915,10 @@
                             </li>
                         `).join('')}
                     </ul>
-                    <button class="secondary small-btn" onclick="addSampleData('${tableName}')">+ Add Sample Row</button>
+                    <div class="button-group">
+                        <button class="success small-btn" onclick="showAddRowModal('${tableName}')">+ Add Custom Row</button>
+                        <button class="secondary small-btn" onclick="addSampleData('${tableName}')">+ Add Sample Row</button>
+                    </div>
                 </div>
             `).join('');
         }
@@ -946,6 +967,86 @@
                 setStatus('success', `Sample row added to ${tableName}`);
             } catch (error) {
                 setStatus('error', 'Error adding sample data: ' + error.message);
+            }
+        }
+
+        // Custom Row Modal Functions
+        function showAddRowModal(tableName) {
+            currentRowTable = tableName;
+            const columns = tables[tableName];
+            const container = document.getElementById('rowInputsContainer');
+
+            container.innerHTML = columns.map(col => `
+                <div class="form-group">
+                    <label>${col.name} (${col.type}):</label>
+                    <input type="text"
+                           class="row-value-input"
+                           data-column="${col.name}"
+                           data-type="${col.type}"
+                           placeholder="Enter ${col.type} value">
+                </div>
+            `).join('');
+
+            document.getElementById('addRowModal').classList.add('active');
+        }
+
+        function closeRowModal() {
+            document.getElementById('addRowModal').classList.remove('active');
+            currentRowTable = null;
+        }
+
+        function saveCustomRow() {
+            if (!currentRowTable) {
+                setStatus('error', 'No table selected');
+                return;
+            }
+
+            const columns = tables[currentRowTable];
+            const inputs = document.querySelectorAll('.row-value-input');
+            const values = [];
+
+            for (let i = 0; i < inputs.length; i++) {
+                const input = inputs[i];
+                const value = input.value.trim();
+                const type = input.dataset.type;
+                const columnName = input.dataset.column;
+
+                if (value === '') {
+                    setStatus('error', `Please provide a value for ${columnName}`);
+                    return;
+                }
+
+                // Format value based on type
+                if (type === 'INTEGER') {
+                    const intValue = parseInt(value);
+                    if (isNaN(intValue)) {
+                        setStatus('error', `Invalid INTEGER value for ${columnName}`);
+                        return;
+                    }
+                    values.push(intValue);
+                } else if (type === 'REAL') {
+                    const floatValue = parseFloat(value);
+                    if (isNaN(floatValue)) {
+                        setStatus('error', `Invalid REAL value for ${columnName}`);
+                        return;
+                    }
+                    values.push(floatValue);
+                } else if (type === 'NULL') {
+                    values.push('NULL');
+                } else {
+                    // TEXT, BLOB, or other string types - escape single quotes
+                    const escapedValue = value.replace(/'/g, "''");
+                    values.push(`'${escapedValue}'`);
+                }
+            }
+
+            try {
+                const valuesStr = values.join(', ');
+                db.run(`INSERT INTO ${currentRowTable} VALUES (${valuesStr})`);
+                setStatus('success', `Custom row added to ${currentRowTable}`);
+                closeRowModal();
+            } catch (error) {
+                setStatus('error', 'Error adding custom row: ' + error.message);
             }
         }
 
