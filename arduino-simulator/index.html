@@ -943,6 +943,7 @@ void loop() {
         // Execution Engine
         let isExecuting = false;
         let stopExecution = false;
+        window.stopExecution = false;
 
         async function executeCode(code) {
             try {
@@ -956,16 +957,17 @@ void loop() {
 
                     await setup();
 
-                    while (!stopExecution) {
+                    while (!window.stopExecution) {
                         await loop();
-                        if (stopExecution) break;
+                        if (window.stopExecution) break;
                         await new Promise(resolve => setTimeout(resolve, 1));
                     }
                 `;
 
-                // Execute the code
-                const asyncFunc = new Function('arduino', 'stopExecution', functionBody);
-                await asyncFunc(arduino, false);
+                // Execute the code using AsyncFunction constructor
+                const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
+                const asyncFunc = new AsyncFunction('arduino', functionBody);
+                await asyncFunc(arduino);
 
             } catch (error) {
                 throw error;
@@ -1066,6 +1068,7 @@ void loop() {
 
                 isExecuting = true;
                 stopExecution = false;
+                window.stopExecution = false;
 
                 await executeCode(code);
 
@@ -1085,6 +1088,7 @@ void loop() {
 
         document.getElementById('stopBtn').addEventListener('click', () => {
             stopExecution = true;
+            window.stopExecution = true;
             isExecuting = false;
             setStatus('', 'Stopped');
             arduino.addToSerial('\n=== Execution stopped ===');
@@ -1094,6 +1098,7 @@ void loop() {
 
         document.getElementById('resetBtn').addEventListener('click', () => {
             stopExecution = true;
+            window.stopExecution = true;
             isExecuting = false;
             arduino.reset();
             setStatus('', 'Ready');
