@@ -314,6 +314,112 @@
             font-size: 14px;
         }
 
+        .mapping-section {
+            background: #252526;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #3e3e42;
+            flex-shrink: 0;
+        }
+
+        .mapping-tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #3e3e42;
+        }
+
+        .tab-button {
+            background: transparent;
+            color: #858585;
+            border: none;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 13px;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .tab-button:hover {
+            color: #d4d4d4;
+            background: transparent;
+            transform: none;
+        }
+
+        .tab-button.active {
+            color: #4ec9b0;
+            border-bottom-color: #4ec9b0;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
+        .file-input-wrapper input[type="file"] {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .mapped-data {
+            background: #1a3a1a;
+            border: 1px solid #4ec9b0;
+            border-radius: 4px;
+            padding: 10px;
+            margin-top: 10px;
+        }
+
+        .mapped-name {
+            color: #4ec9b0;
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .signal-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            border-bottom: 1px solid #3e3e42;
+        }
+
+        .signal-row:last-child {
+            border-bottom: none;
+        }
+
+        .signal-name {
+            color: #9cdcfe;
+            font-size: 12px;
+        }
+
+        .signal-value {
+            color: #b5cea8;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .mapping-status {
+            background: #1e3a1e;
+            border: 1px solid #4ec9b0;
+            border-radius: 4px;
+            padding: 8px 12px;
+            margin-top: 10px;
+            font-size: 12px;
+            color: #4ec9b0;
+        }
+
         @media (max-width: 768px) {
             .container {
                 padding: 10px;
@@ -358,6 +464,67 @@ Example:
             </div>
         </div>
 
+        <div class="mapping-section">
+            <div class="section-title">Message Mapping (Optional)</div>
+            <div class="mapping-tabs">
+                <button class="tab-button active" onclick="switchTab('json')">JSON Config</button>
+                <button class="tab-button" onclick="switchTab('dbc')">DBC File</button>
+            </div>
+
+            <div id="tab-json" class="tab-content active">
+                <textarea id="mappingInput" placeholder='Enter mapping configuration in JSON format:
+{
+  "0x123": {
+    "name": "EngineData",
+    "signals": [
+      {
+        "name": "Temperature",
+        "startByte": 1,
+        "length": 1,
+        "offset": 30,
+        "scale": 1,
+        "endianness": "big"
+      },
+      {
+        "name": "RPM",
+        "startByte": 2,
+        "length": 1,
+        "offset": 0,
+        "scale": 1,
+        "endianness": "big"
+      }
+    ]
+  }
+}' style="min-height: 150px;"></textarea>
+                <div class="buttons">
+                    <button onclick="applyMapping()">✓ Apply Mapping</button>
+                    <button class="secondary" onclick="loadMappingExample()">📝 Load Example</button>
+                    <button class="secondary" onclick="clearMapping()">✗ Clear Mapping</button>
+                </div>
+            </div>
+
+            <div id="tab-dbc" class="tab-content">
+                <textarea id="dbcInput" placeholder='Paste DBC file content here or upload a file:
+
+BO_ 291 EngineData: 8 ECU
+ SG_ Temperature : 8|8@1+ (1,30) [0|0] "C"  Receiver
+ SG_ RPM : 16|8@1+ (1,0) [0|0] "rpm"  Receiver
+
+BO_ 1122 SpeedData: 8 ECU
+ SG_ VehicleSpeed : 0|16@1+ (0.01,0) [0|300] "km/h"  Receiver' style="min-height: 150px;"></textarea>
+                <div class="buttons">
+                    <button onclick="parseDBC()">✓ Parse DBC</button>
+                    <div class="file-input-wrapper">
+                        <button class="secondary">📁 Upload DBC File</button>
+                        <input type="file" id="dbcFile" accept=".dbc" onchange="handleDBCFile(this)">
+                    </div>
+                    <button class="secondary" onclick="clearMapping()">✗ Clear Mapping</button>
+                </div>
+            </div>
+
+            <div id="mappingStatus" style="display: none;"></div>
+        </div>
+
         <div class="stats" id="stats" style="display: none;">
             <div class="stat-item">
                 <span>Total Messages:</span>
@@ -391,6 +558,9 @@ Example:
         const input = document.getElementById('input');
         const output = document.getElementById('output');
         const stats = document.getElementById('stats');
+
+        // Global mapping configuration
+        let messageMapping = {};
 
         function parseMessages() {
             const text = input.value.trim();
@@ -496,10 +666,38 @@ Example:
                 const dataDec = msg.data.map(b => b.toString().padStart(3, ' ')).join(' ');
                 const dataAscii = msg.data.map(b => (b >= 32 && b <= 126) ? String.fromCharCode(b) : '.').join(' ');
 
+                // Check for message mapping
+                const mapping = getMessageMapping(msg);
+                let mappedDataHtml = '';
+
+                if (mapping) {
+                    let signalsHtml = '';
+                    mapping.signals.forEach(signal => {
+                        const value = decodeSignal(msg.data, signal);
+                        if (value !== null) {
+                            signalsHtml += `
+                                <div class="signal-row">
+                                    <span class="signal-name">${signal.name}:</span>
+                                    <span class="signal-value">${value}</span>
+                                </div>
+                            `;
+                        }
+                    });
+
+                    if (signalsHtml) {
+                        mappedDataHtml = `
+                            <div class="mapped-data">
+                                <div class="mapped-name">${mapping.name}</div>
+                                ${signalsHtml}
+                            </div>
+                        `;
+                    }
+                }
+
                 html += `
                     <div class="message-card">
                         <div class="message-header">
-                            <div class="message-id">${msg.idHex}</div>
+                            <div class="message-id">${msg.idHex}${mapping ? ' - ' + mapping.name : ''}</div>
                             <div class="message-type ${msg.isExtended ? 'type-extended' : 'type-standard'}">
                                 ${msg.isExtended ? 'Extended (29-bit)' : 'Standard (11-bit)'}
                             </div>
@@ -523,6 +721,8 @@ Example:
                                 <span class="detail-value">${msg.dlc} byte${msg.dlc !== 1 ? 's' : ''}</span>
                             </div>
                         </div>
+
+                        ${mappedDataHtml}
 
                         ${msg.data.length > 0 ? `
                             <div class="data-section">
@@ -574,7 +774,10 @@ Example:
 
         function loadExample() {
             input.value = `# Standard CAN messages (11-bit ID)
-123#0102030405060708
+# Message 0x123 with Temperature=242°C (0xF2) and RPM=51 (0x33)
+123#0011F23300000000
+# Same message with Temperature=272°C (0xFF+30 offset) and RPM=51
+123#0011FF3300000000
 456#DEADBEEF
 0x1FF#1122334455
 0x100#48656C6C6F
@@ -608,6 +811,319 @@ Example:
                 parseMessages();
             }
         });
+
+        // ========== Mapping Functions ==========
+
+        function switchTab(tab) {
+            // Update tab buttons
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(`tab-${tab}`).classList.add('active');
+        }
+
+        function applyMapping() {
+            const mappingInput = document.getElementById('mappingInput').value.trim();
+
+            if (!mappingInput) {
+                showMappingStatus('No mapping provided', 'error');
+                messageMapping = {};
+                return;
+            }
+
+            try {
+                const mapping = JSON.parse(mappingInput);
+
+                // Normalize keys to uppercase hex format
+                messageMapping = {};
+                for (const [key, value] of Object.entries(mapping)) {
+                    const normalizedKey = normalizeHexKey(key);
+                    messageMapping[normalizedKey] = value;
+                }
+
+                showMappingStatus(`✓ Mapping loaded for ${Object.keys(messageMapping).length} message(s)`, 'success');
+
+                // Re-parse messages with new mapping
+                if (input.value.trim()) {
+                    parseMessages();
+                }
+            } catch (e) {
+                showMappingStatus(`Error parsing JSON: ${e.message}`, 'error');
+                messageMapping = {};
+            }
+        }
+
+        function parseDBC() {
+            const dbcInput = document.getElementById('dbcInput').value.trim();
+
+            if (!dbcInput) {
+                showMappingStatus('No DBC content provided', 'error');
+                return;
+            }
+
+            try {
+                messageMapping = parseDBCContent(dbcInput);
+                const msgCount = Object.keys(messageMapping).length;
+                const signalCount = Object.values(messageMapping).reduce((sum, msg) => sum + msg.signals.length, 0);
+
+                showMappingStatus(`✓ DBC parsed: ${msgCount} message(s), ${signalCount} signal(s)`, 'success');
+
+                // Re-parse messages with new mapping
+                if (input.value.trim()) {
+                    parseMessages();
+                }
+            } catch (e) {
+                showMappingStatus(`Error parsing DBC: ${e.message}`, 'error');
+                messageMapping = {};
+            }
+        }
+
+        function parseDBCContent(dbcContent) {
+            const mapping = {};
+            const lines = dbcContent.split('\n');
+
+            let currentMessage = null;
+            let currentMessageId = null;
+
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+
+                // Parse message definition: BO_ <id> <name>: <dlc> <sender>
+                const msgMatch = line.match(/^BO_\s+(\d+)\s+(\w+)\s*:\s*(\d+)\s+(\w+)/);
+                if (msgMatch) {
+                    const id = parseInt(msgMatch[1]);
+                    const name = msgMatch[2];
+                    currentMessageId = '0x' + id.toString(16).toUpperCase();
+                    currentMessage = {
+                        name: name,
+                        signals: []
+                    };
+                    mapping[currentMessageId] = currentMessage;
+                    continue;
+                }
+
+                // Parse signal definition: SG_ <name> : <start_bit>|<length>@<endianness><signed> (<scale>,<offset>) [<min>|<max>] "<unit>" <receiver>
+                const sigMatch = line.match(/^SG_\s+(\w+)\s*:\s*(\d+)\|(\d+)@([01])([+-])\s*\(([^,]+),([^)]+)\)\s*\[([^\]]*)\]\s*"([^"]*)"\s*(.+)/);
+                if (sigMatch && currentMessage) {
+                    const signalName = sigMatch[1];
+                    const startBit = parseInt(sigMatch[2]);
+                    const bitLength = parseInt(sigMatch[3]);
+                    const endianness = sigMatch[4] === '1' ? 'little' : 'big';
+                    const isSigned = sigMatch[5] === '-';
+                    const scale = parseFloat(sigMatch[6]);
+                    const offset = parseFloat(sigMatch[7]);
+                    const unit = sigMatch[9];
+
+                    // Convert bit position to byte position
+                    const startByte = Math.floor(startBit / 8);
+                    const byteLength = Math.ceil(bitLength / 8);
+
+                    currentMessage.signals.push({
+                        name: signalName,
+                        startBit: startBit,
+                        startByte: startByte,
+                        bitLength: bitLength,
+                        length: byteLength,
+                        endianness: endianness,
+                        signed: isSigned,
+                        scale: scale,
+                        offset: offset,
+                        unit: unit
+                    });
+                }
+            }
+
+            if (Object.keys(mapping).length === 0) {
+                throw new Error('No valid messages found in DBC file');
+            }
+
+            return mapping;
+        }
+
+        function handleDBCFile(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('dbcInput').value = e.target.result;
+                parseDBC();
+            };
+            reader.readAsText(file);
+        }
+
+        function normalizeHexKey(key) {
+            // Convert any hex string format to "0xXXX" uppercase format
+            let hex = key.trim().replace(/^0x/i, '');
+            return '0x' + parseInt(hex, 16).toString(16).toUpperCase();
+        }
+
+        function showMappingStatus(message, type) {
+            const statusDiv = document.getElementById('mappingStatus');
+            statusDiv.textContent = message;
+            statusDiv.style.display = 'block';
+            statusDiv.className = 'mapping-status';
+
+            if (type === 'error') {
+                statusDiv.style.background = '#3e1e1e';
+                statusDiv.style.borderColor = '#f48771';
+                statusDiv.style.color = '#f48771';
+            } else {
+                statusDiv.style.background = '#1e3a1e';
+                statusDiv.style.borderColor = '#4ec9b0';
+                statusDiv.style.color = '#4ec9b0';
+            }
+        }
+
+        function clearMapping() {
+            messageMapping = {};
+            document.getElementById('mappingInput').value = '';
+            document.getElementById('dbcInput').value = '';
+            document.getElementById('mappingStatus').style.display = 'none';
+
+            // Re-parse messages without mapping
+            if (input.value.trim()) {
+                parseMessages();
+            }
+        }
+
+        function loadMappingExample() {
+            const example = {
+                "0x123": {
+                    "name": "EngineData",
+                    "signals": [
+                        {
+                            "name": "Temperature",
+                            "startByte": 1,
+                            "length": 1,
+                            "offset": 30,
+                            "scale": 1,
+                            "endianness": "big",
+                            "unit": "°C"
+                        },
+                        {
+                            "name": "RPM",
+                            "startByte": 2,
+                            "length": 1,
+                            "offset": 0,
+                            "scale": 1,
+                            "endianness": "big",
+                            "unit": "rpm"
+                        }
+                    ]
+                },
+                "0x456": {
+                    "name": "SpeedData",
+                    "signals": [
+                        {
+                            "name": "VehicleSpeed",
+                            "startByte": 0,
+                            "length": 2,
+                            "offset": 0,
+                            "scale": 0.01,
+                            "endianness": "little",
+                            "unit": "km/h"
+                        }
+                    ]
+                }
+            };
+
+            document.getElementById('mappingInput').value = JSON.stringify(example, null, 2);
+            applyMapping();
+        }
+
+        function decodeSignal(data, signal) {
+            try {
+                let rawValue;
+
+                if (signal.bitLength && signal.startBit !== undefined) {
+                    // Bit-level extraction for DBC signals
+                    rawValue = extractBits(data, signal.startBit, signal.bitLength, signal.endianness === 'little');
+
+                    // Handle signed values
+                    if (signal.signed && rawValue >= (1 << (signal.bitLength - 1))) {
+                        rawValue -= (1 << signal.bitLength);
+                    }
+                } else {
+                    // Byte-level extraction for simple JSON mappings
+                    const startByte = signal.startByte || 0;
+                    const length = signal.length || 1;
+
+                    if (startByte + length > data.length) {
+                        return null;
+                    }
+
+                    const bytes = data.slice(startByte, startByte + length);
+
+                    if (signal.endianness === 'little') {
+                        rawValue = bytes.reduce((acc, byte, i) => acc + (byte << (8 * i)), 0);
+                    } else {
+                        // big endian (default)
+                        rawValue = bytes.reduce((acc, byte) => (acc << 8) + byte, 0);
+                    }
+                }
+
+                // Apply scale and offset
+                const scale = signal.scale !== undefined ? signal.scale : 1;
+                const offset = signal.offset !== undefined ? signal.offset : 0;
+                const physicalValue = rawValue * scale + offset;
+
+                // Format the output
+                let displayValue;
+                if (scale < 1 || physicalValue % 1 !== 0) {
+                    displayValue = physicalValue.toFixed(2);
+                } else {
+                    displayValue = Math.round(physicalValue).toString();
+                }
+
+                if (signal.unit) {
+                    displayValue += ' ' + signal.unit;
+                }
+
+                return displayValue;
+            } catch (e) {
+                return 'Error';
+            }
+        }
+
+        function extractBits(data, startBit, bitLength, isLittleEndian) {
+            // Convert byte array to bit array
+            let bits = [];
+            for (let i = 0; i < data.length; i++) {
+                for (let j = 0; j < 8; j++) {
+                    bits.push((data[i] >> j) & 1);
+                }
+            }
+
+            let value = 0;
+            if (isLittleEndian) {
+                for (let i = 0; i < bitLength; i++) {
+                    if (startBit + i < bits.length && bits[startBit + i]) {
+                        value |= (1 << i);
+                    }
+                }
+            } else {
+                // Big endian bit ordering
+                for (let i = 0; i < bitLength; i++) {
+                    if (startBit + i < bits.length && bits[startBit + i]) {
+                        value |= (1 << (bitLength - 1 - i));
+                    }
+                }
+            }
+
+            return value;
+        }
+
+        function getMessageMapping(message) {
+            const msgIdHex = message.idHex;
+            return messageMapping[msgIdHex] || null;
+        }
     </script>
 </body>
 </html>
