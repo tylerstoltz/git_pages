@@ -870,6 +870,14 @@ void loop() {
 
         // Code Parser and Transpiler
         function transpileCode(code) {
+            // Helper function to convert C++ types to JavaScript
+            function convertCppTypes(code) {
+                // Replace C++ type declarations with 'let'
+                // This handles: int, float, long, bool, char, byte, unsigned int, unsigned long, etc.
+                code = code.replace(/\b(unsigned\s+)?(int|float|long|bool|char|byte|short|double)\s+(?=\w)/g, 'let ');
+                return code;
+            }
+
             // Extract global variables
             let globalVars = '';
             const lines = code.split('\n');
@@ -885,7 +893,8 @@ void loop() {
                     const beforeSetup = code.indexOf(line) < code.indexOf('void setup()');
                     if (beforeSetup && (trimmed.includes('int ') || trimmed.includes('float ') ||
                         trimmed.includes('long ') || trimmed.includes('bool ') ||
-                        trimmed.includes('char ') || trimmed.includes('byte '))) {
+                        trimmed.includes('char ') || trimmed.includes('byte ') ||
+                        trimmed.includes('unsigned '))) {
                         globalVars += line + '\n';
                         continue;
                     }
@@ -894,6 +903,9 @@ void loop() {
             }
 
             code = codeLines.join('\n');
+
+            // Convert C++ types in global variables
+            globalVars = convertCppTypes(globalVars);
 
             // Replace Arduino constants
             code = code.replace(/\bHIGH\b/g, 'arduino.HIGH');
@@ -930,8 +942,12 @@ void loop() {
                 throw new Error('Code must contain both setup() and loop() functions');
             }
 
-            const setupBody = setupMatch[1];
-            const loopBody = loopMatch[1];
+            let setupBody = setupMatch[1];
+            let loopBody = loopMatch[1];
+
+            // Convert C++ types in setup and loop bodies
+            setupBody = convertCppTypes(setupBody);
+            loopBody = convertCppTypes(loopBody);
 
             return {
                 globalVars,
