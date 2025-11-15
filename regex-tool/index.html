@@ -682,7 +682,7 @@ Order ID: 54321 Date: 2023-10-03</textarea>
                                 Select the entire block of text that contains both changing and unchanging parts
                             </div>
                             <div class="generator-controls">
-                                <button class="generator-button" onclick="startContextSelection()">
+                                <button class="generator-button" onclick="startContextSelection()" id="context-select-btn">
                                     Select Context
                                 </button>
                                 <button class="generator-button secondary" onclick="clearDualSelections()">
@@ -704,7 +704,7 @@ Order ID: 54321 Date: 2023-10-03</textarea>
                                 Within the context, select the part that changes (e.g., numbers, dates, specific words)
                             </div>
                             <div class="generator-controls">
-                                <button class="generator-button" onclick="startChangingBitSelection()" id="select-changing-btn" disabled>
+                                <button class="generator-button" onclick="startChangingBitSelection()" id="changing-bit-select-btn" disabled>
                                     Select Changing Bit
                                 </button>
                             </div>
@@ -1389,6 +1389,8 @@ Border: #333`,
         let changingBitSelection = null;
         let isSelectingContext = false;
         let isSelectingChangingBit = false;
+        let contextSelectionHandler = null;
+        let changingBitSelectionHandler = null;
 
         function switchToTokenMode() {
             document.getElementById('token-mode-btn').classList.add('active');
@@ -1408,11 +1410,41 @@ Border: #333`,
 
         function startContextSelection() {
             const textarea = document.getElementById('dual-sample-text');
-            textarea.focus();
+            const contextBtn = document.getElementById('context-select-btn');
 
-            alert('Please select the context block in the text area above, then click OK.');
+            // If already selecting, cancel
+            if (isSelectingContext && contextSelectionHandler) {
+                cancelContextSelection();
+                return;
+            }
 
-            setTimeout(() => {
+            // Enable selection mode
+            isSelectingContext = true;
+            isSelectingChangingBit = false;
+
+            // Update button to show cancel option
+            const originalText = contextBtn.textContent;
+            contextBtn.textContent = 'Cancel Selection';
+            contextBtn.classList.add('secondary');
+
+            // Add visual feedback
+            textarea.classList.add('selecting-context');
+            textarea.style.borderColor = '#4ec9b0';
+            textarea.style.boxShadow = '0 0 0 2px #4ec9b044';
+
+            // Show instructions
+            const step = document.getElementById('context-step');
+            let instructionDiv = step.querySelector('.selection-instruction');
+            if (!instructionDiv) {
+                instructionDiv = document.createElement('div');
+                instructionDiv.className = 'selection-instruction';
+                instructionDiv.style.cssText = 'background: #4ec9b044; padding: 10px; border-radius: 4px; margin-top: 10px; color: #4ec9b0; font-weight: bold;';
+                step.insertBefore(instructionDiv, step.querySelector('.generator-controls').nextSibling);
+            }
+            instructionDiv.textContent = '👆 Select the context block in the text area above, then release your mouse';
+
+            // Listen for mouseup event to capture selection
+            const handleSelection = () => {
                 const selectedText = textarea.value.substring(textarea.selectionStart, textarea.selectionEnd);
 
                 if (selectedText && selectedText.trim().length > 0) {
@@ -1434,10 +1466,56 @@ Border: #333`,
                     document.getElementById('changing-bit-selection-info').style.display = 'none';
                     document.getElementById('changing-bit-step').classList.remove('active');
                     document.getElementById('generate-dual-btn').disabled = true;
-                } else {
-                    alert('Please select some text first!');
+
+                    // Remove selection mode
+                    isSelectingContext = false;
+                    textarea.classList.remove('selecting-context');
+                    textarea.style.borderColor = '';
+                    textarea.style.boxShadow = '';
+                    contextBtn.textContent = 'Select Context';
+                    contextBtn.classList.remove('secondary');
+                    if (instructionDiv) {
+                        instructionDiv.remove();
+                    }
+
+                    // Remove event listener
+                    textarea.removeEventListener('mouseup', handleSelection);
+                    contextSelectionHandler = null;
                 }
-            }, 100);
+            };
+
+            // Store handler reference
+            contextSelectionHandler = handleSelection;
+
+            // Attach event listener
+            textarea.addEventListener('mouseup', handleSelection);
+
+            // Focus textarea
+            textarea.focus();
+        }
+
+        function cancelContextSelection() {
+            const textarea = document.getElementById('dual-sample-text');
+            const contextBtn = document.getElementById('context-select-btn');
+            const step = document.getElementById('context-step');
+            const instructionDiv = step.querySelector('.selection-instruction');
+
+            // Remove selection mode
+            isSelectingContext = false;
+            textarea.classList.remove('selecting-context');
+            textarea.style.borderColor = '';
+            textarea.style.boxShadow = '';
+            contextBtn.textContent = 'Select Context';
+            contextBtn.classList.remove('secondary');
+            if (instructionDiv) {
+                instructionDiv.remove();
+            }
+
+            // Remove event listener
+            if (contextSelectionHandler) {
+                textarea.removeEventListener('mouseup', contextSelectionHandler);
+                contextSelectionHandler = null;
+            }
         }
 
         function startChangingBitSelection() {
@@ -1447,14 +1525,44 @@ Border: #333`,
             }
 
             const textarea = document.getElementById('dual-sample-text');
-            textarea.focus();
+            const changingBtn = document.getElementById('changing-bit-select-btn');
+
+            // If already selecting, cancel
+            if (isSelectingChangingBit && changingBitSelectionHandler) {
+                cancelChangingBitSelection();
+                return;
+            }
+
+            // Enable selection mode
+            isSelectingChangingBit = true;
+            isSelectingContext = false;
+
+            // Update button to show cancel option
+            const originalText = changingBtn.textContent;
+            changingBtn.textContent = 'Cancel Selection';
+            changingBtn.classList.add('secondary');
+
+            // Add visual feedback
+            textarea.style.borderColor = '#9cdcfe';
+            textarea.style.boxShadow = '0 0 0 2px #9cdcfe44';
+
+            // Show instructions
+            const step = document.getElementById('changing-bit-step');
+            let instructionDiv = step.querySelector('.selection-instruction');
+            if (!instructionDiv) {
+                instructionDiv = document.createElement('div');
+                instructionDiv.className = 'selection-instruction';
+                instructionDiv.style.cssText = 'background: #9cdcfe44; padding: 10px; border-radius: 4px; margin-top: 10px; color: #9cdcfe; font-weight: bold;';
+                step.insertBefore(instructionDiv, step.querySelector('.generator-controls').nextSibling);
+            }
+            instructionDiv.innerHTML = '👆 Select ONLY the changing part within your context<br/><small>Context: "' +
+                (contextSelection.text.length > 60 ? contextSelection.text.substring(0, 60) + '...' : contextSelection.text) + '"</small>';
 
             // Set selection to context range to help user
             textarea.setSelectionRange(contextSelection.start, contextSelection.end);
 
-            alert('Now select just the changing bit (the part that varies) within the highlighted context, then click OK.');
-
-            setTimeout(() => {
+            // Listen for mouseup event to capture selection
+            const handleSelection = () => {
                 const selectedText = textarea.value.substring(textarea.selectionStart, textarea.selectionEnd);
                 const selectionStart = textarea.selectionStart;
                 const selectionEnd = textarea.selectionEnd;
@@ -1462,6 +1570,15 @@ Border: #333`,
                 if (selectedText && selectedText.trim().length > 0) {
                     // Verify that the changing bit is within the context
                     if (selectionStart >= contextSelection.start && selectionEnd <= contextSelection.end) {
+                        // Ensure it's not the exact same as context
+                        if (selectedText === contextSelection.text) {
+                            // Show warning but don't block
+                            instructionDiv.innerHTML = '⚠️ You selected the same text as context. Please select ONLY the changing part.<br/><small>Try again or click the button to cancel.</small>';
+                            instructionDiv.style.background = '#f4877144';
+                            instructionDiv.style.color = '#f48771';
+                            return; // Don't save, wait for another selection
+                        }
+
                         changingBitSelection = {
                             text: selectedText,
                             start: selectionStart,
@@ -1476,23 +1593,81 @@ Border: #333`,
                         document.getElementById('changing-bit-selection-info').style.display = 'block';
                         document.getElementById('changing-bit-step').classList.add('active');
                         document.getElementById('generate-dual-btn').disabled = false;
+
+                        // Remove selection mode
+                        isSelectingChangingBit = false;
+                        textarea.style.borderColor = '';
+                        textarea.style.boxShadow = '';
+                        changingBtn.textContent = 'Select Changing Bit';
+                        changingBtn.classList.remove('secondary');
+                        if (instructionDiv) {
+                            instructionDiv.remove();
+                        }
+
+                        // Remove event listener
+                        textarea.removeEventListener('mouseup', handleSelection);
+                        changingBitSelectionHandler = null;
                     } else {
-                        alert('The changing bit must be within the selected context! Please try again.');
+                        // Show error
+                        instructionDiv.innerHTML = '❌ Selection must be within the context!<br/><small>Context range: characters ' +
+                            contextSelection.start + '-' + contextSelection.end + ', your selection: ' +
+                            selectionStart + '-' + selectionEnd + '</small>';
+                        instructionDiv.style.background = '#f4877144';
+                        instructionDiv.style.color = '#f48771';
                     }
-                } else {
-                    alert('Please select some text first!');
                 }
-            }, 100);
+            };
+
+            // Store handler reference
+            changingBitSelectionHandler = handleSelection;
+
+            // Attach event listener
+            textarea.addEventListener('mouseup', handleSelection);
+
+            // Focus textarea
+            textarea.focus();
+        }
+
+        function cancelChangingBitSelection() {
+            const textarea = document.getElementById('dual-sample-text');
+            const changingBtn = document.getElementById('changing-bit-select-btn');
+            const step = document.getElementById('changing-bit-step');
+            const instructionDiv = step.querySelector('.selection-instruction');
+
+            // Remove selection mode
+            isSelectingChangingBit = false;
+            textarea.style.borderColor = '';
+            textarea.style.boxShadow = '';
+            changingBtn.textContent = 'Select Changing Bit';
+            changingBtn.classList.remove('secondary');
+            if (instructionDiv) {
+                instructionDiv.remove();
+            }
+
+            // Remove event listener
+            if (changingBitSelectionHandler) {
+                textarea.removeEventListener('mouseup', changingBitSelectionHandler);
+                changingBitSelectionHandler = null;
+            }
         }
 
         function clearDualSelections() {
+            // Cancel any active selections
+            if (isSelectingContext) {
+                cancelContextSelection();
+            }
+            if (isSelectingChangingBit) {
+                cancelChangingBitSelection();
+            }
+
+            // Clear stored selections
             contextSelection = null;
             changingBitSelection = null;
             document.getElementById('context-selection-info').style.display = 'none';
             document.getElementById('changing-bit-selection-info').style.display = 'none';
             document.getElementById('context-step').classList.remove('active');
             document.getElementById('changing-bit-step').classList.remove('active');
-            document.getElementById('select-changing-btn').disabled = true;
+            document.getElementById('changing-bit-select-btn').disabled = true;
             document.getElementById('generate-dual-btn').disabled = true;
             document.getElementById('dual-generated-pattern-display').classList.remove('visible');
         }
