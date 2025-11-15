@@ -90,14 +90,14 @@ This document explores how to host and share work created in the Claude Code vir
 2. Claude adds `index.html` and assets
 3. Claude commits and pushes
 4. **User enables** in repo: Settings → Pages → Source: `gh-pages` branch
-5. Site live at: `https://tylerstoltz.github.io/claude_code_monorepo/`
+5. Site live at: `https://tylerstoltz.github.io/git_pages/`
 
 #### Method 2: /docs Folder on Main
 1. Claude creates `/docs` directory
 2. Claude adds `index.html` and assets
 3. Claude commits and pushes to main
 4. **User enables** in repo: Settings → Pages → Source: main branch `/docs` folder
-5. Site live at: `https://tylerstoltz.github.io/claude_code_monorepo/`
+5. Site live at: `https://tylerstoltz.github.io/git_pages/`
 
 #### Method 3: Feature Branch → PR → Deploy
 1. Claude creates content on feature branch
@@ -200,6 +200,6 @@ This document explores how to host and share work created in the Claude Code vir
 
 ---
 
-**Last Updated**: 2025-11-14
+**Last Updated**: 2025-11-15
 **Environment**: Claude Code Virtualized Sandbox
-**Repository**: tylerstoltz/claude_code_monorepo
+**Repository**: tylerstoltz/git_pages
