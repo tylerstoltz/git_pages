@@ -493,7 +493,7 @@
             <select id="transaction-type" onchange="handleTransactionTypeChange()">
                 <option value="850">EDI 850 - Purchase Order</option>
                 <option value="810">EDI 810 - Invoice</option>
-                <option value="856">EDI 856 - Advance Ship Notice (Coming Soon)</option>
+                <option value="856">EDI 856 - Advance Ship Notice</option>
                 <option value="846">EDI 846 - Inventory Inquiry (Coming Soon)</option>
                 <option value="997">EDI 997 - Functional Acknowledgment (Coming Soon)</option>
             </select>
@@ -635,7 +635,7 @@
             // Update encoder segment dropdown
             updateSegmentDropdown();
 
-            if (currentTransactionType !== '850' && currentTransactionType !== '810') {
+            if (currentTransactionType !== '850' && currentTransactionType !== '810' && currentTransactionType !== '856') {
                 showPlaceholder();
             } else {
                 hidePlaceholder();
@@ -676,6 +676,20 @@
                     <option value="IT1">IT1 - Invoice Line Item</option>
                     <option value="TDS">TDS - Total Monetary Value</option>
                 `;
+            } else if (currentTransactionType === '856') {
+                options += `
+                    <option value="BSN">BSN - Beginning Segment (Ship Notice)</option>
+                    <option value="DTM">DTM - Date/Time Reference</option>
+                    <option value="HL">HL - Hierarchical Level</option>
+                    <option value="TD5">TD5 - Carrier Details</option>
+                    <option value="REF">REF - Reference Identification</option>
+                    <option value="PRF">PRF - Purchase Order Reference</option>
+                    <option value="N1">N1 - Name</option>
+                    <option value="N3">N3 - Address</option>
+                    <option value="N4">N4 - Geographic Location</option>
+                    <option value="LIN">LIN - Item Identification</option>
+                    <option value="SN1">SN1 - Item Detail (Shipment)</option>
+                `;
             }
 
             // Common trailer segments
@@ -698,7 +712,10 @@
                     <div class="placeholder-icon">🚧</div>
                     <h2>Coming Soon</h2>
                     <p>EDI ${currentTransactionType} decoder/encoder is not yet implemented.</p>
-                    <p style="margin-top: 12px;">Currently EDI 850 (Purchase Order) and EDI 810 (Invoice) are supported.<br>
+                    <p style="margin-top: 12px;">Currently supported:<br>
+                    • EDI 850 (Purchase Order)<br>
+                    • EDI 810 (Invoice)<br>
+                    • EDI 856 (Advance Ship Notice)<br><br>
                     Additional transaction types will be added in future updates.</p>
                 </div>
             `;
@@ -877,11 +894,16 @@
             'ST': 'Transaction Set Header',
             'BEG': 'Beginning Segment for Purchase Order',
             'BIG': 'Beginning Segment for Invoice',
+            'BSN': 'Beginning Segment for Ship Notice',
             'REF': 'Reference Identification',
             'PER': 'Administrative Communications Contact',
             'DTM': 'Date/Time Reference',
             'ITD': 'Terms of Sale/Deferred Terms',
             'FOB': 'F.O.B. Related Instructions',
+            'HL': 'Hierarchical Level',
+            'PRF': 'Purchase Order Reference',
+            'LIN': 'Item Identification',
+            'SN1': 'Item Detail (Shipment)',
             'N1': 'Name',
             'N2': 'Additional Name Information',
             'N3': 'Address Information',
@@ -898,7 +920,8 @@
             'SAC': 'Service/Allowance/Charge',
             'TD5': 'Carrier Details',
             'MSG': 'Message Text',
-            'N9': 'Reference Identification'
+            'N9': 'Reference Identification',
+            'MAN': 'Marks and Numbers'
         };
 
         function detectDelimiters(ediContent) {
@@ -1312,6 +1335,9 @@
                 } else if (currentTransactionType === '810') {
                     parsedData = parseEDI810(input);
                     html = renderEDI810(parsedData);
+                } else if (currentTransactionType === '856') {
+                    parsedData = parseEDI856(input);
+                    html = renderEDI856(parsedData);
                 } else {
                     setStatus('error', `EDI ${currentTransactionType} is not yet supported`);
                     return;
@@ -1739,6 +1765,399 @@
             return html;
         }
 
+        // ==================== EDI 856 DECODER ====================
+
+        function parseEDI856(content) {
+            try {
+                // Detect delimiters from ISA segment
+                const delimiters = detectDelimiters(content);
+
+                // Split into segments
+                const segments = content.split(delimiters.segment)
+                    .map(s => s.trim())
+                    .filter(s => s.length > 0);
+
+                const result = {
+                    delimiters: delimiters,
+                    interchange: {},
+                    functionalGroup: {},
+                    transactionSet: {},
+                    shipNotice: {},
+                    hierarchicalLevels: [],
+                    items: [],
+                    segments: []
+                };
+
+                let currentHL = null;
+                let currentItem = null;
+
+                segments.forEach(segment => {
+                    const elements = segment.split(delimiters.element);
+                    const segmentCode = elements[0];
+
+                    result.segments.push({
+                        code: segmentCode,
+                        elements: elements
+                    });
+
+                    switch (segmentCode) {
+                        case 'ISA':
+                            result.interchange = {
+                                authInfoQualifier: elements[1],
+                                authInfo: elements[2],
+                                securityInfoQualifier: elements[3],
+                                securityInfo: elements[4],
+                                senderQualifier: elements[5],
+                                senderId: elements[6],
+                                receiverQualifier: elements[7],
+                                receiverId: elements[8],
+                                date: elements[9],
+                                time: elements[10],
+                                standards: elements[11],
+                                version: elements[12],
+                                controlNumber: elements[13],
+                                ackRequested: elements[14],
+                                usageIndicator: elements[15]
+                            };
+                            break;
+
+                        case 'GS':
+                            result.functionalGroup = {
+                                functionalCode: elements[1],
+                                senderCode: elements[2],
+                                receiverCode: elements[3],
+                                date: elements[4],
+                                time: elements[5],
+                                controlNumber: elements[6],
+                                agency: elements[7],
+                                version: elements[8]
+                            };
+                            break;
+
+                        case 'ST':
+                            result.transactionSet = {
+                                identifier: elements[1],
+                                controlNumber: elements[2]
+                            };
+                            break;
+
+                        case 'BSN':
+                            result.shipNotice = {
+                                purposeCode: elements[1],
+                                shipmentId: elements[2],
+                                date: elements[3],
+                                time: elements[4],
+                                hierarchicalStructure: elements[5]
+                            };
+                            break;
+
+                        case 'HL':
+                            currentHL = {
+                                id: elements[1],
+                                parentId: elements[2],
+                                levelCode: elements[3],
+                                childCode: elements[4],
+                                items: []
+                            };
+                            result.hierarchicalLevels.push(currentHL);
+                            break;
+
+                        case 'PRF':
+                            if (currentHL) {
+                                currentHL.poNumber = elements[1];
+                                currentHL.poDate = elements[4];
+                            }
+                            break;
+
+                        case 'LIN':
+                            if (currentItem) {
+                                result.items.push(currentItem);
+                            }
+                            currentItem = {
+                                hlId: currentHL ? currentHL.id : null,
+                                lineNumber: elements[1],
+                                productIdQualifier: elements[2],
+                                productId: elements[3],
+                                quantity: null,
+                                unitOfMeasure: null
+                            };
+                            if (currentHL) {
+                                currentHL.items.push(currentItem);
+                            }
+                            break;
+
+                        case 'SN1':
+                            if (currentItem) {
+                                currentItem.lineNumber = currentItem.lineNumber || elements[1];
+                                currentItem.quantity = elements[2];
+                                currentItem.unitOfMeasure = elements[3];
+                            }
+                            break;
+                    }
+                });
+
+                if (currentItem) {
+                    result.items.push(currentItem);
+                }
+
+                return result;
+            } catch (error) {
+                throw new Error('Failed to parse EDI 856: ' + error.message);
+            }
+        }
+
+        function renderEDI856(data) {
+            let html = '';
+
+            // Interchange Header
+            if (data.interchange && data.interchange.senderId) {
+                html += `
+                    <div class="edi-segment">
+                        <div class="segment-header">
+                            <div>
+                                <span class="segment-code">ISA</span>
+                                <span class="segment-name"> - ${segmentNames['ISA']}</span>
+                            </div>
+                        </div>
+                        <div class="segment-fields">
+                            <div class="field">
+                                <div class="field-label">Sender ID</div>
+                                <div class="field-value">${data.interchange.senderId || ''}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Receiver ID</div>
+                                <div class="field-value">${data.interchange.receiverId || ''}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Date</div>
+                                <div class="field-value">${formatEDIDate(data.interchange.date || '')}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Time</div>
+                                <div class="field-value">${formatEDITime(data.interchange.time || '')}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Control Number</div>
+                                <div class="field-value">${data.interchange.controlNumber || ''}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Functional Group
+            if (data.functionalGroup && data.functionalGroup.senderCode) {
+                html += `
+                    <div class="edi-segment">
+                        <div class="segment-header">
+                            <div>
+                                <span class="segment-code">GS</span>
+                                <span class="segment-name"> - ${segmentNames['GS']}</span>
+                            </div>
+                        </div>
+                        <div class="segment-fields">
+                            <div class="field">
+                                <div class="field-label">Functional Code</div>
+                                <div class="field-value">${data.functionalGroup.functionalCode || ''}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Sender Code</div>
+                                <div class="field-value">${data.functionalGroup.senderCode || ''}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Receiver Code</div>
+                                <div class="field-value">${data.functionalGroup.receiverCode || ''}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Date</div>
+                                <div class="field-value">${formatEDIDate(data.functionalGroup.date || '')}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Ship Notice Header
+            if (data.shipNotice && data.shipNotice.shipmentId) {
+                const purposeDesc = {
+                    '00': 'Original',
+                    '01': 'Cancellation',
+                    '04': 'Change',
+                    '05': 'Replace'
+                };
+
+                html += `
+                    <div class="edi-segment" style="border-left-color: #4ec9b0;">
+                        <div class="segment-header">
+                            <div>
+                                <span class="segment-code">BSN</span>
+                                <span class="segment-name"> - Ship Notice Information</span>
+                            </div>
+                        </div>
+                        <div class="segment-fields">
+                            <div class="field">
+                                <div class="field-label">Shipment ID</div>
+                                <div class="field-value">${data.shipNotice.shipmentId || ''}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Purpose</div>
+                                <div class="field-value">${purposeDesc[data.shipNotice.purposeCode] || data.shipNotice.purposeCode || ''}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Ship Date</div>
+                                <div class="field-value">${formatEDIDate(data.shipNotice.date || '')}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Ship Time</div>
+                                <div class="field-value">${formatEDITime(data.shipNotice.time || '')}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Hierarchical Levels
+            if (data.hierarchicalLevels && data.hierarchicalLevels.length > 0) {
+                html += '<div class="nested-section">';
+                html += '<div class="item-header">📦 Hierarchical Structure</div>';
+
+                const levelNames = {
+                    'S': 'Shipment',
+                    'O': 'Order',
+                    'P': 'Pack/Carton',
+                    'I': 'Item'
+                };
+
+                data.hierarchicalLevels.forEach((hl, index) => {
+                    const levelName = levelNames[hl.levelCode] || hl.levelCode;
+
+                    html += `
+                        <div class="edi-segment" style="border-left-color: #dcdcaa;">
+                            <div class="segment-header">
+                                <div>
+                                    <span class="segment-code">HL</span>
+                                    <span class="segment-name"> - ${levelName} Level (ID: ${hl.id})</span>
+                                </div>
+                            </div>
+                            <div class="segment-fields">
+                                <div class="field">
+                                    <div class="field-label">Hierarchical ID</div>
+                                    <div class="field-value">${hl.id || ''}</div>
+                                </div>
+                                <div class="field">
+                                    <div class="field-label">Parent ID</div>
+                                    <div class="field-value">${hl.parentId || 'None (Top Level)'}</div>
+                                </div>
+                                <div class="field">
+                                    <div class="field-label">Level Code</div>
+                                    <div class="field-value">${hl.levelCode} (${levelName})</div>
+                                </div>
+                    `;
+
+                    if (hl.poNumber) {
+                        html += `
+                            <div class="field">
+                                <div class="field-label">PO Number</div>
+                                <div class="field-value">${hl.poNumber}</div>
+                            </div>
+                        `;
+                    }
+
+                    if (hl.items && hl.items.length > 0) {
+                        html += `
+                            <div class="field">
+                                <div class="field-label">Contains Items</div>
+                                <div class="field-value">${hl.items.length} item(s)</div>
+                            </div>
+                        `;
+                    }
+
+                    html += `
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += '</div>';
+            }
+
+            // Ship Items
+            if (data.items && data.items.length > 0) {
+                html += '<div class="nested-section">';
+                html += '<div class="item-header">📋 Shipped Items (' + data.items.length + ')</div>';
+
+                data.items.forEach((item, index) => {
+                    html += `
+                        <div class="edi-segment" style="border-left-color: #c586c0;">
+                            <div class="segment-header">
+                                <div>
+                                    <span class="segment-code">LIN/SN1</span>
+                                    <span class="segment-name"> - Item #${item.lineNumber || index + 1}</span>
+                                </div>
+                            </div>
+                            <div class="segment-fields">
+                                <div class="field">
+                                    <div class="field-label">Product ID</div>
+                                    <div class="field-value">${item.productId || ''}</div>
+                                </div>
+                                <div class="field">
+                                    <div class="field-label">Quantity Shipped</div>
+                                    <div class="field-value">${item.quantity || ''} ${item.unitOfMeasure || ''}</div>
+                                </div>
+                                <div class="field">
+                                    <div class="field-label">Hierarchical Level</div>
+                                    <div class="field-value">HL ${item.hlId || 'N/A'}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += '</div>';
+            }
+
+            // All other segments
+            if (data.segments && data.segments.length > 0) {
+                const processedCodes = ['ISA', 'GS', 'ST', 'BSN', 'HL', 'PRF', 'LIN', 'SN1', 'SE', 'GE', 'IEA'];
+                const otherSegments = data.segments.filter(s => !processedCodes.includes(s.code));
+
+                if (otherSegments.length > 0) {
+                    html += '<div class="item-header">📄 Additional Segments</div>';
+
+                    otherSegments.forEach(segment => {
+                        html += `
+                            <div class="edi-segment">
+                                <div class="segment-header">
+                                    <div>
+                                        <span class="segment-code">${segment.code}</span>
+                                        <span class="segment-name"> - ${segmentNames[segment.code] || 'Unknown'}</span>
+                                    </div>
+                                </div>
+                                <div class="segment-fields">
+                        `;
+
+                        segment.elements.slice(1).forEach((element, idx) => {
+                            if (element) {
+                                html += `
+                                    <div class="field">
+                                        <div class="field-label">Element ${idx + 1}</div>
+                                        <div class="field-value">${element}</div>
+                                    </div>
+                                `;
+                            }
+                        });
+
+                        html += `
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+            }
+
+            return html;
+        }
+
         // ==================== EDI 850 ENCODER ====================
 
         const segmentFields = {
@@ -1859,6 +2278,36 @@
                 { name: 'totalAmountDue', label: 'Total Amount Subject to Terms', hint: 'In cents (optional)', required: false },
                 { name: 'discountedAmount', label: 'Amount Due if Paid by Discount Date', hint: 'In cents (optional)', required: false },
                 { name: 'termsDiscountAmount', label: 'Terms Discount Amount', hint: 'In cents (optional)', required: false }
+            ],
+            // EDI 856 ASN Segments
+            'BSN': [
+                { name: 'purposeCode', label: 'Purpose Code', hint: '00 = Original', required: true, default: '00' },
+                { name: 'shipmentId', label: 'Shipment ID', hint: 'Unique shipment identifier', required: true },
+                { name: 'date', label: 'Ship Date', hint: 'YYYYMMDD', required: true },
+                { name: 'time', label: 'Ship Time', hint: 'HHMM', required: true },
+                { name: 'hierarchicalStructure', label: 'Hierarchical Structure Code', hint: '0001, 0002, etc.', required: false }
+            ],
+            'HL': [
+                { name: 'id', label: 'Hierarchical ID', hint: 'Unique ID for this level', required: true },
+                { name: 'parentId', label: 'Parent Hierarchical ID', hint: 'Leave empty for top level', required: false },
+                { name: 'levelCode', label: 'Level Code', hint: 'S=Shipment, O=Order, P=Pack, I=Item', required: true },
+                { name: 'childCode', label: 'Child Code', hint: '1=Has children, 0=No children', required: false }
+            ],
+            'PRF': [
+                { name: 'poNumber', label: 'PO Number', hint: 'Purchase order reference', required: true },
+                { name: 'releaseNumber', label: 'Release Number', hint: 'Optional', required: false },
+                { name: 'changeNumber', label: 'Change Order Number', hint: 'Optional', required: false },
+                { name: 'poDate', label: 'PO Date', hint: 'YYYYMMDD (optional)', required: false }
+            ],
+            'LIN': [
+                { name: 'lineNumber', label: 'Line Number', hint: 'Sequential item number', required: false },
+                { name: 'productIdQualifier', label: 'Product ID Qualifier', hint: 'UP = UPC, IN = Buyer Item', required: true },
+                { name: 'productId', label: 'Product ID', hint: 'Product identifier', required: true }
+            ],
+            'SN1': [
+                { name: 'lineNumber', label: 'Line Number', hint: 'Optional', required: false },
+                { name: 'quantity', label: 'Quantity Shipped', hint: 'Number of units', required: true },
+                { name: 'unitOfMeasure', label: 'Unit of Measure', hint: 'EA = Each, CS = Case', required: true, default: 'EA' }
             ]
         };
 
@@ -1885,7 +2334,13 @@
                 if (segmentType === 'ST' && field.name === 'identifier') {
                     defaultValue = currentTransactionType;
                 } else if (segmentType === 'GS' && field.name === 'functionalCode') {
-                    defaultValue = currentTransactionType === '810' ? 'IN' : 'PO';
+                    if (currentTransactionType === '810') {
+                        defaultValue = 'IN';
+                    } else if (currentTransactionType === '856') {
+                        defaultValue = 'SH';
+                    } else {
+                        defaultValue = 'PO';
+                    }
                 }
 
                 html += `
@@ -1907,7 +2362,7 @@
         }
 
         function addSegment() {
-            if (currentTransactionType !== '850' && currentTransactionType !== '810') {
+            if (currentTransactionType !== '850' && currentTransactionType !== '810' && currentTransactionType !== '856') {
                 setStatus('error', `EDI ${currentTransactionType} is not yet supported`);
                 return;
             }
