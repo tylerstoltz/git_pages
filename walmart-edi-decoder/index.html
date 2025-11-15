@@ -492,7 +492,7 @@
             <label for="transaction-type">Transaction Type:</label>
             <select id="transaction-type" onchange="handleTransactionTypeChange()">
                 <option value="850">EDI 850 - Purchase Order</option>
-                <option value="810">EDI 810 - Invoice (Coming Soon)</option>
+                <option value="810">EDI 810 - Invoice</option>
                 <option value="856">EDI 856 - Advance Ship Notice (Coming Soon)</option>
                 <option value="846">EDI 846 - Inventory Inquiry (Coming Soon)</option>
                 <option value="997">EDI 997 - Functional Acknowledgment (Coming Soon)</option>
@@ -632,11 +632,61 @@
             // Clear current content
             clearAll();
 
-            if (currentTransactionType !== '850') {
+            // Update encoder segment dropdown
+            updateSegmentDropdown();
+
+            if (currentTransactionType !== '850' && currentTransactionType !== '810') {
                 showPlaceholder();
             } else {
                 hidePlaceholder();
             }
+        }
+
+        function updateSegmentDropdown() {
+            const segmentSelect = document.getElementById('segment-type');
+
+            // Common segments for all transaction types
+            let options = `
+                <option value="">Select a segment...</option>
+                <option value="ISA">ISA - Interchange Control Header</option>
+                <option value="GS">GS - Functional Group Header</option>
+                <option value="ST">ST - Transaction Set Header</option>
+            `;
+
+            // Transaction-specific segments
+            if (currentTransactionType === '850') {
+                options += `
+                    <option value="BEG">BEG - Beginning Segment (Purchase Order)</option>
+                    <option value="REF">REF - Reference Identification</option>
+                    <option value="DTM">DTM - Date/Time Reference</option>
+                    <option value="N1">N1 - Name</option>
+                    <option value="N3">N3 - Address</option>
+                    <option value="N4">N4 - Geographic Location</option>
+                    <option value="PO1">PO1 - Purchase Order Line Item</option>
+                `;
+            } else if (currentTransactionType === '810') {
+                options += `
+                    <option value="BIG">BIG - Beginning Segment (Invoice)</option>
+                    <option value="REF">REF - Reference Identification</option>
+                    <option value="DTM">DTM - Date/Time Reference</option>
+                    <option value="ITD">ITD - Terms of Sale</option>
+                    <option value="N1">N1 - Name</option>
+                    <option value="N3">N3 - Address</option>
+                    <option value="N4">N4 - Geographic Location</option>
+                    <option value="IT1">IT1 - Invoice Line Item</option>
+                    <option value="TDS">TDS - Total Monetary Value</option>
+                `;
+            }
+
+            // Common trailer segments
+            options += `
+                <option value="CTT">CTT - Transaction Totals</option>
+                <option value="SE">SE - Transaction Set Trailer</option>
+                <option value="GE">GE - Functional Group Trailer</option>
+                <option value="IEA">IEA - Interchange Control Trailer</option>
+            `;
+
+            segmentSelect.innerHTML = options;
         }
 
         function showPlaceholder() {
@@ -648,7 +698,7 @@
                     <div class="placeholder-icon">🚧</div>
                     <h2>Coming Soon</h2>
                     <p>EDI ${currentTransactionType} decoder/encoder is not yet implemented.</p>
-                    <p style="margin-top: 12px;">Currently only EDI 850 (Purchase Order) is supported.<br>
+                    <p style="margin-top: 12px;">Currently EDI 850 (Purchase Order) and EDI 810 (Invoice) are supported.<br>
                     Additional transaction types will be added in future updates.</p>
                 </div>
             `;
@@ -814,7 +864,7 @@
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'edi-850.x12';
+            a.download = `edi-${currentTransactionType}.x12`;
             a.click();
             URL.revokeObjectURL(url);
         }
@@ -826,15 +876,20 @@
             'GS': 'Functional Group Header',
             'ST': 'Transaction Set Header',
             'BEG': 'Beginning Segment for Purchase Order',
+            'BIG': 'Beginning Segment for Invoice',
             'REF': 'Reference Identification',
             'PER': 'Administrative Communications Contact',
             'DTM': 'Date/Time Reference',
+            'ITD': 'Terms of Sale/Deferred Terms',
+            'FOB': 'F.O.B. Related Instructions',
             'N1': 'Name',
             'N2': 'Additional Name Information',
             'N3': 'Address Information',
             'N4': 'Geographic Location',
-            'PO1': 'Baseline Item Data',
+            'PO1': 'Baseline Item Data (Purchase Order)',
+            'IT1': 'Baseline Item Data (Invoice)',
             'PID': 'Product/Item Description',
+            'TDS': 'Total Monetary Value Summary',
             'CTT': 'Transaction Totals',
             'SE': 'Transaction Set Trailer',
             'GE': 'Functional Group Trailer',
@@ -1241,11 +1296,6 @@
         }
 
         function decodeEDI() {
-            if (currentTransactionType !== '850') {
-                setStatus('error', 'Only EDI 850 is currently supported');
-                return;
-            }
-
             const input = document.getElementById('input-text').value.trim();
 
             if (!input) {
@@ -1254,8 +1304,18 @@
             }
 
             try {
-                parsedData = parseEDI850(input);
-                const html = renderEDI850(parsedData);
+                let parsedData, html;
+
+                if (currentTransactionType === '850') {
+                    parsedData = parseEDI850(input);
+                    html = renderEDI850(parsedData);
+                } else if (currentTransactionType === '810') {
+                    parsedData = parseEDI810(input);
+                    html = renderEDI810(parsedData);
+                } else {
+                    setStatus('error', `EDI ${currentTransactionType} is not yet supported`);
+                    return;
+                }
 
                 document.getElementById('output-content').innerHTML = html;
 
@@ -1284,6 +1344,401 @@
             }
         }
 
+        // ==================== EDI 810 DECODER ====================
+
+        function parseEDI810(content) {
+            try {
+                // Detect delimiters from ISA segment
+                const delimiters = detectDelimiters(content);
+
+                // Split into segments
+                const segments = content.split(delimiters.segment)
+                    .map(s => s.trim())
+                    .filter(s => s.length > 0);
+
+                const result = {
+                    delimiters: delimiters,
+                    interchange: {},
+                    functionalGroup: {},
+                    transactionSet: {},
+                    invoice: {},
+                    items: [],
+                    totals: {},
+                    segments: []
+                };
+
+                let currentItem = null;
+
+                segments.forEach(segment => {
+                    const elements = segment.split(delimiters.element);
+                    const segmentCode = elements[0];
+
+                    result.segments.push({
+                        code: segmentCode,
+                        elements: elements
+                    });
+
+                    switch (segmentCode) {
+                        case 'ISA':
+                            result.interchange = {
+                                authInfoQualifier: elements[1],
+                                authInfo: elements[2],
+                                securityInfoQualifier: elements[3],
+                                securityInfo: elements[4],
+                                senderQualifier: elements[5],
+                                senderId: elements[6],
+                                receiverQualifier: elements[7],
+                                receiverId: elements[8],
+                                date: elements[9],
+                                time: elements[10],
+                                standards: elements[11],
+                                version: elements[12],
+                                controlNumber: elements[13],
+                                ackRequested: elements[14],
+                                usageIndicator: elements[15]
+                            };
+                            break;
+
+                        case 'GS':
+                            result.functionalGroup = {
+                                functionalCode: elements[1],
+                                senderCode: elements[2],
+                                receiverCode: elements[3],
+                                date: elements[4],
+                                time: elements[5],
+                                controlNumber: elements[6],
+                                agency: elements[7],
+                                version: elements[8]
+                            };
+                            break;
+
+                        case 'ST':
+                            result.transactionSet = {
+                                identifier: elements[1],
+                                controlNumber: elements[2]
+                            };
+                            break;
+
+                        case 'BIG':
+                            result.invoice = {
+                                invoiceDate: elements[1],
+                                invoiceNumber: elements[2],
+                                poDate: elements[3],
+                                poNumber: elements[4],
+                                releaseNumber: elements[5],
+                                changeOrderSequence: elements[6],
+                                transactionType: elements[7]
+                            };
+                            break;
+
+                        case 'IT1':
+                            if (currentItem) {
+                                result.items.push(currentItem);
+                            }
+                            currentItem = {
+                                lineNumber: elements[1],
+                                quantityInvoiced: elements[2],
+                                unitOfMeasure: elements[3],
+                                unitPrice: elements[4],
+                                basis: elements[5],
+                                productIdQualifier: elements[6],
+                                productId: elements[7],
+                                productIdQualifier2: elements[8],
+                                productId2: elements[9],
+                                details: []
+                            };
+                            break;
+
+                        case 'PID':
+                            if (currentItem) {
+                                currentItem.details.push({
+                                    type: elements[1],
+                                    description: elements[5]
+                                });
+                            }
+                            break;
+
+                        case 'TDS':
+                            result.totals = {
+                                totalAmount: elements[1],
+                                totalAmountDue: elements[2],
+                                discountedAmount: elements[3],
+                                termsDiscountAmount: elements[4]
+                            };
+                            break;
+                    }
+                });
+
+                if (currentItem) {
+                    result.items.push(currentItem);
+                }
+
+                return result;
+            } catch (error) {
+                throw new Error('Failed to parse EDI 810: ' + error.message);
+            }
+        }
+
+        function renderEDI810(data) {
+            let html = '';
+
+            // Interchange Header
+            if (data.interchange && data.interchange.senderId) {
+                html += `
+                    <div class="edi-segment">
+                        <div class="segment-header">
+                            <div>
+                                <span class="segment-code">ISA</span>
+                                <span class="segment-name"> - ${segmentNames['ISA']}</span>
+                            </div>
+                        </div>
+                        <div class="segment-fields">
+                            <div class="field">
+                                <div class="field-label">Sender ID</div>
+                                <div class="field-value">${data.interchange.senderId || ''}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Receiver ID</div>
+                                <div class="field-value">${data.interchange.receiverId || ''}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Date</div>
+                                <div class="field-value">${formatEDIDate(data.interchange.date || '')}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Time</div>
+                                <div class="field-value">${formatEDITime(data.interchange.time || '')}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Control Number</div>
+                                <div class="field-value">${data.interchange.controlNumber || ''}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Functional Group
+            if (data.functionalGroup && data.functionalGroup.senderCode) {
+                html += `
+                    <div class="edi-segment">
+                        <div class="segment-header">
+                            <div>
+                                <span class="segment-code">GS</span>
+                                <span class="segment-name"> - ${segmentNames['GS']}</span>
+                            </div>
+                        </div>
+                        <div class="segment-fields">
+                            <div class="field">
+                                <div class="field-label">Functional Code</div>
+                                <div class="field-value">${data.functionalGroup.functionalCode || ''}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Sender Code</div>
+                                <div class="field-value">${data.functionalGroup.senderCode || ''}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Receiver Code</div>
+                                <div class="field-value">${data.functionalGroup.receiverCode || ''}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Date</div>
+                                <div class="field-value">${formatEDIDate(data.functionalGroup.date || '')}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Invoice Header
+            if (data.invoice && data.invoice.invoiceNumber) {
+                html += `
+                    <div class="edi-segment" style="border-left-color: #4ec9b0;">
+                        <div class="segment-header">
+                            <div>
+                                <span class="segment-code">BIG</span>
+                                <span class="segment-name"> - Invoice Information</span>
+                            </div>
+                        </div>
+                        <div class="segment-fields">
+                            <div class="field">
+                                <div class="field-label">Invoice Number</div>
+                                <div class="field-value">${data.invoice.invoiceNumber || ''}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Invoice Date</div>
+                                <div class="field-value">${formatEDIDate(data.invoice.invoiceDate || '')}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">PO Number</div>
+                                <div class="field-value">${data.invoice.poNumber || ''}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">PO Date</div>
+                                <div class="field-value">${formatEDIDate(data.invoice.poDate || '')}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Line Items
+            if (data.items && data.items.length > 0) {
+                html += '<div class="nested-section">';
+                html += '<div class="item-header">🧾 Invoice Line Items (' + data.items.length + ')</div>';
+
+                let grandTotal = 0;
+
+                data.items.forEach((item, index) => {
+                    // Parse unit price with implicit decimals (N2 format)
+                    const unitPriceValue = item.unitPrice ? parseFloat(item.unitPrice) / 100 : 0;
+                    const unitPrice = unitPriceValue.toFixed(2);
+
+                    const quantity = item.quantityInvoiced ? parseFloat(item.quantityInvoiced) : 0;
+                    const lineTotal = (quantity * unitPriceValue).toFixed(2);
+                    grandTotal += parseFloat(lineTotal);
+
+                    html += `
+                        <div class="edi-segment" style="border-left-color: #dcdcaa;">
+                            <div class="segment-header">
+                                <div>
+                                    <span class="segment-code">IT1</span>
+                                    <span class="segment-name"> - Line Item #${item.lineNumber || index + 1}</span>
+                                </div>
+                            </div>
+                            <div class="segment-fields">
+                                <div class="field">
+                                    <div class="field-label">Product ID</div>
+                                    <div class="field-value">${item.productId || ''}</div>
+                                </div>
+                                <div class="field">
+                                    <div class="field-label">Quantity Invoiced</div>
+                                    <div class="field-value">${item.quantityInvoiced || ''} ${item.unitOfMeasure || ''}</div>
+                                </div>
+                                <div class="field">
+                                    <div class="field-label">Unit Price</div>
+                                    <div class="field-value">$${unitPrice}</div>
+                                </div>
+                                <div class="field">
+                                    <div class="field-label">Line Total</div>
+                                    <div class="field-value">$${lineTotal}</div>
+                                </div>
+                    `;
+
+                    if (item.details && item.details.length > 0) {
+                        item.details.forEach(detail => {
+                            if (detail.description) {
+                                html += `
+                                    <div class="field">
+                                        <div class="field-label">Description</div>
+                                        <div class="field-value">${detail.description}</div>
+                                    </div>
+                                `;
+                            }
+                        });
+                    }
+
+                    html += `
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += '</div>';
+
+                // Show calculated total
+                html += `
+                    <div class="edi-segment" style="border-left-color: #c586c0; margin-top: 16px;">
+                        <div class="segment-header">
+                            <div>
+                                <span class="segment-code">CALC</span>
+                                <span class="segment-name"> - Calculated Totals</span>
+                            </div>
+                        </div>
+                        <div class="segment-fields">
+                            <div class="field">
+                                <div class="field-label">Subtotal (from line items)</div>
+                                <div class="field-value">$${grandTotal.toFixed(2)}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Invoice Totals (TDS segment)
+            if (data.totals && data.totals.totalAmount) {
+                const totalAmount = parseFloat(data.totals.totalAmount || 0) / 100;
+                const discountedAmount = parseFloat(data.totals.discountedAmount || 0) / 100;
+                const termsDiscount = parseFloat(data.totals.termsDiscountAmount || 0) / 100;
+
+                html += `
+                    <div class="edi-segment" style="border-left-color: #c586c0;">
+                        <div class="segment-header">
+                            <div>
+                                <span class="segment-code">TDS</span>
+                                <span class="segment-name"> - ${segmentNames['TDS']}</span>
+                            </div>
+                        </div>
+                        <div class="segment-fields">
+                            <div class="field">
+                                <div class="field-label">Total Invoice Amount</div>
+                                <div class="field-value">$${totalAmount.toFixed(2)}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Amount Due if Paid by Discount Date</div>
+                                <div class="field-value">$${discountedAmount.toFixed(2)}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Terms Discount Amount</div>
+                                <div class="field-value">$${termsDiscount.toFixed(2)}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // All other segments
+            if (data.segments && data.segments.length > 0) {
+                const processedCodes = ['ISA', 'GS', 'ST', 'BIG', 'IT1', 'PID', 'TDS', 'SE', 'GE', 'IEA'];
+                const otherSegments = data.segments.filter(s => !processedCodes.includes(s.code));
+
+                if (otherSegments.length > 0) {
+                    html += '<div class="item-header">📄 Additional Segments</div>';
+
+                    otherSegments.forEach(segment => {
+                        html += `
+                            <div class="edi-segment">
+                                <div class="segment-header">
+                                    <div>
+                                        <span class="segment-code">${segment.code}</span>
+                                        <span class="segment-name"> - ${segmentNames[segment.code] || 'Unknown'}</span>
+                                    </div>
+                                </div>
+                                <div class="segment-fields">
+                        `;
+
+                        segment.elements.slice(1).forEach((element, idx) => {
+                            if (element) {
+                                html += `
+                                    <div class="field">
+                                        <div class="field-label">Element ${idx + 1}</div>
+                                        <div class="field-value">${element}</div>
+                                    </div>
+                                `;
+                            }
+                        });
+
+                        html += `
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+            }
+
+            return html;
+        }
+
         // ==================== EDI 850 ENCODER ====================
 
         const segmentFields = {
@@ -1305,7 +1760,7 @@
                 { name: 'usageIndicator', label: 'Usage Indicator', hint: 'T = Test, P = Production', required: true, default: 'T' }
             ],
             'GS': [
-                { name: 'functionalCode', label: 'Functional Code', hint: 'PO = Purchase Order', required: true, default: 'PO' },
+                { name: 'functionalCode', label: 'Functional Code', hint: 'PO = Purchase Order, IN = Invoice', required: true, default: 'PO' },
                 { name: 'senderCode', label: 'Sender Code', hint: 'Application sender', required: true },
                 { name: 'receiverCode', label: 'Receiver Code', hint: 'Application receiver', required: true },
                 { name: 'date', label: 'Date', hint: 'YYYYMMDD', required: true },
@@ -1315,7 +1770,7 @@
                 { name: 'version', label: 'Version', hint: '004010, 005010', required: true, default: '004010' }
             ],
             'ST': [
-                { name: 'identifier', label: 'Transaction Set ID', hint: '850', required: true, default: '850' },
+                { name: 'identifier', label: 'Transaction Set ID', hint: '850 = PO, 810 = Invoice', required: true, default: '850' },
                 { name: 'controlNumber', label: 'Control Number', hint: 'Unique within group', required: true }
             ],
             'BEG': [
@@ -1372,6 +1827,38 @@
             'IEA': [
                 { name: 'groupCount', label: 'Group Count', hint: 'Number of GS/GE pairs', required: true },
                 { name: 'controlNumber', label: 'Control Number', hint: 'Must match ISA13', required: true }
+            ],
+            // EDI 810 Invoice Segments
+            'BIG': [
+                { name: 'invoiceDate', label: 'Invoice Date', hint: 'YYYYMMDD', required: true },
+                { name: 'invoiceNumber', label: 'Invoice Number', hint: 'Unique invoice identifier', required: true },
+                { name: 'poDate', label: 'PO Date', hint: 'YYYYMMDD (optional)', required: false },
+                { name: 'poNumber', label: 'PO Number', hint: 'Purchase order reference', required: true },
+                { name: 'releaseNumber', label: 'Release Number', hint: 'Optional', required: false },
+                { name: 'changeOrder', label: 'Change Order Sequence', hint: 'Optional', required: false },
+                { name: 'transactionType', label: 'Transaction Type Code', hint: 'Optional', required: false }
+            ],
+            'IT1': [
+                { name: 'lineNumber', label: 'Line Number', hint: 'Sequential number', required: true },
+                { name: 'quantityInvoiced', label: 'Quantity Invoiced', hint: 'Billed quantity', required: true },
+                { name: 'unitOfMeasure', label: 'Unit of Measure', hint: 'EA = Each, CS = Case', required: true, default: 'EA' },
+                { name: 'unitPrice', label: 'Unit Price', hint: 'In cents (e.g., 1600 = $16.00)', required: true },
+                { name: 'basis', label: 'Basis of Unit Price', hint: 'PE = Price Each', required: false, default: 'PE' },
+                { name: 'productIdQualifier', label: 'Product ID Qualifier', hint: 'UP = UPC, CB = Buyer Catalog', required: true },
+                { name: 'productId', label: 'Product ID', hint: 'Product identifier', required: true }
+            ],
+            'ITD': [
+                { name: 'termsType', label: 'Terms Type Code', hint: '01 = Basic, 05 = No Discount', required: true },
+                { name: 'termsBasis', label: 'Terms Basis Date Code', hint: '3 = Invoice Date', required: false },
+                { name: 'termsDiscount', label: 'Terms Discount Percent', hint: 'E.g., 2 for 2%', required: false },
+                { name: 'termsDiscountDays', label: 'Terms Discount Days Due', hint: 'E.g., 10', required: false },
+                { name: 'termsNetDays', label: 'Terms Net Days', hint: 'E.g., 30', required: false }
+            ],
+            'TDS': [
+                { name: 'totalAmount', label: 'Total Invoice Amount', hint: 'In cents (e.g., 97000 = $970.00)', required: true },
+                { name: 'totalAmountDue', label: 'Total Amount Subject to Terms', hint: 'In cents (optional)', required: false },
+                { name: 'discountedAmount', label: 'Amount Due if Paid by Discount Date', hint: 'In cents (optional)', required: false },
+                { name: 'termsDiscountAmount', label: 'Terms Discount Amount', hint: 'In cents (optional)', required: false }
             ]
         };
 
@@ -1392,6 +1879,15 @@
 
             let html = '';
             fields.forEach(field => {
+                let defaultValue = field.default || '';
+
+                // Set transaction-specific defaults
+                if (segmentType === 'ST' && field.name === 'identifier') {
+                    defaultValue = currentTransactionType;
+                } else if (segmentType === 'GS' && field.name === 'functionalCode') {
+                    defaultValue = currentTransactionType === '810' ? 'IN' : 'PO';
+                }
+
                 html += `
                     <div class="form-group">
                         <label for="field-${field.name}">
@@ -1400,7 +1896,7 @@
                         <input type="text"
                                id="field-${field.name}"
                                placeholder="${field.hint}"
-                               value="${field.default || ''}"
+                               value="${defaultValue}"
                                ${field.required ? 'required' : ''}>
                         <div class="form-hint">${field.hint}</div>
                     </div>
@@ -1411,8 +1907,8 @@
         }
 
         function addSegment() {
-            if (currentTransactionType !== '850') {
-                setStatus('error', 'Only EDI 850 is currently supported');
+            if (currentTransactionType !== '850' && currentTransactionType !== '810') {
+                setStatus('error', `EDI ${currentTransactionType} is not yet supported`);
                 return;
             }
 
