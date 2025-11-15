@@ -578,6 +578,150 @@
         .inline-input select {
             width: auto;
         }
+
+        /* Tablet responsiveness */
+        @media (max-width: 1024px) {
+            .container {
+                max-width: 100%;
+                padding: 15px;
+            }
+
+            .header h1 {
+                font-size: 20px;
+            }
+        }
+
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+                padding: 12px 15px;
+            }
+
+            .header h1 {
+                font-size: 18px;
+            }
+
+            .tabs {
+                overflow-x: auto;
+                flex-wrap: nowrap;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .tab-btn {
+                white-space: nowrap;
+                font-size: 13px;
+                padding: 8px 15px;
+            }
+
+            .panel {
+                padding: 15px;
+            }
+
+            .panel h2 {
+                font-size: 16px;
+            }
+
+            .panel h3 {
+                font-size: 14px;
+            }
+
+            /* Make table designer stack on smaller screens */
+            .table-designer {
+                grid-template-columns: 1fr;
+            }
+
+            /* Stack join items vertically */
+            .join-item {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .join-controls {
+                justify-content: flex-start;
+            }
+
+            /* Stack filter items vertically */
+            .filter-item {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            /* Make buttons touch-friendly */
+            button {
+                min-height: 44px;
+                font-size: 14px;
+            }
+
+            .small-btn {
+                min-height: 36px;
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+
+            /* Stack query display sections */
+            .query-section {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Small mobile devices */
+        @media (max-width: 480px) {
+            .container {
+                padding: 10px;
+            }
+
+            .header h1 {
+                font-size: 16px;
+                gap: 6px;
+            }
+
+            .panel {
+                padding: 12px;
+                margin-bottom: 15px;
+            }
+
+            .data-tabs {
+                justify-content: flex-start;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .data-tab {
+                white-space: nowrap;
+            }
+
+            /* Reduce minimum width for table cards */
+            .table-designer {
+                grid-template-columns: 1fr;
+            }
+
+            /* Ensure inputs are usable */
+            input[type="text"],
+            select,
+            textarea {
+                font-size: 16px; /* Prevents iOS zoom on focus */
+            }
+
+            button {
+                width: 100%;
+                margin-bottom: 8px;
+            }
+
+            .small-btn {
+                width: auto;
+            }
+
+            .btn-group {
+                flex-direction: column;
+            }
+
+            .btn-group button {
+                margin-right: 0;
+            }
+        }
     </style>
 </head>
 <body>

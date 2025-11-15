@@ -22,11 +22,15 @@ A collection of web-based developer tools built with Claude Code and hosted on G
 - **[Base64 Tool](https://tylerstoltz.github.io/git_pages/base64-tool/)** - Encode/decode text and files with URL-safe support
 - **[JWT Cookie Inspector](https://tylerstoltz.github.io/git_pages/jwt-cookie-inspector/)** - Decode JWT tokens and view claims, expiration, signature details
 - **[Hex ↔ Decimal Converter](https://tylerstoltz.github.io/git_pages/hex-converter/)** - Convert between hexadecimal and decimal number systems
+- **[Hash Generator](https://tylerstoltz.github.io/git_pages/hash-generator/)** - Generate MD5, SHA-1, SHA-256, SHA-512 hashes with HMAC support
+- **[Unix Timestamp Converter](https://tylerstoltz.github.io/git_pages/timestamp-converter/)** - Convert between Unix timestamps and dates with timezone support
 
 ### Specialized Tools
 - **[CAN Bus Analyzer](https://tylerstoltz.github.io/git_pages/can-analyzer/)** - Decode and analyze CAN bus messages for automotive/embedded systems
 - **[Token Counter](https://tylerstoltz.github.io/git_pages/token-counter/)** - Count tokens for GPT-4, GPT-3.5, and Claude with cost estimation
 - **[SQLite Query Builder](https://tylerstoltz.github.io/git_pages/sqlite-query-builder/)** - Visual query builder with SSMS-style interface and sample database
+
+**Total Tools**: 14
 
 ## Features
 

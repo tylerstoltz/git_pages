@@ -6,81 +6,69 @@ This document tracks planned improvements, new tools, and known issues. See [GAM
 
 ---
 
-## 🐛 Critical Bugs (Must Fix)
+## ✅ Recently Completed
 
 ### Regex Tool - Dual-Selection UX Issue
-**Status**: 🔴 Critical - Blocking normal usage
+**Status**: ✅ Fixed (2025-11-15)
 
-**Problem**: The Pattern Generator's dual-selection mode has broken UX flow:
-- If user selects context block first, then clicks "Select Context", they're still prompted to select context
-- If user clicks "Select Context" first, instructions appear in wrong order
-- In the "Select Changing Bit" step, instructions follow the correct action but the tool always behaves as though the user selected the exact same thing for both Context and Changing Bit
+**Solution Implemented**:
+- Removed alert-based flow that caused focus loss
+- Implemented event-driven selection using mouseup listeners
+- Added visual feedback with color-coded borders (green for context, blue for changing bit)
+- Buttons now toggle to "Cancel Selection" allowing users to exit selection mode
+- Added inline dynamic instructions during selection process
+- Validates that changing bit is different from context and within context range
+- Proper cleanup of event listeners to prevent memory leaks
 
-**Example Use Case**:
-```
-Context Block (full selection):
-Order ID: 12345 Date: 2023-10-01
-Order ID: 67890 Date: 2023-10-02
-Order ID: 54321 Date: 2023-10-03
+---
 
-Changing Bit (highlight within context):
-12345, 67890, 54321 (the order IDs)
+### New Tools Added
 
-Expected Output:
-Order ID: (\d+) Date:
-```
+#### Hash Generator
+**Status**: ✅ Completed (2025-11-15)
 
-**Current Behavior**: Both selections treated as identical, pattern generation fails
+Features implemented:
+- ✅ Generate MD5, SHA-1, SHA-256, SHA-512 hashes
+- ✅ HMAC support with secret key input
+- ✅ Hash text input or file upload with drag-and-drop
+- ✅ Hash comparison tool
+- ✅ Copy individual hashes
+- ✅ Output in hex or base64 format
+- ✅ Auto-generate on text change (debounced)
+- ✅ Mobile-responsive design
 
-**Fix Required**:
-- Review selection state management
-- Fix instruction sequencing logic
-- Ensure independent tracking of context vs. changing bit
-- Add clear visual feedback for each selection step
-- Test with all examples from original TODO
+---
+
+#### Unix Timestamp Converter
+**Status**: ✅ Completed (2025-11-15)
+
+Features implemented:
+- ✅ Convert Unix timestamp → human-readable date
+- ✅ Convert date → Unix timestamp
+- ✅ Support both seconds and milliseconds
+- ✅ Display in multiple timezones (UTC, local)
+- ✅ Live current timestamp (updates every second)
+- ✅ Time difference calculator
+- ✅ Copy current timestamp
+- ✅ Mobile-responsive design
+
+---
+
+#### Mobile Responsiveness Audit
+**Status**: ✅ Completed (2025-11-15)
+
+All 12 tools audited and verified:
+- ✅ All tools have viewport meta tags
+- ✅ All tools have responsive media queries
+- ✅ Added comprehensive mobile support to SQLite Query Builder (was missing all media queries)
+- ✅ Verified touch-friendly buttons (min 44px)
+- ✅ Tested complex UIs (SQLite, Arduino, Regex, Python REPL)
 
 ---
 
 ## 🚀 High Priority (Next Up)
 
 ### New Tools - Essential Utilities
-
-#### Hash Generator
-**Priority**: ⭐⭐⭐ High
-**Estimated Effort**: 3-4 hours
-
-Essential developer tool for security and data integrity.
-
-**Features**:
-- Generate MD5, SHA-1, SHA-256, SHA-512 hashes
-- HMAC support with secret key input
-- Hash text input or file upload
-- Hash comparison tool (compare two hashes)
-- Copy individual hashes or export all
-- Show hash in different formats (hex, base64)
-
-**Technical Notes**: Use Web Crypto API (native browser support, no external libraries needed)
-
----
-
-#### Unix Timestamp Converter
-**Priority**: ⭐⭐⭐ High
-**Estimated Effort**: 2-3 hours
-
-Frequently needed by backend developers and API testers.
-
-**Features**:
-- Convert Unix timestamp → human-readable date
-- Convert date → Unix timestamp
-- Support both seconds and milliseconds
-- Display in multiple timezones (UTC, local, custom)
-- Live current timestamp (updates every second)
-- Time difference calculator (between two timestamps)
-- Copy in various formats
-
-**Technical Notes**: Native JavaScript Date object, no libraries needed
-
----
 
 #### Diff Checker
 **Priority**: ⭐⭐⭐ High
@@ -143,27 +131,6 @@ Valuable for frontend developers and designers.
 ---
 
 ### Quality Improvements
-
-#### Mobile Responsiveness Audit
-**Priority**: ⭐⭐⭐ High
-**Estimated Effort**: 4-6 hours
-
-Ensure all tools work well on mobile devices.
-
-**Checklist**:
-- [ ] Test all 12 tools at 375px width (iPhone SE)
-- [ ] Test at 768px width (tablets)
-- [ ] Fix any layout overflow issues
-- [ ] Ensure buttons are touch-friendly (min 44px)
-- [ ] Test complex UIs:
-  - [ ] SQLite Query Builder (multi-panel)
-  - [ ] Arduino Simulator (visual board)
-  - [ ] Python REPL (loading states)
-  - [ ] Regex Tool (dual panels)
-- [ ] Test input fields with on-screen keyboard
-- [ ] Verify copy/paste on mobile
-
----
 
 #### Accessibility Review
 **Priority**: ⭐⭐ Medium-High
@@ -406,28 +373,38 @@ Add dark mode toggle across all tools.
 - ✅ JavaScript REPL - Browser-based JS execution
 - ✅ Python REPL - Pyodide-powered Python in browser
 - ✅ Arduino Simulator - Virtual Arduino UNO
-- ✅ Regex Tool - Pattern testing (has UX bug to fix)
+- ✅ Regex Tool - Pattern testing with dual-selection mode
 - ✅ SQLite Query Builder - Visual SQL query designer
+- ✅ Hash Generator - Cryptographic hashing tool
+- ✅ Unix Timestamp Converter - Timestamp/date conversion
 - ✅ README.md - Updated to reflect tools hub
 - ✅ AGENTS.md - Updated with development guidelines
 - ✅ HOSTING_OPTIONS.md - Updated repository references
 - ✅ GAMEPLAN.md - Created comprehensive roadmap
 - ✅ index.html footer - Fixed GitHub links
+- ✅ Regex Tool Bug Fix - Fixed dual-selection UX issue
+- ✅ Mobile Responsiveness - Comprehensive audit and fixes
 
 ---
 
 ## 📊 Statistics
 
-**Current Tool Count**: 12
-**High Priority Tools**: 5
+**Current Tool Count**: 14 (+2 from previous)
+**High Priority Tools**: 3
 **Medium Priority Tools**: 3
 **Nice to Have Tools**: 5
-**Known Critical Bugs**: 1
-**Quality Improvements Needed**: 2
+**Known Critical Bugs**: 0 (down from 1)
+**Quality Improvements Completed**: 2
 
-**Estimated Work**:
-- Critical Bugs: 2-3 hours
-- High Priority: ~20-25 hours
+**Recent Work Completed** (2025-11-15):
+- ✅ Fixed critical regex tool bug (~2 hours)
+- ✅ Mobile responsiveness audit and fixes (~3 hours)
+- ✅ Hash Generator tool (~3 hours)
+- ✅ Unix Timestamp Converter tool (~2 hours)
+Total: ~10 hours of development
+
+**Estimated Remaining Work**:
+- High Priority: ~10-15 hours
 - Medium Priority: ~15-20 hours
 - Nice to Have: ~25-35 hours
 
