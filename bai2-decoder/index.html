@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BAI2 Decoder - Claude Code Tools</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: #2d2d30;
+            padding: 15px 20px;
+            border-bottom: 1px solid #3e3e42;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 1.5em;
+            color: #ffffff;
+        }
+
+        .header a {
+            color: #569cd6;
+            text-decoration: none;
+            font-size: 0.9em;
+        }
+
+        .header a:hover {
+            text-decoration: underline;
+        }
+
+        .container {
+            flex: 1;
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .editor-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .editor-panel {
+            background: #252526;
+            border: 1px solid #3e3e42;
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-header {
+            background: #2d2d30;
+            padding: 12px 15px;
+            border-bottom: 1px solid #3e3e42;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-title {
+            color: #9cdcfe;
+            font-weight: bold;
+            font-size: 0.95em;
+        }
+
+        .editor-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        textarea {
+            flex: 1;
+            min-height: 400px;
+            background: #1e1e1e;
+            border: none;
+            padding: 15px;
+            color: #d4d4d4;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            resize: vertical;
+            line-height: 1.6;
+        }
+
+        textarea:focus {
+            outline: none;
+        }
+
+        .controls {
+            padding: 15px;
+            border-top: 1px solid #3e3e42;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background: #0e639c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: #1177bb;
+        }
+
+        button:active {
+            background: #0d5a8f;
+        }
+
+        .output-content {
+            flex: 1;
+            background: #1e1e1e;
+            padding: 15px;
+            overflow-y: auto;
+            min-height: 400px;
+        }
+
+        .file-header, .group-section, .account-section {
+            background: #252526;
+            border: 1px solid #3e3e42;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .section-title {
+            color: #4ec9b0;
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #3e3e42;
+        }
+
+        .info-row {
+            display: flex;
+            padding: 6px 0;
+            border-bottom: 1px solid #2d2d30;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            color: #858585;
+            min-width: 180px;
+            font-weight: 500;
+        }
+
+        .info-value {
+            color: #dcdcaa;
+            flex: 1;
+            font-family: 'Courier New', monospace;
+        }
+
+        .transaction-list {
+            margin-top: 15px;
+        }
+
+        .transaction-item {
+            background: #1e1e1e;
+            border-left: 3px solid #569cd6;
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 4px;
+        }
+
+        .transaction-item.credit {
+            border-left-color: #4ec9b0;
+        }
+
+        .transaction-item.debit {
+            border-left-color: #f48771;
+        }
+
+        .transaction-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .transaction-type {
+            color: #9cdcfe;
+        }
+
+        .transaction-amount {
+            color: #b5cea8;
+            font-family: 'Courier New', monospace;
+        }
+
+        .transaction-amount.credit {
+            color: #4ec9b0;
+        }
+
+        .transaction-amount.debit {
+            color: #f48771;
+        }
+
+        .transaction-details {
+            font-size: 0.9em;
+            color: #858585;
+            margin-top: 5px;
+        }
+
+        .balance-info {
+            background: #2d2d30;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+
+        .balance-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+        }
+
+        .balance-label {
+            color: #9cdcfe;
+        }
+
+        .balance-amount {
+            color: #b5cea8;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+        }
+
+        .status-bar {
+            background: #252526;
+            border: 1px solid #3e3e42;
+            border-radius: 8px;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .status-message {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9em;
+        }
+
+        .status-icon {
+            font-size: 1.2em;
+        }
+
+        .status-success { color: #4ec9b0; }
+        .status-error { color: #f48771; }
+        .status-info { color: #858585; }
+
+        .stats {
+            display: flex;
+            gap: 20px;
+            font-size: 0.85em;
+            color: #858585;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .stat-value {
+            color: #4ec9b0;
+            font-weight: bold;
+        }
+
+        .file-upload-section {
+            background: #252526;
+            border: 1px solid #3e3e42;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .file-drop-zone {
+            background: #1e1e1e;
+            border: 2px dashed #3e3e42;
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .file-drop-zone:hover {
+            border-color: #569cd6;
+            background: #252526;
+        }
+
+        .file-drop-zone.drag-over {
+            border-color: #4ec9b0;
+            background: #2d2d30;
+        }
+
+        .file-drop-icon {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .file-drop-text {
+            color: #858585;
+            margin-bottom: 5px;
+        }
+
+        #file-input {
+            display: none;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #606060;
+            padding: 60px 20px;
+        }
+
+        .empty-state-icon {
+            font-size: 4em;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        @media (max-width: 1000px) {
+            .editor-section {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🏦 BAI2 Decoder</h1>
+        <a href="../">← Back to Tools</a>
+    </div>
+
+    <div class="container">
+        <div class="file-upload-section">
+            <div class="file-drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+                <div class="file-drop-icon">📄</div>
+                <div class="file-drop-text">Click to select a BAI2 file or drag and drop</div>
+            </div>
+            <input type="file" id="file-input" accept=".bai,.bai2,.txt" onchange="handleFileSelect(event)">
+        </div>
+
+        <div class="editor-section">
+            <div class="editor-panel">
+                <div class="panel-header">
+                    <span class="panel-title">📥 BAI2 Input</span>
+                </div>
+                <div class="editor-wrapper">
+                    <textarea id="input-text" placeholder="Paste BAI2 file content here...
+
+Example BAI2 format:
+01,SENDER,RECEIVER,DATE,TIME,FILE_ID/
+02,RECEIVER,SENDER,1,DATE,TIME/
+03,ACCOUNT_NUMBER,CURRENCY,TYPE_CODE/
+16,TRANSACTION_CODE,AMOUNT,,,TEXT/
+49,ACCOUNT_TOTAL,NUM_RECORDS/
+98,GROUP_TOTAL,NUM_ACCOUNTS,NUM_RECORDS/
+99,FILE_TOTAL,NUM_GROUPS,NUM_RECORDS/"></textarea>
+                    <div class="controls">
+                        <button onclick="decodeBAI2()">🔍 Decode BAI2</button>
+                        <button onclick="clearAll()">Clear</button>
+                        <button onclick="copyText('input')">Copy Input</button>
+                        <button onclick="loadSample()">Load Sample</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="editor-panel">
+                <div class="panel-header">
+                    <span class="panel-title">📊 Decoded Output</span>
+                </div>
+                <div class="editor-wrapper">
+                    <div class="output-content" id="output-content">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📋</div>
+                            <div>Decoded BAI2 data will appear here</div>
+                        </div>
+                    </div>
+                    <div class="controls">
+                        <button onclick="copyOutput()">Copy Decoded Text</button>
+                        <button onclick="downloadOutput()">Download Report</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="status-bar">
+            <div class="status-message">
+                <span class="status-icon status-info" id="status-icon">ℹ️</span>
+                <span id="status-text">Ready to decode BAI2 data</span>
+            </div>
+            <div class="stats">
+                <div class="stat-item">
+                    <span>Accounts:</span>
+                    <span class="stat-value" id="account-count">0</span>
+                </div>
+                <div class="stat-item">
+                    <span>Transactions:</span>
+                    <span class="stat-value" id="transaction-count">0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const inputText = document.getElementById('input-text');
+        const outputContent = document.getElementById('output-content');
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+
+        // BAI2 Type Codes
+        const typeCodeMap = {
+            '010': 'Opening Ledger',
+            '015': 'Closing Ledger',
+            '040': 'Opening Available',
+            '045': 'Closing Available',
+            '100': 'Current Day Total',
+            '400': 'Loan Balance',
+            '430': 'Principal Balance',
+        };
+
+        // BAI2 Transaction Codes
+        const transactionCodeMap = {
+            '108': 'Credit - Other',
+            '115': 'Credit - Book Transfer',
+            '142': 'Credit - Electronic Transfer',
+            '165': 'Credit - Miscellaneous',
+            '195': 'Credit - Interest',
+            '201': 'Credit - Wire Transfer',
+            '275': 'Debit - ZBA Credit',
+            '301': 'Debit - Wire Transfer',
+            '308': 'Debit - Other',
+            '315': 'Debit - Book Transfer',
+            '342': 'Debit - Electronic Transfer',
+            '354': 'Debit - Fee',
+            '395': 'Debit - Interest',
+            '398': 'Debit - Service Charge',
+            '451': 'Debit - Late Charge',
+            '475': 'Credit - ZBA Debit',
+            '555': 'Credit - Deposited Item',
+            '662': 'Debit - Rejected Credit',
+        };
+
+        function parseBAI2(content) {
+            // Normalize line endings and split by record separators
+            const records = content.replace(/\r\n/g, '\n').split(/[\/\n]/).filter(r => r.trim());
+
+            const result = {
+                fileHeader: null,
+                groups: []
+            };
+
+            let currentGroup = null;
+            let currentAccount = null;
+
+            records.forEach(record => {
+                const fields = record.split(',').map(f => f.trim());
+                const recordCode = fields[0];
+
+                switch(recordCode) {
+                    case '01': // File Header
+                        result.fileHeader = {
+                            sender: fields[1] || 'N/A',
+                            receiver: fields[2] || 'N/A',
+                            fileDate: formatDate(fields[3]),
+                            fileTime: formatTime(fields[4]),
+                            fileId: fields[5] || 'N/A',
+                            physicalRecordLength: fields[6] || 'N/A',
+                            blockSize: fields[7] || 'N/A',
+                            versionNumber: fields[8] || '2'
+                        };
+                        break;
+
+                    case '02': // Group Header
+                        currentGroup = {
+                            receiver: fields[1] || 'N/A',
+                            originator: fields[2] || 'N/A',
+                            groupStatus: fields[3] === '1' ? 'Update' : 'Previous Day',
+                            asOfDate: formatDate(fields[4]),
+                            asOfTime: formatTime(fields[5]),
+                            currencyCode: fields[6] || 'USD',
+                            accounts: []
+                        };
+                        result.groups.push(currentGroup);
+                        break;
+
+                    case '03': // Account Identifier
+                        currentAccount = {
+                            accountNumber: fields[1] || 'N/A',
+                            currencyCode: fields[2] || 'USD',
+                            typeCode: fields[3] || 'N/A',
+                            typeDescription: typeCodeMap[fields[3]] || 'Unknown Type',
+                            amount: formatAmount(fields[4]),
+                            itemCount: fields[5] || '0',
+                            fundsType: fields[6] || 'N/A',
+                            transactions: [],
+                            balances: []
+                        };
+                        if (currentGroup) {
+                            currentGroup.accounts.push(currentAccount);
+                        }
+                        break;
+
+                    case '16': // Transaction Detail
+                        if (currentAccount) {
+                            const transCode = fields[1];
+                            const amount = fields[2];
+                            currentAccount.transactions.push({
+                                typeCode: transCode,
+                                typeDescription: transactionCodeMap[transCode] || 'Unknown Transaction',
+                                amount: formatAmount(amount),
+                                fundsType: fields[3] || '',
+                                bankReference: fields[4] || '',
+                                customerReference: fields[5] || '',
+                                text: fields[6] || '',
+                                isCredit: isCredit(transCode)
+                            });
+                        }
+                        break;
+
+                    case '88': // Continuation Record
+                        if (currentAccount && currentAccount.transactions.length > 0) {
+                            const lastTrans = currentAccount.transactions[currentAccount.transactions.length - 1];
+                            lastTrans.text += ' ' + fields.slice(1).join(' ');
+                        }
+                        break;
+
+                    case '49': // Account Trailer
+                        if (currentAccount) {
+                            currentAccount.accountControlTotal = formatAmount(fields[1]);
+                            currentAccount.numberOfRecords = fields[2] || '0';
+                        }
+                        break;
+
+                    case '98': // Group Trailer
+                        if (currentGroup) {
+                            currentGroup.groupControlTotal = formatAmount(fields[1]);
+                            currentGroup.numberOfAccounts = fields[2] || '0';
+                            currentGroup.numberOfRecords = fields[3] || '0';
+                        }
+                        break;
+
+                    case '99': // File Trailer
+                        result.fileTrailer = {
+                            fileControlTotal: formatAmount(fields[1]),
+                            numberOfGroups: fields[2] || '0',
+                            numberOfRecords: fields[3] || '0'
+                        };
+                        break;
+                }
+            });
+
+            return result;
+        }
+
+        function isCredit(code) {
+            const creditCodes = ['108', '115', '142', '165', '195', '201', '475', '555'];
+            return creditCodes.includes(code);
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr || dateStr.length !== 6) return dateStr || 'N/A';
+            // YYMMDD format
+            const year = '20' + dateStr.substring(0, 2);
+            const month = dateStr.substring(2, 4);
+            const day = dateStr.substring(4, 6);
+            return `${year}-${month}-${day}`;
+        }
+
+        function formatTime(timeStr) {
+            if (!timeStr || timeStr.length !== 4) return timeStr || 'N/A';
+            // HHMM format
+            const hour = timeStr.substring(0, 2);
+            const minute = timeStr.substring(2, 4);
+            return `${hour}:${minute}`;
+        }
+
+        function formatAmount(amountStr) {
+            if (!amountStr) return '$0.00';
+            // Remove any non-digit characters except minus and decimal
+            const cleaned = amountStr.replace(/[^\d.-]/g, '');
+            const amount = parseFloat(cleaned) / 100; // BAI2 amounts are in cents
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD'
+            }).format(amount);
+        }
+
+        function renderBAI2(data) {
+            let html = '';
+
+            // File Header
+            if (data.fileHeader) {
+                html += `
+                    <div class="file-header">
+                        <div class="section-title">📄 File Header</div>
+                        <div class="info-row">
+                            <div class="info-label">Sender:</div>
+                            <div class="info-value">${data.fileHeader.sender}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">Receiver:</div>
+                            <div class="info-value">${data.fileHeader.receiver}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">File Date:</div>
+                            <div class="info-value">${data.fileHeader.fileDate}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">File Time:</div>
+                            <div class="info-value">${data.fileHeader.fileTime}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">File ID:</div>
+                            <div class="info-value">${data.fileHeader.fileId}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">Version:</div>
+                            <div class="info-value">${data.fileHeader.versionNumber}</div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Groups and Accounts
+            data.groups.forEach((group, groupIdx) => {
+                html += `
+                    <div class="group-section">
+                        <div class="section-title">📁 Group ${groupIdx + 1} - ${group.originator}</div>
+                        <div class="info-row">
+                            <div class="info-label">Receiver:</div>
+                            <div class="info-value">${group.receiver}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">Originator:</div>
+                            <div class="info-value">${group.originator}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">Status:</div>
+                            <div class="info-value">${group.groupStatus}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">As-of Date:</div>
+                            <div class="info-value">${group.asOfDate}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">Currency:</div>
+                            <div class="info-value">${group.currencyCode}</div>
+                        </div>
+                `;
+
+                group.accounts.forEach((account, accountIdx) => {
+                    html += `
+                        <div class="account-section" style="margin-top: 15px;">
+                            <div class="section-title">💳 Account ${accountIdx + 1}: ${account.accountNumber}</div>
+                            <div class="info-row">
+                                <div class="info-label">Account Number:</div>
+                                <div class="info-value">${account.accountNumber}</div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-label">Currency:</div>
+                                <div class="info-value">${account.currencyCode}</div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-label">Summary Type:</div>
+                                <div class="info-value">${account.typeCode} - ${account.typeDescription}</div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-label">Summary Amount:</div>
+                                <div class="info-value">${account.amount}</div>
+                            </div>
+                    `;
+
+                    if (account.transactions.length > 0) {
+                        html += `
+                            <div class="transaction-list">
+                                <div class="section-title" style="font-size: 0.95em;">💸 Transactions (${account.transactions.length})</div>
+                        `;
+
+                        account.transactions.forEach((trans, transIdx) => {
+                            const typeClass = trans.isCredit ? 'credit' : 'debit';
+                            html += `
+                                <div class="transaction-item ${typeClass}">
+                                    <div class="transaction-header">
+                                        <span class="transaction-type">${trans.typeCode} - ${trans.typeDescription}</span>
+                                        <span class="transaction-amount ${typeClass}">${trans.isCredit ? '+' : '-'}${trans.amount}</span>
+                                    </div>
+                                    ${trans.text ? `<div class="transaction-details">📝 ${trans.text}</div>` : ''}
+                                    ${trans.bankReference ? `<div class="transaction-details">🏦 Bank Ref: ${trans.bankReference}</div>` : ''}
+                                    ${trans.customerReference ? `<div class="transaction-details">👤 Customer Ref: ${trans.customerReference}</div>` : ''}
+                                </div>
+                            `;
+                        });
+
+                        html += `</div>`;
+                    }
+
+                    if (account.accountControlTotal) {
+                        html += `
+                            <div class="balance-info">
+                                <div class="balance-row">
+                                    <span class="balance-label">Account Control Total:</span>
+                                    <span class="balance-amount">${account.accountControlTotal}</span>
+                                </div>
+                                <div class="balance-row">
+                                    <span class="balance-label">Number of Records:</span>
+                                    <span class="balance-amount">${account.numberOfRecords}</span>
+                                </div>
+                            </div>
+                        `;
+                    }
+
+                    html += `</div>`;
+                });
+
+                if (group.groupControlTotal) {
+                    html += `
+                        <div class="balance-info" style="margin-top: 15px;">
+                            <div class="balance-row">
+                                <span class="balance-label">Group Control Total:</span>
+                                <span class="balance-amount">${group.groupControlTotal}</span>
+                            </div>
+                            <div class="balance-row">
+                                <span class="balance-label">Number of Accounts:</span>
+                                <span class="balance-amount">${group.numberOfAccounts}</span>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                html += `</div>`;
+            });
+
+            // File Trailer
+            if (data.fileTrailer) {
+                html += `
+                    <div class="file-header">
+                        <div class="section-title">📊 File Trailer</div>
+                        <div class="info-row">
+                            <div class="info-label">File Control Total:</div>
+                            <div class="info-value">${data.fileTrailer.fileControlTotal}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">Number of Groups:</div>
+                            <div class="info-value">${data.fileTrailer.numberOfGroups}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">Number of Records:</div>
+                            <div class="info-value">${data.fileTrailer.numberOfRecords}</div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            return html;
+        }
+
+        function decodeBAI2() {
+            const input = inputText.value.trim();
+            if (!input) {
+                setStatus('error', 'Please enter BAI2 data to decode');
+                return;
+            }
+
+            try {
+                const parsed = parseBAI2(input);
+                const html = renderBAI2(parsed);
+                outputContent.innerHTML = html;
+
+                // Count accounts and transactions
+                let accountCount = 0;
+                let transactionCount = 0;
+                parsed.groups.forEach(group => {
+                    accountCount += group.accounts.length;
+                    group.accounts.forEach(account => {
+                        transactionCount += account.transactions.length;
+                    });
+                });
+
+                document.getElementById('account-count').textContent = accountCount;
+                document.getElementById('transaction-count').textContent = transactionCount;
+
+                setStatus('success', `Decoded ${accountCount} account(s) with ${transactionCount} transaction(s)`);
+            } catch (error) {
+                setStatus('error', 'Error decoding BAI2: ' + error.message);
+                outputContent.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">❌</div>
+                        <div>Error decoding BAI2 data</div>
+                        <div style="margin-top: 10px; color: #f48771;">${error.message}</div>
+                    </div>
+                `;
+            }
+        }
+
+        function clearAll() {
+            inputText.value = '';
+            outputContent.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">📋</div>
+                    <div>Decoded BAI2 data will appear here</div>
+                </div>
+            `;
+            document.getElementById('account-count').textContent = '0';
+            document.getElementById('transaction-count').textContent = '0';
+            setStatus('info', 'Ready to decode BAI2 data');
+        }
+
+        function copyText(type) {
+            const text = inputText.value;
+            if (!text) {
+                setStatus('error', 'Nothing to copy');
+                return;
+            }
+
+            navigator.clipboard.writeText(text).then(() => {
+                setStatus('success', 'Copied to clipboard!');
+            }).catch(() => {
+                setStatus('error', 'Failed to copy');
+            });
+        }
+
+        function copyOutput() {
+            const text = outputContent.innerText;
+            if (!text || text.includes('will appear here')) {
+                setStatus('error', 'Nothing to copy');
+                return;
+            }
+
+            navigator.clipboard.writeText(text).then(() => {
+                setStatus('success', 'Decoded data copied to clipboard!');
+            }).catch(() => {
+                setStatus('error', 'Failed to copy');
+            });
+        }
+
+        function downloadOutput() {
+            const text = outputContent.innerText;
+            if (!text || text.includes('will appear here')) {
+                setStatus('error', 'Nothing to download');
+                return;
+            }
+
+            const blob = new Blob([text], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'bai2-decoded-report.txt';
+            a.click();
+            URL.revokeObjectURL(url);
+            setStatus('success', 'Report downloaded');
+        }
+
+        function loadSample() {
+            const sample = `01,BANKNAME,COMPANYNAME,241115,1200,1,80,1,2/
+02,COMPANYNAME,BANKNAME,1,241115,1200,USD,/
+03,123456789,USD,010,500000,2,0,/
+16,195,150000,,,MONTHLY123,INTEREST CREDIT/
+16,555,350000,,,DEP456,DEPOSIT/
+49,500000,3/
+98,500000,1,4/
+99,500000,1,5/`;
+            inputText.value = sample;
+            decodeBAI2();
+            setStatus('success', 'Sample BAI2 data loaded');
+        }
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                inputText.value = e.target.result;
+                decodeBAI2();
+                setStatus('success', `File "${file.name}" loaded and decoded`);
+            };
+            reader.onerror = function() {
+                setStatus('error', 'Error reading file');
+            };
+            reader.readAsText(file);
+        }
+
+        function setStatus(type, message) {
+            const icon = document.getElementById('status-icon');
+            const text = document.getElementById('status-text');
+
+            icon.className = `status-icon status-${type}`;
+            text.textContent = message;
+
+            if (type === 'success') {
+                icon.textContent = '✅';
+            } else if (type === 'error') {
+                icon.textContent = '❌';
+            } else {
+                icon.textContent = 'ℹ️';
+            }
+        }
+
+        // Drag and drop handlers
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('drag-over');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('drag-over');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                handleFileSelect({ target: fileInput });
+            }
+        });
+
+        // Auto-decode on input
+        inputText.addEventListener('input', () => {
+            if (inputText.value.trim()) {
+                decodeBAI2();
+            }
+        });
+    </script>
+</body>
+</html>
