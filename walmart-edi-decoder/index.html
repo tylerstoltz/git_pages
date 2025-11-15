@@ -1,0 +1,3395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Walmart EDI Decoder/Encoder</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: #1e1e1e;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: #252526;
+            padding: 25px 30px;
+            border-bottom: 1px solid #3e3e42;
+        }
+
+        .header h1 {
+            color: #ffffff;
+            font-size: 28px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-icon {
+            font-size: 32px;
+        }
+
+        .header p {
+            color: #8e8e93;
+            font-size: 14px;
+            margin-left: 44px;
+        }
+
+        .transaction-selector {
+            background: #2d2d30;
+            padding: 20px 30px;
+            border-bottom: 1px solid #3e3e42;
+        }
+
+        .transaction-selector label {
+            color: #cccccc;
+            font-size: 14px;
+            font-weight: 500;
+            margin-right: 12px;
+        }
+
+        .transaction-selector select {
+            background: #3c3c3c;
+            color: #ffffff;
+            border: 1px solid #555555;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            min-width: 250px;
+        }
+
+        .transaction-selector select:hover {
+            border-color: #0e639c;
+        }
+
+        .transaction-selector select:focus {
+            outline: none;
+            border-color: #0e639c;
+            box-shadow: 0 0 0 2px rgba(14, 99, 156, 0.2);
+        }
+
+        .mode-selector {
+            display: flex;
+            gap: 10px;
+            padding: 20px 30px;
+            background: #2d2d30;
+            border-bottom: 1px solid #3e3e42;
+        }
+
+        .mode-btn {
+            padding: 10px 24px;
+            background: #3c3c3c;
+            color: #cccccc;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .mode-btn:hover {
+            background: #4a4a4a;
+        }
+
+        .mode-btn.active {
+            background: #0e639c;
+            color: #ffffff;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .split-view {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .panel {
+            background: #252526;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #3e3e42;
+        }
+
+        .panel-header {
+            background: #2d2d30;
+            padding: 12px 16px;
+            border-bottom: 1px solid #3e3e42;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-title {
+            color: #ffffff;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .panel-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn {
+            padding: 6px 14px;
+            background: #0e639c;
+            color: #ffffff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            background: #1177bb;
+        }
+
+        .btn-secondary {
+            background: #3c3c3c;
+        }
+
+        .btn-secondary:hover {
+            background: #4a4a4a;
+        }
+
+        .panel-content {
+            padding: 16px;
+            min-height: 400px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .file-upload {
+            border: 2px dashed #555555;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+        }
+
+        .file-upload:hover {
+            border-color: #0e639c;
+            background: rgba(14, 99, 156, 0.05);
+        }
+
+        .file-upload.dragover {
+            border-color: #4ec9b0;
+            background: rgba(78, 201, 176, 0.1);
+        }
+
+        .file-upload-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+
+        .file-upload-text {
+            color: #cccccc;
+            font-size: 14px;
+        }
+
+        .file-upload-hint {
+            color: #8e8e93;
+            font-size: 12px;
+            margin-top: 8px;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 400px;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            border: 1px solid #3e3e42;
+            border-radius: 4px;
+            padding: 12px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            resize: vertical;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #0e639c;
+        }
+
+        .output-content {
+            color: #d4d4d4;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .edi-segment {
+            margin: 12px 0;
+            padding: 12px;
+            background: #2d2d30;
+            border-left: 3px solid #0e639c;
+            border-radius: 4px;
+        }
+
+        .segment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .segment-code {
+            color: #4ec9b0;
+            font-weight: 600;
+            font-family: 'Consolas', monospace;
+        }
+
+        .segment-name {
+            color: #ffffff;
+            font-weight: 500;
+        }
+
+        .segment-fields {
+            margin-top: 8px;
+        }
+
+        .field {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            gap: 12px;
+            padding: 6px 0;
+            border-bottom: 1px solid #3e3e42;
+        }
+
+        .field:last-child {
+            border-bottom: none;
+        }
+
+        .field-label {
+            color: #9cdcfe;
+            font-size: 12px;
+        }
+
+        .field-value {
+            color: #ce9178;
+            font-family: 'Consolas', monospace;
+            font-size: 12px;
+        }
+
+        .nested-section {
+            margin-left: 20px;
+            border-left: 2px solid #3e3e42;
+            padding-left: 16px;
+        }
+
+        .item-header {
+            color: #dcdcaa;
+            font-weight: 600;
+            margin: 16px 0 8px 0;
+            padding: 8px;
+            background: #252526;
+            border-radius: 4px;
+        }
+
+        .status-bar {
+            background: #007acc;
+            padding: 12px 30px;
+            color: #ffffff;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-bar.success {
+            background: #4ec9b0;
+        }
+
+        .status-bar.error {
+            background: #f48771;
+        }
+
+        .status-bar.info {
+            background: #0e639c;
+        }
+
+        .status-icon {
+            font-size: 16px;
+        }
+
+        .encoder-form {
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #cccccc;
+            font-size: 13px;
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 8px 12px;
+            background: #3c3c3c;
+            color: #ffffff;
+            border: 1px solid #555555;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #0e639c;
+        }
+
+        .form-hint {
+            color: #8e8e93;
+            font-size: 11px;
+            margin-top: 4px;
+        }
+
+        .segment-list {
+            margin-top: 20px;
+        }
+
+        .segment-item {
+            background: #2d2d30;
+            padding: 12px;
+            margin-bottom: 8px;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .segment-item-code {
+            color: #4ec9b0;
+            font-family: 'Consolas', monospace;
+            font-weight: 600;
+        }
+
+        .segment-item-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .btn-small {
+            padding: 4px 10px;
+            font-size: 11px;
+        }
+
+        .placeholder-message {
+            text-align: center;
+            padding: 60px 20px;
+            color: #8e8e93;
+        }
+
+        .placeholder-message h2 {
+            color: #cccccc;
+            margin-bottom: 12px;
+            font-size: 24px;
+        }
+
+        .placeholder-message p {
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .placeholder-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .stats {
+            display: flex;
+            gap: 24px;
+            margin-left: auto;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .stat-value {
+            font-weight: 600;
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 12px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1e1e1e;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #555555;
+            border-radius: 6px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #666666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>
+                <span class="header-icon">📦</span>
+                Walmart EDI Decoder/Encoder
+            </h1>
+            <p>Decode and encode Walmart EDI transaction sets (X12 format)</p>
+        </div>
+
+        <div class="transaction-selector">
+            <label for="transaction-type">Transaction Type:</label>
+            <select id="transaction-type" onchange="handleTransactionTypeChange()">
+                <option value="850">EDI 850 - Purchase Order</option>
+                <option value="810">EDI 810 - Invoice</option>
+                <option value="856">EDI 856 - Advance Ship Notice</option>
+                <option value="846">EDI 846 - Inventory Inquiry</option>
+                <option value="997">EDI 997 - Functional Acknowledgment
+            </select>
+        </div>
+
+        <div class="mode-selector">
+            <button class="mode-btn active" onclick="switchMode('decode')">Decode</button>
+            <button class="mode-btn" onclick="switchMode('encode')">Encode</button>
+        </div>
+
+        <div class="content">
+            <!-- Decode Section -->
+            <div id="decode-section" class="section active">
+                <div class="file-upload" id="file-upload" onclick="document.getElementById('file-input').click()">
+                    <div class="file-upload-icon">📄</div>
+                    <div class="file-upload-text">Click to upload or drag and drop your EDI file</div>
+                    <div class="file-upload-hint">Supports .edi, .x12, .txt files</div>
+                    <input type="file" id="file-input" accept=".edi,.x12,.txt" onchange="handleFileUpload(event)">
+                </div>
+
+                <div class="split-view">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <span class="panel-title">Input (Raw EDI)</span>
+                            <div class="panel-actions">
+                                <button class="btn btn-secondary btn-small" onclick="clearInput()">Clear</button>
+                            </div>
+                        </div>
+                        <div class="panel-content">
+                            <textarea id="input-text" placeholder="Paste your EDI content here..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="panel">
+                        <div class="panel-header">
+                            <span class="panel-title">Output (Decoded)</span>
+                            <div class="panel-actions">
+                                <button class="btn btn-small" onclick="copyOutput()">Copy</button>
+                                <button class="btn btn-secondary btn-small" onclick="downloadOutput()">Download</button>
+                            </div>
+                        </div>
+                        <div class="panel-content">
+                            <div id="output-content" class="output-content">
+                                <div class="placeholder-message">
+                                    <div class="placeholder-icon">🔍</div>
+                                    <h2>Ready to decode</h2>
+                                    <p>Upload a file or paste EDI content to see the decoded output</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 20px; text-align: center;">
+                    <button class="btn" onclick="decodeEDI()" style="padding: 12px 32px; font-size: 14px;">
+                        🔄 Decode EDI
+                    </button>
+                </div>
+            </div>
+
+            <!-- Encode Section -->
+            <div id="encode-section" class="section">
+                <div class="split-view">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <span class="panel-title">Create Segments</span>
+                        </div>
+                        <div class="panel-content">
+                            <div class="encoder-form" id="encoder-form">
+                                <div class="form-group">
+                                    <label for="segment-type">Segment Type</label>
+                                    <select id="segment-type" onchange="updateEncoderFields()">
+                                        <option value="">Select a segment...</option>
+                                        <option value="ISA">ISA - Interchange Control Header</option>
+                                        <option value="GS">GS - Functional Group Header</option>
+                                        <option value="ST">ST - Transaction Set Header</option>
+                                        <option value="BEG">BEG - Beginning Segment</option>
+                                        <option value="REF">REF - Reference Identification</option>
+                                        <option value="DTM">DTM - Date/Time Reference</option>
+                                        <option value="N1">N1 - Name</option>
+                                        <option value="N3">N3 - Address</option>
+                                        <option value="N4">N4 - Geographic Location</option>
+                                        <option value="PO1">PO1 - Purchase Order Line Item</option>
+                                        <option value="CTT">CTT - Transaction Totals</option>
+                                        <option value="SE">SE - Transaction Set Trailer</option>
+                                        <option value="GE">GE - Functional Group Trailer</option>
+                                        <option value="IEA">IEA - Interchange Control Trailer</option>
+                                    </select>
+                                </div>
+
+                                <div id="dynamic-fields"></div>
+
+                                <button class="btn" onclick="addSegment()" style="width: 100%; margin-top: 12px;">
+                                    ➕ Add Segment
+                                </button>
+                            </div>
+
+                            <div class="segment-list" id="segment-list"></div>
+                        </div>
+                    </div>
+
+                    <div class="panel">
+                        <div class="panel-header">
+                            <span class="panel-title">Generated EDI</span>
+                            <div class="panel-actions">
+                                <button class="btn btn-small" onclick="copyGenerated()">Copy</button>
+                                <button class="btn btn-secondary btn-small" onclick="downloadGenerated()">Download</button>
+                            </div>
+                        </div>
+                        <div class="panel-content">
+                            <textarea id="generated-edi" readonly placeholder="Add segments to generate EDI output..."></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="status-bar" class="status-bar" style="display: none;">
+            <span class="status-icon">ℹ️</span>
+            <span id="status-text">Ready</span>
+            <div class="stats" id="stats" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentMode = 'decode';
+        let currentTransactionType = '850';
+        let segmentsList = [];
+        let parsedData = null;
+
+        // Transaction type handlers
+        function handleTransactionTypeChange() {
+            const select = document.getElementById('transaction-type');
+            currentTransactionType = select.value;
+
+            // Clear current content
+            clearAll();
+
+            // Update encoder segment dropdown
+            updateSegmentDropdown();
+
+            if (currentTransactionType !== '850' && currentTransactionType !== '810' && currentTransactionType !== '856' && currentTransactionType !== '846' && currentTransactionType !== '997') {
+                showPlaceholder();
+            } else {
+                hidePlaceholder();
+            }
+        }
+
+        function updateSegmentDropdown() {
+            const segmentSelect = document.getElementById('segment-type');
+
+            // Common segments for all transaction types
+            let options = `
+                <option value="">Select a segment...</option>
+                <option value="ISA">ISA - Interchange Control Header</option>
+                <option value="GS">GS - Functional Group Header</option>
+                <option value="ST">ST - Transaction Set Header</option>
+            `;
+
+            // Transaction-specific segments
+            if (currentTransactionType === '850') {
+                options += `
+                    <option value="BEG">BEG - Beginning Segment (Purchase Order)</option>
+                    <option value="REF">REF - Reference Identification</option>
+                    <option value="DTM">DTM - Date/Time Reference</option>
+                    <option value="N1">N1 - Name</option>
+                    <option value="N3">N3 - Address</option>
+                    <option value="N4">N4 - Geographic Location</option>
+                    <option value="PO1">PO1 - Purchase Order Line Item</option>
+                `;
+            } else if (currentTransactionType === '810') {
+                options += `
+                    <option value="BIG">BIG - Beginning Segment (Invoice)</option>
+                    <option value="REF">REF - Reference Identification</option>
+                    <option value="DTM">DTM - Date/Time Reference</option>
+                    <option value="ITD">ITD - Terms of Sale</option>
+                    <option value="N1">N1 - Name</option>
+                    <option value="N3">N3 - Address</option>
+                    <option value="N4">N4 - Geographic Location</option>
+                    <option value="IT1">IT1 - Invoice Line Item</option>
+                    <option value="TDS">TDS - Total Monetary Value</option>
+                `;
+            } else if (currentTransactionType === '856') {
+                options += `
+                    <option value="BSN">BSN - Beginning Segment (Ship Notice)</option>
+                    <option value="DTM">DTM - Date/Time Reference</option>
+                    <option value="HL">HL - Hierarchical Level</option>
+                    <option value="TD5">TD5 - Carrier Details</option>
+                    <option value="REF">REF - Reference Identification</option>
+                    <option value="PRF">PRF - Purchase Order Reference</option>
+                    <option value="N1">N1 - Name</option>
+                    <option value="N3">N3 - Address</option>
+                    <option value="N4">N4 - Geographic Location</option>
+                    <option value="LIN">LIN - Item Identification</option>
+                    <option value="SN1">SN1 - Item Detail (Shipment)</option>
+                `;
+            } else if (currentTransactionType === '846') {
+                options += `
+                    <option value="BIA">BIA - Beginning Segment (Inventory Advice)</option>
+                    <option value="DTM">DTM - Date/Time Reference</option>
+                    <option value="REF">REF - Reference Identification</option>
+                    <option value="N1">N1 - Name</option>
+                    <option value="N3">N3 - Address</option>
+                    <option value="N4">N4 - Geographic Location</option>
+                    <option value="LIN">LIN - Item Identification</option>
+                    <option value="QTY">QTY - Quantity Information</option>
+                `;
+            } else if (currentTransactionType === '997') {
+                options += `
+                    <option value="AK1">AK1 - Functional Group Response Header</option>
+                    <option value="AK2">AK2 - Transaction Set Response Header</option>
+                    <option value="AK3">AK3 - Data Segment Note</option>
+                    <option value="AK4">AK4 - Data Element Note</option>
+                    <option value="AK5">AK5 - Transaction Set Response Trailer</option>
+                    <option value="AK9">AK9 - Functional Group Response Trailer</option>
+                `;
+            }
+
+            // Common trailer segments
+            options += `
+                <option value="CTT">CTT - Transaction Totals</option>
+                <option value="SE">SE - Transaction Set Trailer</option>
+                <option value="GE">GE - Functional Group Trailer</option>
+                <option value="IEA">IEA - Interchange Control Trailer</option>
+            `;
+
+            segmentSelect.innerHTML = options;
+        }
+
+        function showPlaceholder() {
+            const decodeSection = document.getElementById('decode-section');
+            const encodeSection = document.getElementById('encode-section');
+
+            const placeholder = `
+                <div class="placeholder-message">
+                    <div class="placeholder-icon">🚧</div>
+                    <h2>Coming Soon</h2>
+                    <p>EDI ${currentTransactionType} decoder/encoder is not yet implemented.</p>
+                    <p style="margin-top: 12px;">Currently supported:<br>
+                    • EDI 850 (Purchase Order)<br>
+                    • EDI 810 (Invoice)<br>
+                    • EDI 856 (Advance Ship Notice)<br>
+                    • EDI 846 (Inventory Inquiry/Advice)<br><br>
+                    Additional transaction types will be added in future updates.</p>
+                </div>
+            `;
+
+            if (currentMode === 'decode') {
+                document.getElementById('output-content').innerHTML = placeholder;
+            } else {
+                document.querySelector('#encode-section .panel-content').innerHTML = placeholder;
+            }
+        }
+
+        function hidePlaceholder() {
+            // Restore normal interface
+            if (currentMode === 'decode') {
+                document.getElementById('output-content').innerHTML = `
+                    <div class="placeholder-message">
+                        <div class="placeholder-icon">🔍</div>
+                        <h2>Ready to decode</h2>
+                        <p>Upload a file or paste EDI content to see the decoded output</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Mode switching
+        function switchMode(mode) {
+            currentMode = mode;
+
+            // Update buttons
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Update sections
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+            });
+
+            if (mode === 'decode') {
+                document.getElementById('decode-section').classList.add('active');
+            } else {
+                document.getElementById('encode-section').classList.add('active');
+            }
+
+            hideStatus();
+
+            // Check if placeholder needed
+            if (currentTransactionType !== '850') {
+                showPlaceholder();
+            }
+        }
+
+        // File upload
+        const fileUpload = document.getElementById('file-upload');
+
+        fileUpload.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            fileUpload.classList.add('dragover');
+        });
+
+        fileUpload.addEventListener('dragleave', () => {
+            fileUpload.classList.remove('dragover');
+        });
+
+        fileUpload.addEventListener('drop', (e) => {
+            e.preventDefault();
+            fileUpload.classList.remove('dragover');
+
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                handleFile(file);
+            }
+        }
+
+        function handleFile(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                document.getElementById('input-text').value = e.target.result;
+                setStatus('success', `File "${file.name}" loaded successfully`);
+            };
+            reader.readAsText(file);
+        }
+
+        // Status bar
+        function setStatus(type, message, stats = null) {
+            const statusBar = document.getElementById('status-bar');
+            const statusText = document.getElementById('status-text');
+            const statusStats = document.getElementById('stats');
+
+            statusBar.className = 'status-bar ' + type;
+            statusText.textContent = message;
+            statusBar.style.display = 'flex';
+
+            if (stats) {
+                statusStats.innerHTML = stats;
+                statusStats.style.display = 'flex';
+            } else {
+                statusStats.style.display = 'none';
+            }
+        }
+
+        function hideStatus() {
+            document.getElementById('status-bar').style.display = 'none';
+        }
+
+        // Clear functions
+        function clearInput() {
+            document.getElementById('input-text').value = '';
+        }
+
+        function clearAll() {
+            document.getElementById('input-text').value = '';
+            document.getElementById('output-content').innerHTML = `
+                <div class="placeholder-message">
+                    <div class="placeholder-icon">🔍</div>
+                    <h2>Ready to decode</h2>
+                    <p>Upload a file or paste EDI content to see the decoded output</p>
+                </div>
+            `;
+            segmentsList = [];
+            renderSegmentList();
+            document.getElementById('generated-edi').value = '';
+            hideStatus();
+        }
+
+        // Copy and download functions
+        function copyOutput() {
+            const output = document.getElementById('output-content').innerText;
+            navigator.clipboard.writeText(output).then(() => {
+                setStatus('success', 'Output copied to clipboard');
+            });
+        }
+
+        function downloadOutput() {
+            const output = document.getElementById('output-content').innerText;
+            const blob = new Blob([output], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'edi-decoded.txt';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function copyGenerated() {
+            const text = document.getElementById('generated-edi').value;
+            navigator.clipboard.writeText(text).then(() => {
+                setStatus('success', 'EDI copied to clipboard');
+            });
+        }
+
+        function downloadGenerated() {
+            const text = document.getElementById('generated-edi').value;
+            const blob = new Blob([text], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `edi-${currentTransactionType}.x12`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // ==================== EDI 850 DECODER ====================
+
+        const segmentNames = {
+            'ISA': 'Interchange Control Header',
+            'GS': 'Functional Group Header',
+            'ST': 'Transaction Set Header',
+            'BEG': 'Beginning Segment for Purchase Order',
+            'BIG': 'Beginning Segment for Invoice',
+            'BSN': 'Beginning Segment for Ship Notice',
+            'BIA': 'Beginning Segment for Inventory Inquiry/Advice',
+            'AK1': 'Functional Group Response Header',
+            'AK2': 'Transaction Set Response Header',
+            'AK3': 'Data Segment Note',
+            'AK4': 'Data Element Note',
+            'AK5': 'Transaction Set Response Trailer',
+            'AK9': 'Functional Group Response Trailer',
+            'REF': 'Reference Identification',
+            'QTY': 'Quantity Information',
+            'PER': 'Administrative Communications Contact',
+            'DTM': 'Date/Time Reference',
+            'ITD': 'Terms of Sale/Deferred Terms',
+            'FOB': 'F.O.B. Related Instructions',
+            'HL': 'Hierarchical Level',
+            'PRF': 'Purchase Order Reference',
+            'LIN': 'Item Identification',
+            'SN1': 'Item Detail (Shipment)',
+            'N1': 'Name',
+            'N2': 'Additional Name Information',
+            'N3': 'Address Information',
+            'N4': 'Geographic Location',
+            'PO1': 'Baseline Item Data (Purchase Order)',
+            'IT1': 'Baseline Item Data (Invoice)',
+            'PID': 'Product/Item Description',
+            'TDS': 'Total Monetary Value Summary',
+            'CTT': 'Transaction Totals',
+            'SE': 'Transaction Set Trailer',
+            'GE': 'Functional Group Trailer',
+            'IEA': 'Interchange Control Trailer',
+            'CUR': 'Currency',
+            'SAC': 'Service/Allowance/Charge',
+            'TD5': 'Carrier Details',
+            'MSG': 'Message Text',
+            'N9': 'Reference Identification',
+            'MAN': 'Marks and Numbers'
+        };
+
+        function detectDelimiters(ediContent) {
+            // ISA segment is always 106 characters
+            if (ediContent.length < 106) {
+                throw new Error('Invalid EDI format: too short for ISA segment');
+            }
+
+            // Element separator is at position 3 (0-indexed)
+            const elementSeparator = ediContent.charAt(3);
+
+            // Segment terminator is at position 105
+            const segmentTerminator = ediContent.charAt(105);
+
+            // Sub-element separator is at position 104
+            const subElementSeparator = ediContent.charAt(104);
+
+            return {
+                element: elementSeparator,
+                segment: segmentTerminator,
+                subElement: subElementSeparator
+            };
+        }
+
+        function parseEDI850(content) {
+            try {
+                // Detect delimiters from ISA segment
+                const delimiters = detectDelimiters(content);
+
+                // Split into segments
+                const segments = content.split(delimiters.segment)
+                    .map(s => s.trim())
+                    .filter(s => s.length > 0);
+
+                const result = {
+                    delimiters: delimiters,
+                    interchange: {},
+                    functionalGroup: {},
+                    transactionSet: {},
+                    items: [],
+                    segments: []
+                };
+
+                let currentItem = null;
+
+                segments.forEach(segment => {
+                    const elements = segment.split(delimiters.element);
+                    const segmentCode = elements[0];
+
+                    result.segments.push({
+                        code: segmentCode,
+                        elements: elements
+                    });
+
+                    switch (segmentCode) {
+                        case 'ISA':
+                            result.interchange = {
+                                authInfoQualifier: elements[1],
+                                authInfo: elements[2],
+                                securityInfoQualifier: elements[3],
+                                securityInfo: elements[4],
+                                senderQualifier: elements[5],
+                                senderId: elements[6],
+                                receiverQualifier: elements[7],
+                                receiverId: elements[8],
+                                date: elements[9],
+                                time: elements[10],
+                                standards: elements[11],
+                                version: elements[12],
+                                controlNumber: elements[13],
+                                ackRequested: elements[14],
+                                usageIndicator: elements[15]
+                            };
+                            break;
+
+                        case 'GS':
+                            result.functionalGroup = {
+                                functionalCode: elements[1],
+                                senderCode: elements[2],
+                                receiverCode: elements[3],
+                                date: elements[4],
+                                time: elements[5],
+                                controlNumber: elements[6],
+                                agency: elements[7],
+                                version: elements[8]
+                            };
+                            break;
+
+                        case 'ST':
+                            result.transactionSet = {
+                                identifier: elements[1],
+                                controlNumber: elements[2]
+                            };
+                            break;
+
+                        case 'BEG':
+                            result.purchaseOrder = {
+                                purpose: elements[1],
+                                type: elements[2],
+                                poNumber: elements[3],
+                                date: elements[5]
+                            };
+                            break;
+
+                        case 'PO1':
+                            if (currentItem) {
+                                result.items.push(currentItem);
+                            }
+                            currentItem = {
+                                lineNumber: elements[1],
+                                quantity: elements[2],
+                                unitOfMeasure: elements[3],
+                                unitPrice: elements[4],
+                                basis: elements[5],
+                                productIdQualifier: elements[6],
+                                productId: elements[7],
+                                details: []
+                            };
+                            break;
+
+                        case 'PID':
+                            if (currentItem) {
+                                currentItem.details.push({
+                                    type: elements[1],
+                                    description: elements[5]
+                                });
+                            }
+                            break;
+                    }
+                });
+
+                if (currentItem) {
+                    result.items.push(currentItem);
+                }
+
+                return result;
+            } catch (error) {
+                throw new Error('Failed to parse EDI: ' + error.message);
+            }
+        }
+
+        function renderEDI850(data) {
+            let html = '';
+
+            // Interchange Header
+            if (data.interchange && data.interchange.senderId) {
+                html += `
+                    <div class="edi-segment">
+                        <div class="segment-header">
+                            <div>
+                                <span class="segment-code">ISA</span>
+                                <span class="segment-name"> - ${segmentNames['ISA']}</span>
+                            </div>
+                        </div>
+                        <div class="segment-fields">
+                            <div class="field">
+                                <div class="field-label">Sender ID</div>
+                                <div class="field-value">${data.interchange.senderId || ''}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Receiver ID</div>
+                                <div class="field-value">${data.interchange.receiverId || ''}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Date</div>
+                                <div class="field-value">${formatEDIDate(data.interchange.date || '')}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Time</div>
+                                <div class="field-value">${formatEDITime(data.interchange.time || '')}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Control Number</div>
+                                <div class="field-value">${data.interchange.controlNumber || ''}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Functional Group
+            if (data.functionalGroup && data.functionalGroup.senderCode) {
+                html += `
+                    <div class="edi-segment">
+                        <div class="segment-header">
+                            <div>
+                                <span class="segment-code">GS</span>
+                                <span class="segment-name"> - ${segmentNames['GS']}</span>
+                            </div>
+                        </div>
+                        <div class="segment-fields">
+                            <div class="field">
+                                <div class="field-label">Functional Code</div>
+                                <div class="field-value">${data.functionalGroup.functionalCode || ''}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Sender Code</div>
+                                <div class="field-value">${data.functionalGroup.senderCode || ''}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Receiver Code</div>
+                                <div class="field-value">${data.functionalGroup.receiverCode || ''}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Date</div>
+                                <div class="field-value">${formatEDIDate(data.functionalGroup.date || '')}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Purchase Order
+            if (data.purchaseOrder) {
+                html += `
+                    <div class="edi-segment" style="border-left-color: #4ec9b0;">
+                        <div class="segment-header">
+                            <div>
+                                <span class="segment-code">BEG</span>
+                                <span class="segment-name"> - Purchase Order Information</span>
+                            </div>
+                        </div>
+                        <div class="segment-fields">
+                            <div class="field">
+                                <div class="field-label">PO Number</div>
+                                <div class="field-value">${data.purchaseOrder.poNumber || ''}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Purpose</div>
+                                <div class="field-value">${getPurposeDescription(data.purchaseOrder.purpose || '')}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Type</div>
+                                <div class="field-value">${getTypeDescription(data.purchaseOrder.type || '')}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Date</div>
+                                <div class="field-value">${formatEDIDate(data.purchaseOrder.date || '')}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Line Items
+            if (data.items && data.items.length > 0) {
+                html += '<div class="nested-section">';
+                html += '<div class="item-header">📋 Line Items (' + data.items.length + ')</div>';
+
+                data.items.forEach((item, index) => {
+                    const unitPrice = item.unitPrice ? parseFloat(item.unitPrice).toFixed(2) : '0.00';
+                    const totalPrice = item.quantity && item.unitPrice
+                        ? (parseFloat(item.quantity) * parseFloat(item.unitPrice)).toFixed(2)
+                        : '0.00';
+
+                    html += `
+                        <div class="edi-segment" style="border-left-color: #dcdcaa;">
+                            <div class="segment-header">
+                                <div>
+                                    <span class="segment-code">PO1</span>
+                                    <span class="segment-name"> - Line Item #${item.lineNumber || index + 1}</span>
+                                </div>
+                            </div>
+                            <div class="segment-fields">
+                                <div class="field">
+                                    <div class="field-label">Product ID</div>
+                                    <div class="field-value">${item.productId || ''}</div>
+                                </div>
+                                <div class="field">
+                                    <div class="field-label">Quantity</div>
+                                    <div class="field-value">${item.quantity || ''} ${item.unitOfMeasure || ''}</div>
+                                </div>
+                                <div class="field">
+                                    <div class="field-label">Unit Price</div>
+                                    <div class="field-value">$${unitPrice}</div>
+                                </div>
+                                <div class="field">
+                                    <div class="field-label">Line Total</div>
+                                    <div class="field-value">$${totalPrice}</div>
+                                </div>
+                    `;
+
+                    if (item.details && item.details.length > 0) {
+                        item.details.forEach(detail => {
+                            if (detail.description) {
+                                html += `
+                                    <div class="field">
+                                        <div class="field-label">Description</div>
+                                        <div class="field-value">${detail.description}</div>
+                                    </div>
+                                `;
+                            }
+                        });
+                    }
+
+                    html += `
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += '</div>';
+            }
+
+            // All other segments
+            if (data.segments && data.segments.length > 0) {
+                const processedCodes = ['ISA', 'GS', 'ST', 'BEG', 'PO1', 'PID', 'SE', 'GE', 'IEA'];
+                const otherSegments = data.segments.filter(s => !processedCodes.includes(s.code));
+
+                if (otherSegments.length > 0) {
+                    html += '<div class="item-header">📄 Additional Segments</div>';
+
+                    otherSegments.forEach(segment => {
+                        html += `
+                            <div class="edi-segment">
+                                <div class="segment-header">
+                                    <div>
+                                        <span class="segment-code">${segment.code}</span>
+                                        <span class="segment-name"> - ${segmentNames[segment.code] || 'Unknown'}</span>
+                                    </div>
+                                </div>
+                                <div class="segment-fields">
+                        `;
+
+                        segment.elements.slice(1).forEach((element, idx) => {
+                            if (element) {
+                                html += `
+                                    <div class="field">
+                                        <div class="field-label">Element ${idx + 1}</div>
+                                        <div class="field-value">${element}</div>
+                                    </div>
+                                `;
+                            }
+                        });
+
+                        html += `
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+            }
+
+            return html;
+        }
+
+        function formatEDIDate(dateStr) {
+            if (!dateStr || dateStr.length < 6) return dateStr;
+
+            // YYMMDD or YYYYMMDD format
+            if (dateStr.length === 6) {
+                const year = '20' + dateStr.substring(0, 2);
+                const month = dateStr.substring(2, 4);
+                const day = dateStr.substring(4, 6);
+                return `${year}-${month}-${day}`;
+            } else if (dateStr.length === 8) {
+                const year = dateStr.substring(0, 4);
+                const month = dateStr.substring(4, 6);
+                const day = dateStr.substring(6, 8);
+                return `${year}-${month}-${day}`;
+            }
+
+            return dateStr;
+        }
+
+        function formatEDITime(timeStr) {
+            if (!timeStr || timeStr.length < 4) return timeStr;
+
+            // HHMM format
+            const hour = timeStr.substring(0, 2);
+            const minute = timeStr.substring(2, 4);
+            return `${hour}:${minute}`;
+        }
+
+        function getPurposeDescription(code) {
+            const purposes = {
+                '00': 'Original',
+                '01': 'Cancellation',
+                '04': 'Change',
+                '05': 'Replace',
+                '07': 'Duplicate',
+                '08': 'Status'
+            };
+            return purposes[code] || code;
+        }
+
+        function getTypeDescription(code) {
+            const types = {
+                'NE': 'New Order',
+                'RL': 'Release or Delivery Order',
+                'SA': 'Stand-alone Order',
+                'KN': 'Purchase Order Change Request'
+            };
+            return types[code] || code;
+        }
+
+        function decodeEDI() {
+            const input = document.getElementById('input-text').value.trim();
+
+            if (!input) {
+                setStatus('error', 'Please enter EDI content to decode');
+                return;
+            }
+
+            try {
+                let parsedData, html;
+
+                if (currentTransactionType === '850') {
+                    parsedData = parseEDI850(input);
+                    html = renderEDI850(parsedData);
+                } else if (currentTransactionType === '810') {
+                    parsedData = parseEDI810(input);
+                    html = renderEDI810(parsedData);
+                } else if (currentTransactionType === '856') {
+                    parsedData = parseEDI856(input);
+                    html = renderEDI856(parsedData);
+                } else if (currentTransactionType === '846') {
+                    parsedData = parseEDI846(input);
+                    html = renderEDI846(parsedData);
+                } else if (currentTransactionType === '997') {
+                    parsedData = parseEDI997(input);
+                    html = renderEDI997(parsedData);
+                } else {
+                    setStatus('error', `EDI ${currentTransactionType} is not yet supported`);
+                    return;
+                }
+
+                document.getElementById('output-content').innerHTML = html;
+
+                const itemCount = parsedData.items ? parsedData.items.length : 0;
+                const stats = `
+                    <div class="stat-item">
+                        <span>Line Items:</span>
+                        <span class="stat-value">${itemCount}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span>Segments:</span>
+                        <span class="stat-value">${parsedData.segments.length}</span>
+                    </div>
+                `;
+
+                setStatus('success', 'EDI decoded successfully', stats);
+            } catch (error) {
+                setStatus('error', 'Error decoding EDI: ' + error.message);
+                document.getElementById('output-content').innerHTML = `
+                    <div class="placeholder-message">
+                        <div class="placeholder-icon">❌</div>
+                        <h2>Decode Error</h2>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // ==================== EDI 810 DECODER ====================
+
+        function parseEDI810(content) {
+            try {
+                // Detect delimiters from ISA segment
+                const delimiters = detectDelimiters(content);
+
+                // Split into segments
+                const segments = content.split(delimiters.segment)
+                    .map(s => s.trim())
+                    .filter(s => s.length > 0);
+
+                const result = {
+                    delimiters: delimiters,
+                    interchange: {},
+                    functionalGroup: {},
+                    transactionSet: {},
+                    invoice: {},
+                    items: [],
+                    totals: {},
+                    segments: []
+                };
+
+                let currentItem = null;
+
+                segments.forEach(segment => {
+                    const elements = segment.split(delimiters.element);
+                    const segmentCode = elements[0];
+
+                    result.segments.push({
+                        code: segmentCode,
+                        elements: elements
+                    });
+
+                    switch (segmentCode) {
+                        case 'ISA':
+                            result.interchange = {
+                                authInfoQualifier: elements[1],
+                                authInfo: elements[2],
+                                securityInfoQualifier: elements[3],
+                                securityInfo: elements[4],
+                                senderQualifier: elements[5],
+                                senderId: elements[6],
+                                receiverQualifier: elements[7],
+                                receiverId: elements[8],
+                                date: elements[9],
+                                time: elements[10],
+                                standards: elements[11],
+                                version: elements[12],
+                                controlNumber: elements[13],
+                                ackRequested: elements[14],
+                                usageIndicator: elements[15]
+                            };
+                            break;
+
+                        case 'GS':
+                            result.functionalGroup = {
+                                functionalCode: elements[1],
+                                senderCode: elements[2],
+                                receiverCode: elements[3],
+                                date: elements[4],
+                                time: elements[5],
+                                controlNumber: elements[6],
+                                agency: elements[7],
+                                version: elements[8]
+                            };
+                            break;
+
+                        case 'ST':
+                            result.transactionSet = {
+                                identifier: elements[1],
+                                controlNumber: elements[2]
+                            };
+                            break;
+
+                        case 'BIG':
+                            result.invoice = {
+                                invoiceDate: elements[1],
+                                invoiceNumber: elements[2],
+                                poDate: elements[3],
+                                poNumber: elements[4],
+                                releaseNumber: elements[5],
+                                changeOrderSequence: elements[6],
+                                transactionType: elements[7]
+                            };
+                            break;
+
+                        case 'IT1':
+                            if (currentItem) {
+                                result.items.push(currentItem);
+                            }
+                            currentItem = {
+                                lineNumber: elements[1],
+                                quantityInvoiced: elements[2],
+                                unitOfMeasure: elements[3],
+                                unitPrice: elements[4],
+                                basis: elements[5],
+                                productIdQualifier: elements[6],
+                                productId: elements[7],
+                                productIdQualifier2: elements[8],
+                                productId2: elements[9],
+                                details: []
+                            };
+                            break;
+
+                        case 'PID':
+                            if (currentItem) {
+                                currentItem.details.push({
+                                    type: elements[1],
+                                    description: elements[5]
+                                });
+                            }
+                            break;
+
+                        case 'TDS':
+                            result.totals = {
+                                totalAmount: elements[1],
+                                totalAmountDue: elements[2],
+                                discountedAmount: elements[3],
+                                termsDiscountAmount: elements[4]
+                            };
+                            break;
+                    }
+                });
+
+                if (currentItem) {
+                    result.items.push(currentItem);
+                }
+
+                return result;
+            } catch (error) {
+                throw new Error('Failed to parse EDI 810: ' + error.message);
+            }
+        }
+
+        function renderEDI810(data) {
+            let html = '';
+
+            // Interchange Header
+            if (data.interchange && data.interchange.senderId) {
+                html += `
+                    <div class="edi-segment">
+                        <div class="segment-header">
+                            <div>
+                                <span class="segment-code">ISA</span>
+                                <span class="segment-name"> - ${segmentNames['ISA']}</span>
+                            </div>
+                        </div>
+                        <div class="segment-fields">
+                            <div class="field">
+                                <div class="field-label">Sender ID</div>
+                                <div class="field-value">${data.interchange.senderId || ''}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Receiver ID</div>
+                                <div class="field-value">${data.interchange.receiverId || ''}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Date</div>
+                                <div class="field-value">${formatEDIDate(data.interchange.date || '')}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Time</div>
+                                <div class="field-value">${formatEDITime(data.interchange.time || '')}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Control Number</div>
+                                <div class="field-value">${data.interchange.controlNumber || ''}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Functional Group
+            if (data.functionalGroup && data.functionalGroup.senderCode) {
+                html += `
+                    <div class="edi-segment">
+                        <div class="segment-header">
+                            <div>
+                                <span class="segment-code">GS</span>
+                                <span class="segment-name"> - ${segmentNames['GS']}</span>
+                            </div>
+                        </div>
+                        <div class="segment-fields">
+                            <div class="field">
+                                <div class="field-label">Functional Code</div>
+                                <div class="field-value">${data.functionalGroup.functionalCode || ''}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Sender Code</div>
+                                <div class="field-value">${data.functionalGroup.senderCode || ''}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Receiver Code</div>
+                                <div class="field-value">${data.functionalGroup.receiverCode || ''}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Date</div>
+                                <div class="field-value">${formatEDIDate(data.functionalGroup.date || '')}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Invoice Header
+            if (data.invoice && data.invoice.invoiceNumber) {
+                html += `
+                    <div class="edi-segment" style="border-left-color: #4ec9b0;">
+                        <div class="segment-header">
+                            <div>
+                                <span class="segment-code">BIG</span>
+                                <span class="segment-name"> - Invoice Information</span>
+                            </div>
+                        </div>
+                        <div class="segment-fields">
+                            <div class="field">
+                                <div class="field-label">Invoice Number</div>
+                                <div class="field-value">${data.invoice.invoiceNumber || ''}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Invoice Date</div>
+                                <div class="field-value">${formatEDIDate(data.invoice.invoiceDate || '')}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">PO Number</div>
+                                <div class="field-value">${data.invoice.poNumber || ''}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">PO Date</div>
+                                <div class="field-value">${formatEDIDate(data.invoice.poDate || '')}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Line Items
+            if (data.items && data.items.length > 0) {
+                html += '<div class="nested-section">';
+                html += '<div class="item-header">🧾 Invoice Line Items (' + data.items.length + ')</div>';
+
+                let grandTotal = 0;
+
+                data.items.forEach((item, index) => {
+                    // Parse unit price with implicit decimals (N2 format)
+                    const unitPriceValue = item.unitPrice ? parseFloat(item.unitPrice) / 100 : 0;
+                    const unitPrice = unitPriceValue.toFixed(2);
+
+                    const quantity = item.quantityInvoiced ? parseFloat(item.quantityInvoiced) : 0;
+                    const lineTotal = (quantity * unitPriceValue).toFixed(2);
+                    grandTotal += parseFloat(lineTotal);
+
+                    html += `
+                        <div class="edi-segment" style="border-left-color: #dcdcaa;">
+                            <div class="segment-header">
+                                <div>
+                                    <span class="segment-code">IT1</span>
+                                    <span class="segment-name"> - Line Item #${item.lineNumber || index + 1}</span>
+                                </div>
+                            </div>
+                            <div class="segment-fields">
+                                <div class="field">
+                                    <div class="field-label">Product ID</div>
+                                    <div class="field-value">${item.productId || ''}</div>
+                                </div>
+                                <div class="field">
+                                    <div class="field-label">Quantity Invoiced</div>
+                                    <div class="field-value">${item.quantityInvoiced || ''} ${item.unitOfMeasure || ''}</div>
+                                </div>
+                                <div class="field">
+                                    <div class="field-label">Unit Price</div>
+                                    <div class="field-value">$${unitPrice}</div>
+                                </div>
+                                <div class="field">
+                                    <div class="field-label">Line Total</div>
+                                    <div class="field-value">$${lineTotal}</div>
+                                </div>
+                    `;
+
+                    if (item.details && item.details.length > 0) {
+                        item.details.forEach(detail => {
+                            if (detail.description) {
+                                html += `
+                                    <div class="field">
+                                        <div class="field-label">Description</div>
+                                        <div class="field-value">${detail.description}</div>
+                                    </div>
+                                `;
+                            }
+                        });
+                    }
+
+                    html += `
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += '</div>';
+
+                // Show calculated total
+                html += `
+                    <div class="edi-segment" style="border-left-color: #c586c0; margin-top: 16px;">
+                        <div class="segment-header">
+                            <div>
+                                <span class="segment-code">CALC</span>
+                                <span class="segment-name"> - Calculated Totals</span>
+                            </div>
+                        </div>
+                        <div class="segment-fields">
+                            <div class="field">
+                                <div class="field-label">Subtotal (from line items)</div>
+                                <div class="field-value">$${grandTotal.toFixed(2)}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Invoice Totals (TDS segment)
+            if (data.totals && data.totals.totalAmount) {
+                const totalAmount = parseFloat(data.totals.totalAmount || 0) / 100;
+                const discountedAmount = parseFloat(data.totals.discountedAmount || 0) / 100;
+                const termsDiscount = parseFloat(data.totals.termsDiscountAmount || 0) / 100;
+
+                html += `
+                    <div class="edi-segment" style="border-left-color: #c586c0;">
+                        <div class="segment-header">
+                            <div>
+                                <span class="segment-code">TDS</span>
+                                <span class="segment-name"> - ${segmentNames['TDS']}</span>
+                            </div>
+                        </div>
+                        <div class="segment-fields">
+                            <div class="field">
+                                <div class="field-label">Total Invoice Amount</div>
+                                <div class="field-value">$${totalAmount.toFixed(2)}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Amount Due if Paid by Discount Date</div>
+                                <div class="field-value">$${discountedAmount.toFixed(2)}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Terms Discount Amount</div>
+                                <div class="field-value">$${termsDiscount.toFixed(2)}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // All other segments
+            if (data.segments && data.segments.length > 0) {
+                const processedCodes = ['ISA', 'GS', 'ST', 'BIG', 'IT1', 'PID', 'TDS', 'SE', 'GE', 'IEA'];
+                const otherSegments = data.segments.filter(s => !processedCodes.includes(s.code));
+
+                if (otherSegments.length > 0) {
+                    html += '<div class="item-header">📄 Additional Segments</div>';
+
+                    otherSegments.forEach(segment => {
+                        html += `
+                            <div class="edi-segment">
+                                <div class="segment-header">
+                                    <div>
+                                        <span class="segment-code">${segment.code}</span>
+                                        <span class="segment-name"> - ${segmentNames[segment.code] || 'Unknown'}</span>
+                                    </div>
+                                </div>
+                                <div class="segment-fields">
+                        `;
+
+                        segment.elements.slice(1).forEach((element, idx) => {
+                            if (element) {
+                                html += `
+                                    <div class="field">
+                                        <div class="field-label">Element ${idx + 1}</div>
+                                        <div class="field-value">${element}</div>
+                                    </div>
+                                `;
+                            }
+                        });
+
+                        html += `
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+            }
+
+            return html;
+        }
+
+        // ==================== EDI 856 DECODER ====================
+
+        function parseEDI856(content) {
+            try {
+                // Detect delimiters from ISA segment
+                const delimiters = detectDelimiters(content);
+
+                // Split into segments
+                const segments = content.split(delimiters.segment)
+                    .map(s => s.trim())
+                    .filter(s => s.length > 0);
+
+                const result = {
+                    delimiters: delimiters,
+                    interchange: {},
+                    functionalGroup: {},
+                    transactionSet: {},
+                    shipNotice: {},
+                    hierarchicalLevels: [],
+                    items: [],
+                    segments: []
+                };
+
+                let currentHL = null;
+                let currentItem = null;
+
+                segments.forEach(segment => {
+                    const elements = segment.split(delimiters.element);
+                    const segmentCode = elements[0];
+
+                    result.segments.push({
+                        code: segmentCode,
+                        elements: elements
+                    });
+
+                    switch (segmentCode) {
+                        case 'ISA':
+                            result.interchange = {
+                                authInfoQualifier: elements[1],
+                                authInfo: elements[2],
+                                securityInfoQualifier: elements[3],
+                                securityInfo: elements[4],
+                                senderQualifier: elements[5],
+                                senderId: elements[6],
+                                receiverQualifier: elements[7],
+                                receiverId: elements[8],
+                                date: elements[9],
+                                time: elements[10],
+                                standards: elements[11],
+                                version: elements[12],
+                                controlNumber: elements[13],
+                                ackRequested: elements[14],
+                                usageIndicator: elements[15]
+                            };
+                            break;
+
+                        case 'GS':
+                            result.functionalGroup = {
+                                functionalCode: elements[1],
+                                senderCode: elements[2],
+                                receiverCode: elements[3],
+                                date: elements[4],
+                                time: elements[5],
+                                controlNumber: elements[6],
+                                agency: elements[7],
+                                version: elements[8]
+                            };
+                            break;
+
+                        case 'ST':
+                            result.transactionSet = {
+                                identifier: elements[1],
+                                controlNumber: elements[2]
+                            };
+                            break;
+
+                        case 'BSN':
+                            result.shipNotice = {
+                                purposeCode: elements[1],
+                                shipmentId: elements[2],
+                                date: elements[3],
+                                time: elements[4],
+                                hierarchicalStructure: elements[5]
+                            };
+                            break;
+
+                        case 'HL':
+                            currentHL = {
+                                id: elements[1],
+                                parentId: elements[2],
+                                levelCode: elements[3],
+                                childCode: elements[4],
+                                items: []
+                            };
+                            result.hierarchicalLevels.push(currentHL);
+                            break;
+
+                        case 'PRF':
+                            if (currentHL) {
+                                currentHL.poNumber = elements[1];
+                                currentHL.poDate = elements[4];
+                            }
+                            break;
+
+                        case 'LIN':
+                            if (currentItem) {
+                                result.items.push(currentItem);
+                            }
+                            currentItem = {
+                                hlId: currentHL ? currentHL.id : null,
+                                lineNumber: elements[1],
+                                productIdQualifier: elements[2],
+                                productId: elements[3],
+                                quantity: null,
+                                unitOfMeasure: null
+                            };
+                            if (currentHL) {
+                                currentHL.items.push(currentItem);
+                            }
+                            break;
+
+                        case 'SN1':
+                            if (currentItem) {
+                                currentItem.lineNumber = currentItem.lineNumber || elements[1];
+                                currentItem.quantity = elements[2];
+                                currentItem.unitOfMeasure = elements[3];
+                            }
+                            break;
+                    }
+                });
+
+                if (currentItem) {
+                    result.items.push(currentItem);
+                }
+
+                return result;
+            } catch (error) {
+                throw new Error('Failed to parse EDI 856: ' + error.message);
+            }
+        }
+
+        function renderEDI856(data) {
+            let html = '';
+
+            // Interchange Header
+            if (data.interchange && data.interchange.senderId) {
+                html += `
+                    <div class="edi-segment">
+                        <div class="segment-header">
+                            <div>
+                                <span class="segment-code">ISA</span>
+                                <span class="segment-name"> - ${segmentNames['ISA']}</span>
+                            </div>
+                        </div>
+                        <div class="segment-fields">
+                            <div class="field">
+                                <div class="field-label">Sender ID</div>
+                                <div class="field-value">${data.interchange.senderId || ''}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Receiver ID</div>
+                                <div class="field-value">${data.interchange.receiverId || ''}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Date</div>
+                                <div class="field-value">${formatEDIDate(data.interchange.date || '')}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Time</div>
+                                <div class="field-value">${formatEDITime(data.interchange.time || '')}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Control Number</div>
+                                <div class="field-value">${data.interchange.controlNumber || ''}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Functional Group
+            if (data.functionalGroup && data.functionalGroup.senderCode) {
+                html += `
+                    <div class="edi-segment">
+                        <div class="segment-header">
+                            <div>
+                                <span class="segment-code">GS</span>
+                                <span class="segment-name"> - ${segmentNames['GS']}</span>
+                            </div>
+                        </div>
+                        <div class="segment-fields">
+                            <div class="field">
+                                <div class="field-label">Functional Code</div>
+                                <div class="field-value">${data.functionalGroup.functionalCode || ''}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Sender Code</div>
+                                <div class="field-value">${data.functionalGroup.senderCode || ''}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Receiver Code</div>
+                                <div class="field-value">${data.functionalGroup.receiverCode || ''}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Date</div>
+                                <div class="field-value">${formatEDIDate(data.functionalGroup.date || '')}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Ship Notice Header
+            if (data.shipNotice && data.shipNotice.shipmentId) {
+                const purposeDesc = {
+                    '00': 'Original',
+                    '01': 'Cancellation',
+                    '04': 'Change',
+                    '05': 'Replace'
+                };
+
+                html += `
+                    <div class="edi-segment" style="border-left-color: #4ec9b0;">
+                        <div class="segment-header">
+                            <div>
+                                <span class="segment-code">BSN</span>
+                                <span class="segment-name"> - Ship Notice Information</span>
+                            </div>
+                        </div>
+                        <div class="segment-fields">
+                            <div class="field">
+                                <div class="field-label">Shipment ID</div>
+                                <div class="field-value">${data.shipNotice.shipmentId || ''}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Purpose</div>
+                                <div class="field-value">${purposeDesc[data.shipNotice.purposeCode] || data.shipNotice.purposeCode || ''}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Ship Date</div>
+                                <div class="field-value">${formatEDIDate(data.shipNotice.date || '')}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Ship Time</div>
+                                <div class="field-value">${formatEDITime(data.shipNotice.time || '')}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Hierarchical Levels
+            if (data.hierarchicalLevels && data.hierarchicalLevels.length > 0) {
+                html += '<div class="nested-section">';
+                html += '<div class="item-header">📦 Hierarchical Structure</div>';
+
+                const levelNames = {
+                    'S': 'Shipment',
+                    'O': 'Order',
+                    'P': 'Pack/Carton',
+                    'I': 'Item'
+                };
+
+                data.hierarchicalLevels.forEach((hl, index) => {
+                    const levelName = levelNames[hl.levelCode] || hl.levelCode;
+
+                    html += `
+                        <div class="edi-segment" style="border-left-color: #dcdcaa;">
+                            <div class="segment-header">
+                                <div>
+                                    <span class="segment-code">HL</span>
+                                    <span class="segment-name"> - ${levelName} Level (ID: ${hl.id})</span>
+                                </div>
+                            </div>
+                            <div class="segment-fields">
+                                <div class="field">
+                                    <div class="field-label">Hierarchical ID</div>
+                                    <div class="field-value">${hl.id || ''}</div>
+                                </div>
+                                <div class="field">
+                                    <div class="field-label">Parent ID</div>
+                                    <div class="field-value">${hl.parentId || 'None (Top Level)'}</div>
+                                </div>
+                                <div class="field">
+                                    <div class="field-label">Level Code</div>
+                                    <div class="field-value">${hl.levelCode} (${levelName})</div>
+                                </div>
+                    `;
+
+                    if (hl.poNumber) {
+                        html += `
+                            <div class="field">
+                                <div class="field-label">PO Number</div>
+                                <div class="field-value">${hl.poNumber}</div>
+                            </div>
+                        `;
+                    }
+
+                    if (hl.items && hl.items.length > 0) {
+                        html += `
+                            <div class="field">
+                                <div class="field-label">Contains Items</div>
+                                <div class="field-value">${hl.items.length} item(s)</div>
+                            </div>
+                        `;
+                    }
+
+                    html += `
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += '</div>';
+            }
+
+            // Ship Items
+            if (data.items && data.items.length > 0) {
+                html += '<div class="nested-section">';
+                html += '<div class="item-header">📋 Shipped Items (' + data.items.length + ')</div>';
+
+                data.items.forEach((item, index) => {
+                    html += `
+                        <div class="edi-segment" style="border-left-color: #c586c0;">
+                            <div class="segment-header">
+                                <div>
+                                    <span class="segment-code">LIN/SN1</span>
+                                    <span class="segment-name"> - Item #${item.lineNumber || index + 1}</span>
+                                </div>
+                            </div>
+                            <div class="segment-fields">
+                                <div class="field">
+                                    <div class="field-label">Product ID</div>
+                                    <div class="field-value">${item.productId || ''}</div>
+                                </div>
+                                <div class="field">
+                                    <div class="field-label">Quantity Shipped</div>
+                                    <div class="field-value">${item.quantity || ''} ${item.unitOfMeasure || ''}</div>
+                                </div>
+                                <div class="field">
+                                    <div class="field-label">Hierarchical Level</div>
+                                    <div class="field-value">HL ${item.hlId || 'N/A'}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += '</div>';
+            }
+
+            // All other segments
+            if (data.segments && data.segments.length > 0) {
+                const processedCodes = ['ISA', 'GS', 'ST', 'BSN', 'HL', 'PRF', 'LIN', 'SN1', 'SE', 'GE', 'IEA'];
+                const otherSegments = data.segments.filter(s => !processedCodes.includes(s.code));
+
+                if (otherSegments.length > 0) {
+                    html += '<div class="item-header">📄 Additional Segments</div>';
+
+                    otherSegments.forEach(segment => {
+                        html += `
+                            <div class="edi-segment">
+                                <div class="segment-header">
+                                    <div>
+                                        <span class="segment-code">${segment.code}</span>
+                                        <span class="segment-name"> - ${segmentNames[segment.code] || 'Unknown'}</span>
+                                    </div>
+                                </div>
+                                <div class="segment-fields">
+                        `;
+
+                        segment.elements.slice(1).forEach((element, idx) => {
+                            if (element) {
+                                html += `
+                                    <div class="field">
+                                        <div class="field-label">Element ${idx + 1}</div>
+                                        <div class="field-value">${element}</div>
+                                    </div>
+                                `;
+                            }
+                        });
+
+                        html += `
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+            }
+
+            return html;
+        }
+
+        // ==================== EDI 846 DECODER ====================
+
+        function parseEDI846(content) {
+            try {
+                // Detect delimiters from ISA segment
+                const delimiters = detectDelimiters(content);
+
+                // Split into segments
+                const segments = content.split(delimiters.segment)
+                    .map(s => s.trim())
+                    .filter(s => s.length > 0);
+
+                const result = {
+                    delimiters: delimiters,
+                    interchange: {},
+                    functionalGroup: {},
+                    transactionSet: {},
+                    inventoryAdvice: {},
+                    items: [],
+                    segments: []
+                };
+
+                let currentItem = null;
+
+                segments.forEach(segment => {
+                    const elements = segment.split(delimiters.element);
+                    const segmentCode = elements[0];
+
+                    result.segments.push({
+                        code: segmentCode,
+                        elements: elements
+                    });
+
+                    switch (segmentCode) {
+                        case 'ISA':
+                            result.interchange = {
+                                authInfoQualifier: elements[1],
+                                authInfo: elements[2],
+                                securityInfoQualifier: elements[3],
+                                securityInfo: elements[4],
+                                senderQualifier: elements[5],
+                                senderId: elements[6],
+                                receiverQualifier: elements[7],
+                                receiverId: elements[8],
+                                date: elements[9],
+                                time: elements[10],
+                                standards: elements[11],
+                                version: elements[12],
+                                controlNumber: elements[13],
+                                ackRequested: elements[14],
+                                usageIndicator: elements[15]
+                            };
+                            break;
+
+                        case 'GS':
+                            result.functionalGroup = {
+                                functionalCode: elements[1],
+                                senderCode: elements[2],
+                                receiverCode: elements[3],
+                                date: elements[4],
+                                time: elements[5],
+                                controlNumber: elements[6],
+                                agency: elements[7],
+                                version: elements[8]
+                            };
+                            break;
+
+                        case 'ST':
+                            result.transactionSet = {
+                                identifier: elements[1],
+                                controlNumber: elements[2]
+                            };
+                            break;
+
+                        case 'BIA':
+                            result.inventoryAdvice = {
+                                reportType: elements[1],
+                                referenceId: elements[2],
+                                date: elements[3],
+                                time: elements[4],
+                                actionCode: elements[5]
+                            };
+                            break;
+
+                        case 'LIN':
+                            if (currentItem) {
+                                result.items.push(currentItem);
+                            }
+                            currentItem = {
+                                lineNumber: elements[1],
+                                productIdQualifier: elements[2],
+                                productId: elements[3],
+                                quantities: []
+                            };
+                            break;
+
+                        case 'QTY':
+                            if (currentItem) {
+                                currentItem.quantities.push({
+                                    qualifierCode: elements[1],
+                                    quantity: elements[2],
+                                    unitOfMeasure: elements[3]
+                                });
+                            }
+                            break;
+                    }
+                });
+
+                if (currentItem) {
+                    result.items.push(currentItem);
+                }
+
+                return result;
+            } catch (error) {
+                throw new Error('Failed to parse EDI 846: ' + error.message);
+            }
+        }
+
+        function renderEDI846(data) {
+            let html = '';
+
+            // Interchange Header
+            if (data.interchange && data.interchange.senderId) {
+                html += `
+                    <div class="edi-segment">
+                        <div class="segment-header">
+                            <div>
+                                <span class="segment-code">ISA</span>
+                                <span class="segment-name"> - ${segmentNames['ISA']}</span>
+                            </div>
+                        </div>
+                        <div class="segment-fields">
+                            <div class="field">
+                                <div class="field-label">Sender ID</div>
+                                <div class="field-value">${data.interchange.senderId || ''}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Receiver ID</div>
+                                <div class="field-value">${data.interchange.receiverId || ''}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Date</div>
+                                <div class="field-value">${formatEDIDate(data.interchange.date || '')}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Time</div>
+                                <div class="field-value">${formatEDITime(data.interchange.time || '')}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Control Number</div>
+                                <div class="field-value">${data.interchange.controlNumber || ''}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Functional Group
+            if (data.functionalGroup && data.functionalGroup.senderCode) {
+                html += `
+                    <div class="edi-segment">
+                        <div class="segment-header">
+                            <div>
+                                <span class="segment-code">GS</span>
+                                <span class="segment-name"> - ${segmentNames['GS']}</span>
+                            </div>
+                        </div>
+                        <div class="segment-fields">
+                            <div class="field">
+                                <div class="field-label">Functional Code</div>
+                                <div class="field-value">${data.functionalGroup.functionalCode || ''}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Sender Code</div>
+                                <div class="field-value">${data.functionalGroup.senderCode || ''}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Receiver Code</div>
+                                <div class="field-value">${data.functionalGroup.receiverCode || ''}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Date</div>
+                                <div class="field-value">${formatEDIDate(data.functionalGroup.date || '')}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Inventory Advice Header
+            if (data.inventoryAdvice && data.inventoryAdvice.referenceId) {
+                const reportTypes = {
+                    '00': 'Original',
+                    '13': 'Inquiry',
+                    'SI': 'Status Information'
+                };
+
+                html += `
+                    <div class="edi-segment" style="border-left-color: #4ec9b0;">
+                        <div class="segment-header">
+                            <div>
+                                <span class="segment-code">BIA</span>
+                                <span class="segment-name"> - Inventory Advice Information</span>
+                            </div>
+                        </div>
+                        <div class="segment-fields">
+                            <div class="field">
+                                <div class="field-label">Reference ID</div>
+                                <div class="field-value">${data.inventoryAdvice.referenceId || ''}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Report Type</div>
+                                <div class="field-value">${reportTypes[data.inventoryAdvice.reportType] || data.inventoryAdvice.reportType || ''}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Date</div>
+                                <div class="field-value">${formatEDIDate(data.inventoryAdvice.date || '')}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Time</div>
+                                <div class="field-value">${formatEDITime(data.inventoryAdvice.time || '')}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Inventory Items
+            if (data.items && data.items.length > 0) {
+                html += '<div class="nested-section">';
+                html += '<div class="item-header">📦 Inventory Items (' + data.items.length + ')</div>';
+
+                const qtyCodeDescriptions = {
+                    '01': 'Discrete Quantity',
+                    '17': 'On Hand',
+                    '26': 'Quantity Available',
+                    '33': 'Quantity on Order',
+                    'QH': 'Quantity on Hold',
+                    'QT': 'Quantity in Transit'
+                };
+
+                data.items.forEach((item, index) => {
+                    html += `
+                        <div class="edi-segment" style="border-left-color: #dcdcaa;">
+                            <div class="segment-header">
+                                <div>
+                                    <span class="segment-code">LIN</span>
+                                    <span class="segment-name"> - Item #${item.lineNumber || index + 1}</span>
+                                </div>
+                            </div>
+                            <div class="segment-fields">
+                                <div class="field">
+                                    <div class="field-label">Product ID</div>
+                                    <div class="field-value">${item.productId || ''}</div>
+                                </div>
+                                <div class="field">
+                                    <div class="field-label">Product ID Qualifier</div>
+                                    <div class="field-value">${item.productIdQualifier || ''}</div>
+                                </div>
+                    `;
+
+                    if (item.quantities && item.quantities.length > 0) {
+                        item.quantities.forEach((qty, qtyIndex) => {
+                            const qtyDesc = qtyCodeDescriptions[qty.qualifierCode] || qty.qualifierCode;
+                            html += `
+                                <div class="field">
+                                    <div class="field-label">${qtyDesc}</div>
+                                    <div class="field-value">${qty.quantity || ''} ${qty.unitOfMeasure || ''}</div>
+                                </div>
+                            `;
+                        });
+                    }
+
+                    html += `
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += '</div>';
+            }
+
+            // All other segments
+            if (data.segments && data.segments.length > 0) {
+                const processedCodes = ['ISA', 'GS', 'ST', 'BIA', 'LIN', 'QTY', 'SE', 'GE', 'IEA'];
+                const otherSegments = data.segments.filter(s => !processedCodes.includes(s.code));
+
+                if (otherSegments.length > 0) {
+                    html += '<div class="item-header">📄 Additional Segments</div>';
+
+                    otherSegments.forEach(segment => {
+                        html += `
+                            <div class="edi-segment">
+                                <div class="segment-header">
+                                    <div>
+                                        <span class="segment-code">${segment.code}</span>
+                                        <span class="segment-name"> - ${segmentNames[segment.code] || 'Unknown'}</span>
+                                    </div>
+                                </div>
+                                <div class="segment-fields">
+                        `;
+
+                        segment.elements.slice(1).forEach((element, idx) => {
+                            if (element) {
+                                html += `
+                                    <div class="field">
+                                        <div class="field-label">Element ${idx + 1}</div>
+                                        <div class="field-value">${element}</div>
+                                    </div>
+                                `;
+                            }
+                        });
+
+                        html += `
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+            }
+
+            return html;
+        }
+
+        // ==================== EDI 997 DECODER ====================
+
+        function parseEDI997(content) {
+            try {
+                // Detect delimiters from ISA segment
+                const delimiters = detectDelimiters(content);
+
+                // Split into segments
+                const segments = content.split(delimiters.segment)
+                    .map(s => s.trim())
+                    .filter(s => s.length > 0);
+
+                const result = {
+                    delimiters: delimiters,
+                    interchange: {},
+                    functionalGroup: {},
+                    transactionSet: {},
+                    acknowledgment: {},
+                    transactions: [],
+                    items: [],
+                    segments: []
+                };
+
+                let currentTransaction = null;
+                let currentSegment = null;
+
+                segments.forEach(segment => {
+                    const elements = segment.split(delimiters.element);
+                    const segmentCode = elements[0];
+
+                    result.segments.push({
+                        code: segmentCode,
+                        elements: elements
+                    });
+
+                    switch (segmentCode) {
+                        case 'ISA':
+                            result.interchange = {
+                                authInfoQualifier: elements[1],
+                                authInfo: elements[2],
+                                securityInfoQualifier: elements[3],
+                                securityInfo: elements[4],
+                                senderQualifier: elements[5],
+                                senderId: elements[6],
+                                receiverQualifier: elements[7],
+                                receiverId: elements[8],
+                                date: elements[9],
+                                time: elements[10],
+                                standards: elements[11],
+                                version: elements[12],
+                                controlNumber: elements[13],
+                                ackRequested: elements[14],
+                                usageIndicator: elements[15]
+                            };
+                            break;
+
+                        case 'GS':
+                            result.functionalGroup = {
+                                functionalCode: elements[1],
+                                senderCode: elements[2],
+                                receiverCode: elements[3],
+                                date: elements[4],
+                                time: elements[5],
+                                controlNumber: elements[6],
+                                agency: elements[7],
+                                version: elements[8]
+                            };
+                            break;
+
+                        case 'ST':
+                            result.transactionSet = {
+                                identifier: elements[1],
+                                controlNumber: elements[2]
+                            };
+                            break;
+
+                        case 'AK1':
+                            result.acknowledgment = {
+                                functionalIdCode: elements[1],
+                                groupControlNumber: elements[2]
+                            };
+                            break;
+
+                        case 'AK2':
+                            if (currentTransaction) {
+                                result.transactions.push(currentTransaction);
+                            }
+                            currentTransaction = {
+                                transactionSetId: elements[1],
+                                transactionControlNumber: elements[2],
+                                segments: [],
+                                status: null,
+                                errorCodes: []
+                            };
+                            currentSegment = null;
+                            break;
+
+                        case 'AK3':
+                            if (currentTransaction) {
+                                currentSegment = {
+                                    segmentId: elements[1],
+                                    segmentPosition: elements[2],
+                                    loopId: elements[3],
+                                    errorCode: elements[4],
+                                    elements: []
+                                };
+                                currentTransaction.segments.push(currentSegment);
+                            }
+                            break;
+
+                        case 'AK4':
+                            if (currentSegment) {
+                                currentSegment.elements.push({
+                                    position: elements[1],
+                                    elementPosition: elements[2],
+                                    errorCode: elements[3],
+                                    copyOfBadElement: elements[4]
+                                });
+                            }
+                            break;
+
+                        case 'AK5':
+                            if (currentTransaction) {
+                                currentTransaction.status = elements[1];
+                                // Elements 2-5 are error codes
+                                for (let i = 2; i <= 5; i++) {
+                                    if (elements[i]) {
+                                        currentTransaction.errorCodes.push(elements[i]);
+                                    }
+                                }
+                            }
+                            break;
+
+                        case 'AK9':
+                            result.acknowledgment.status = elements[1];
+                            result.acknowledgment.transactionSetsIncluded = elements[2];
+                            result.acknowledgment.transactionSetsReceived = elements[3];
+                            result.acknowledgment.transactionSetsAccepted = elements[4];
+                            // Elements 5-7 are error codes
+                            result.acknowledgment.errorCodes = [];
+                            for (let i = 5; i <= 7; i++) {
+                                if (elements[i]) {
+                                    result.acknowledgment.errorCodes.push(elements[i]);
+                                }
+                            }
+                            break;
+                    }
+                });
+
+                if (currentTransaction) {
+                    result.transactions.push(currentTransaction);
+                }
+
+                // For consistency with other parsers, set items to transactions
+                result.items = result.transactions;
+
+                return result;
+            } catch (error) {
+                throw new Error('Failed to parse EDI 997: ' + error.message);
+            }
+        }
+
+        function renderEDI997(data) {
+            let html = '';
+
+            // Interchange Header
+            if (data.interchange && data.interchange.senderId) {
+                html += `
+                    <div class="edi-segment">
+                        <div class="segment-header">
+                            <div>
+                                <span class="segment-code">ISA</span>
+                                <span class="segment-name"> - ${segmentNames['ISA']}</span>
+                            </div>
+                        </div>
+                        <div class="segment-fields">
+                            <div class="field">
+                                <div class="field-label">Sender ID</div>
+                                <div class="field-value">${data.interchange.senderId || ''}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Receiver ID</div>
+                                <div class="field-value">${data.interchange.receiverId || ''}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Date</div>
+                                <div class="field-value">${formatEDIDate(data.interchange.date || '')}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Time</div>
+                                <div class="field-value">${formatEDITime(data.interchange.time || '')}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Control Number</div>
+                                <div class="field-value">${data.interchange.controlNumber || ''}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Functional Group
+            if (data.functionalGroup && data.functionalGroup.senderCode) {
+                html += `
+                    <div class="edi-segment">
+                        <div class="segment-header">
+                            <div>
+                                <span class="segment-code">GS</span>
+                                <span class="segment-name"> - ${segmentNames['GS']}</span>
+                            </div>
+                        </div>
+                        <div class="segment-fields">
+                            <div class="field">
+                                <div class="field-label">Functional Code</div>
+                                <div class="field-value">${data.functionalGroup.functionalCode || ''}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Sender Code</div>
+                                <div class="field-value">${data.functionalGroup.senderCode || ''}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Receiver Code</div>
+                                <div class="field-value">${data.functionalGroup.receiverCode || ''}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Date</div>
+                                <div class="field-value">${formatEDIDate(data.functionalGroup.date || '')}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Acknowledgment Header (AK1)
+            if (data.acknowledgment && data.acknowledgment.functionalIdCode) {
+                const statusDescriptions = {
+                    'A': 'Accepted',
+                    'E': 'Accepted with Errors',
+                    'R': 'Rejected',
+                    'P': 'Partially Accepted'
+                };
+
+                html += `
+                    <div class="edi-segment" style="border-left-color: #4ec9b0;">
+                        <div class="segment-header">
+                            <div>
+                                <span class="segment-code">AK1</span>
+                                <span class="segment-name"> - Functional Group Response</span>
+                            </div>
+                        </div>
+                        <div class="segment-fields">
+                            <div class="field">
+                                <div class="field-label">Functional ID Code</div>
+                                <div class="field-value">${data.acknowledgment.functionalIdCode || ''}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Group Control Number</div>
+                                <div class="field-value">${data.acknowledgment.groupControlNumber || ''}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // AK9 Summary
+                if (data.acknowledgment.status) {
+                    const statusDesc = statusDescriptions[data.acknowledgment.status] || data.acknowledgment.status;
+                    const statusColor = data.acknowledgment.status === 'A' ? '#4ec9b0' :
+                                       data.acknowledgment.status === 'E' ? '#dcdcaa' : '#f48771';
+
+                    html += `
+                        <div class="edi-segment" style="border-left-color: ${statusColor};">
+                            <div class="segment-header">
+                                <div>
+                                    <span class="segment-code">AK9</span>
+                                    <span class="segment-name"> - Functional Group Status: ${statusDesc}</span>
+                                </div>
+                            </div>
+                            <div class="segment-fields">
+                                <div class="field">
+                                    <div class="field-label">Status</div>
+                                    <div class="field-value">${statusDesc}</div>
+                                </div>
+                                <div class="field">
+                                    <div class="field-label">Transaction Sets Included</div>
+                                    <div class="field-value">${data.acknowledgment.transactionSetsIncluded || '0'}</div>
+                                </div>
+                                <div class="field">
+                                    <div class="field-label">Transaction Sets Received</div>
+                                    <div class="field-value">${data.acknowledgment.transactionSetsReceived || '0'}</div>
+                                </div>
+                                <div class="field">
+                                    <div class="field-label">Transaction Sets Accepted</div>
+                                    <div class="field-value">${data.acknowledgment.transactionSetsAccepted || '0'}</div>
+                                </div>
+                    `;
+
+                    if (data.acknowledgment.errorCodes && data.acknowledgment.errorCodes.length > 0) {
+                        html += `
+                            <div class="field">
+                                <div class="field-label">Error Codes</div>
+                                <div class="field-value">${data.acknowledgment.errorCodes.join(', ')}</div>
+                            </div>
+                        `;
+                    }
+
+                    html += `
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+
+            // Acknowledged Transactions
+            if (data.transactions && data.transactions.length > 0) {
+                html += '<div class="nested-section">';
+                html += '<div class="item-header">✓ Acknowledged Transactions (' + data.transactions.length + ')</div>';
+
+                const statusDescriptions = {
+                    'A': 'Accepted',
+                    'E': 'Accepted with Errors',
+                    'R': 'Rejected',
+                    'P': 'Partially Accepted'
+                };
+
+                const errorCodeDescriptions = {
+                    '1': 'Transaction Set Not Supported',
+                    '2': 'Transaction Set Trailer Missing',
+                    '3': 'Transaction Set Control Number Mismatch',
+                    '4': 'Number of Included Segments Does Not Match Count',
+                    '5': 'One or More Segments in Error',
+                    '6': 'Missing or Invalid Transaction Set Identifier',
+                    '7': 'Missing or Invalid Transaction Set Control Number'
+                };
+
+                const elementErrorDescriptions = {
+                    '1': 'Mandatory Data Element Missing',
+                    '2': 'Conditional Required Data Element Missing',
+                    '3': 'Too Many Data Elements',
+                    '4': 'Data Element Too Short',
+                    '5': 'Data Element Too Long',
+                    '6': 'Invalid Character in Data Element',
+                    '7': 'Invalid Code Value',
+                    '8': 'Invalid Date',
+                    '9': 'Invalid Time',
+                    '10': 'Exclusion Condition Violated'
+                };
+
+                data.transactions.forEach((txn, index) => {
+                    const statusDesc = statusDescriptions[txn.status] || txn.status || 'Unknown';
+                    const statusColor = txn.status === 'A' ? '#4ec9b0' :
+                                       txn.status === 'E' ? '#dcdcaa' : '#f48771';
+
+                    html += `
+                        <div class="edi-segment" style="border-left-color: ${statusColor};">
+                            <div class="segment-header">
+                                <div>
+                                    <span class="segment-code">AK2/AK5</span>
+                                    <span class="segment-name"> - Transaction ${txn.transactionSetId} (${statusDesc})</span>
+                                </div>
+                            </div>
+                            <div class="segment-fields">
+                                <div class="field">
+                                    <div class="field-label">Transaction Set ID</div>
+                                    <div class="field-value">${txn.transactionSetId || ''}</div>
+                                </div>
+                                <div class="field">
+                                    <div class="field-label">Control Number</div>
+                                    <div class="field-value">${txn.transactionControlNumber || ''}</div>
+                                </div>
+                                <div class="field">
+                                    <div class="field-label">Status</div>
+                                    <div class="field-value">${statusDesc}</div>
+                                </div>
+                    `;
+
+                    if (txn.errorCodes && txn.errorCodes.length > 0) {
+                        html += `
+                            <div class="field">
+                                <div class="field-label">Error Codes</div>
+                                <div class="field-value">`;
+
+                        txn.errorCodes.forEach((code, idx) => {
+                            const desc = errorCodeDescriptions[code] || code;
+                            html += `${idx > 0 ? '<br>' : ''}${code}: ${desc}`;
+                        });
+
+                        html += `</div>
+                            </div>
+                        `;
+                    }
+
+                    html += `</div>`;
+
+                    // Show segment-level errors (AK3/AK4)
+                    if (txn.segments && txn.segments.length > 0) {
+                        html += `<div style="margin-left: 20px; margin-top: 8px;">`;
+                        html += `<div style="color: #dcdcaa; font-weight: 600; margin-bottom: 4px;">Segment Errors:</div>`;
+
+                        txn.segments.forEach((seg, segIdx) => {
+                            html += `
+                                <div style="background: #252526; padding: 8px; margin-bottom: 4px; border-radius: 4px; border-left: 2px solid #f48771;">
+                                    <div style="color: #9cdcfe;">Segment: ${seg.segmentId} (Position: ${seg.segmentPosition || 'N/A'})</div>
+                            `;
+
+                            if (seg.errorCode) {
+                                html += `<div style="color: #ce9178; font-size: 12px;">Error: ${seg.errorCode}</div>`;
+                            }
+
+                            if (seg.elements && seg.elements.length > 0) {
+                                html += `<div style="margin-top: 4px; font-size: 12px;">`;
+                                seg.elements.forEach((elem, elemIdx) => {
+                                    const elemDesc = elementErrorDescriptions[elem.errorCode] || elem.errorCode;
+                                    html += `
+                                        <div style="color: #8e8e93; margin-top: 2px;">
+                                            • Element ${elem.position || 'N/A'}: ${elemDesc}
+                                            ${elem.copyOfBadElement ? ` (Value: "${elem.copyOfBadElement}")` : ''}
+                                        </div>
+                                    `;
+                                });
+                                html += `</div>`;
+                            }
+
+                            html += `</div>`;
+                        });
+
+                        html += `</div>`;
+                    }
+
+                    html += `</div>`;
+                });
+
+                html += '</div>';
+            }
+
+            // All other segments
+            if (data.segments && data.segments.length > 0) {
+                const processedCodes = ['ISA', 'GS', 'ST', 'AK1', 'AK2', 'AK3', 'AK4', 'AK5', 'AK9', 'SE', 'GE', 'IEA'];
+                const otherSegments = data.segments.filter(s => !processedCodes.includes(s.code));
+
+                if (otherSegments.length > 0) {
+                    html += '<div class="item-header">📄 Additional Segments</div>';
+
+                    otherSegments.forEach(segment => {
+                        html += `
+                            <div class="edi-segment">
+                                <div class="segment-header">
+                                    <div>
+                                        <span class="segment-code">${segment.code}</span>
+                                        <span class="segment-name"> - ${segmentNames[segment.code] || 'Unknown'}</span>
+                                    </div>
+                                </div>
+                                <div class="segment-fields">
+                        `;
+
+                        segment.elements.slice(1).forEach((element, idx) => {
+                            if (element) {
+                                html += `
+                                    <div class="field">
+                                        <div class="field-label">Element ${idx + 1}</div>
+                                        <div class="field-value">${element}</div>
+                                    </div>
+                                `;
+                            }
+                        });
+
+                        html += `
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+            }
+
+            return html;
+        }
+
+        // ==================== EDI 850 ENCODER ====================
+
+        const segmentFields = {
+            'ISA': [
+                { name: 'authInfoQualifier', label: 'Auth Info Qualifier', hint: '00 = No Auth', required: true, default: '00' },
+                { name: 'authInfo', label: 'Auth Information', hint: '10 spaces', required: true, default: '          ' },
+                { name: 'securityQualifier', label: 'Security Qualifier', hint: '00 = No Security', required: true, default: '00' },
+                { name: 'securityInfo', label: 'Security Information', hint: '10 spaces', required: true, default: '          ' },
+                { name: 'senderQualifier', label: 'Sender Qualifier', hint: 'ZZ, 01, 14, etc.', required: true, default: 'ZZ' },
+                { name: 'senderId', label: 'Sender ID', hint: '15 characters', required: true },
+                { name: 'receiverQualifier', label: 'Receiver Qualifier', hint: 'ZZ, 01, 14, etc.', required: true, default: 'ZZ' },
+                { name: 'receiverId', label: 'Receiver ID', hint: '15 characters', required: true },
+                { name: 'date', label: 'Date', hint: 'YYMMDD', required: true },
+                { name: 'time', label: 'Time', hint: 'HHMM', required: true },
+                { name: 'standards', label: 'Standards ID', hint: 'U = US EDI', required: true, default: 'U' },
+                { name: 'version', label: 'Version', hint: '00401, 00501', required: true, default: '00401' },
+                { name: 'controlNumber', label: 'Control Number', hint: '9 digits', required: true },
+                { name: 'ackRequested', label: 'Ack Requested', hint: '0 = No, 1 = Yes', required: true, default: '0' },
+                { name: 'usageIndicator', label: 'Usage Indicator', hint: 'T = Test, P = Production', required: true, default: 'T' }
+            ],
+            'GS': [
+                { name: 'functionalCode', label: 'Functional Code', hint: 'PO = Purchase Order, IN = Invoice', required: true, default: 'PO' },
+                { name: 'senderCode', label: 'Sender Code', hint: 'Application sender', required: true },
+                { name: 'receiverCode', label: 'Receiver Code', hint: 'Application receiver', required: true },
+                { name: 'date', label: 'Date', hint: 'YYYYMMDD', required: true },
+                { name: 'time', label: 'Time', hint: 'HHMM', required: true },
+                { name: 'controlNumber', label: 'Group Control Number', hint: 'Unique number', required: true },
+                { name: 'agency', label: 'Agency Code', hint: 'X = ASC X12', required: true, default: 'X' },
+                { name: 'version', label: 'Version', hint: '004010, 005010', required: true, default: '004010' }
+            ],
+            'ST': [
+                { name: 'identifier', label: 'Transaction Set ID', hint: '850 = PO, 810 = Invoice', required: true, default: '850' },
+                { name: 'controlNumber', label: 'Control Number', hint: 'Unique within group', required: true }
+            ],
+            'BEG': [
+                { name: 'purpose', label: 'Purpose Code', hint: '00 = Original', required: true, default: '00' },
+                { name: 'type', label: 'PO Type', hint: 'NE = New Order', required: true, default: 'NE' },
+                { name: 'poNumber', label: 'PO Number', hint: 'Purchase order number', required: true },
+                { name: 'release', label: 'Release Number', hint: 'Optional', required: false },
+                { name: 'date', label: 'Date', hint: 'YYYYMMDD', required: true }
+            ],
+            'REF': [
+                { name: 'qualifier', label: 'Reference Qualifier', hint: 'DP = Department, IA = Internal Vendor', required: true },
+                { name: 'reference', label: 'Reference Number', hint: 'Reference value', required: true }
+            ],
+            'DTM': [
+                { name: 'qualifier', label: 'Date Qualifier', hint: '002 = Delivery, 010 = Ship', required: true },
+                { name: 'date', label: 'Date', hint: 'YYYYMMDD', required: true }
+            ],
+            'N1': [
+                { name: 'entityCode', label: 'Entity ID Code', hint: 'ST = Ship To, BY = Buyer', required: true },
+                { name: 'name', label: 'Name', hint: 'Organization name', required: true },
+                { name: 'idCodeQualifier', label: 'ID Code Qualifier', hint: '92 = Assigned by buyer', required: false },
+                { name: 'idCode', label: 'ID Code', hint: 'Identification code', required: false }
+            ],
+            'N3': [
+                { name: 'address1', label: 'Address Line 1', hint: 'Street address', required: true },
+                { name: 'address2', label: 'Address Line 2', hint: 'Additional address', required: false }
+            ],
+            'N4': [
+                { name: 'city', label: 'City', hint: 'City name', required: true },
+                { name: 'state', label: 'State', hint: 'State code', required: false },
+                { name: 'postalCode', label: 'Postal Code', hint: 'ZIP code', required: true },
+                { name: 'country', label: 'Country Code', hint: 'US, CA, etc.', required: false }
+            ],
+            'PO1': [
+                { name: 'lineNumber', label: 'Line Number', hint: 'Sequential number', required: true },
+                { name: 'quantity', label: 'Quantity', hint: 'Ordered quantity', required: true },
+                { name: 'unitOfMeasure', label: 'Unit of Measure', hint: 'EA = Each, CS = Case', required: true, default: 'EA' },
+                { name: 'unitPrice', label: 'Unit Price', hint: 'Price per unit', required: true },
+                { name: 'basis', label: 'Basis of Unit Price', hint: 'PE = Price Each', required: false, default: 'PE' },
+                { name: 'productIdQualifier', label: 'Product ID Qualifier', hint: 'UP = UPC, BP = Buyer Part', required: true },
+                { name: 'productId', label: 'Product ID', hint: 'Product identifier', required: true }
+            ],
+            'CTT': [
+                { name: 'lineItemCount', label: 'Line Item Count', hint: 'Total number of PO1 segments', required: true }
+            ],
+            'SE': [
+                { name: 'segmentCount', label: 'Segment Count', hint: 'Number of segments including ST and SE', required: true },
+                { name: 'controlNumber', label: 'Control Number', hint: 'Must match ST02', required: true }
+            ],
+            'GE': [
+                { name: 'transactionCount', label: 'Transaction Set Count', hint: 'Number of ST/SE pairs', required: true },
+                { name: 'controlNumber', label: 'Control Number', hint: 'Must match GS06', required: true }
+            ],
+            'IEA': [
+                { name: 'groupCount', label: 'Group Count', hint: 'Number of GS/GE pairs', required: true },
+                { name: 'controlNumber', label: 'Control Number', hint: 'Must match ISA13', required: true }
+            ],
+            // EDI 810 Invoice Segments
+            'BIG': [
+                { name: 'invoiceDate', label: 'Invoice Date', hint: 'YYYYMMDD', required: true },
+                { name: 'invoiceNumber', label: 'Invoice Number', hint: 'Unique invoice identifier', required: true },
+                { name: 'poDate', label: 'PO Date', hint: 'YYYYMMDD (optional)', required: false },
+                { name: 'poNumber', label: 'PO Number', hint: 'Purchase order reference', required: true },
+                { name: 'releaseNumber', label: 'Release Number', hint: 'Optional', required: false },
+                { name: 'changeOrder', label: 'Change Order Sequence', hint: 'Optional', required: false },
+                { name: 'transactionType', label: 'Transaction Type Code', hint: 'Optional', required: false }
+            ],
+            'IT1': [
+                { name: 'lineNumber', label: 'Line Number', hint: 'Sequential number', required: true },
+                { name: 'quantityInvoiced', label: 'Quantity Invoiced', hint: 'Billed quantity', required: true },
+                { name: 'unitOfMeasure', label: 'Unit of Measure', hint: 'EA = Each, CS = Case', required: true, default: 'EA' },
+                { name: 'unitPrice', label: 'Unit Price', hint: 'In cents (e.g., 1600 = $16.00)', required: true },
+                { name: 'basis', label: 'Basis of Unit Price', hint: 'PE = Price Each', required: false, default: 'PE' },
+                { name: 'productIdQualifier', label: 'Product ID Qualifier', hint: 'UP = UPC, CB = Buyer Catalog', required: true },
+                { name: 'productId', label: 'Product ID', hint: 'Product identifier', required: true }
+            ],
+            'ITD': [
+                { name: 'termsType', label: 'Terms Type Code', hint: '01 = Basic, 05 = No Discount', required: true },
+                { name: 'termsBasis', label: 'Terms Basis Date Code', hint: '3 = Invoice Date', required: false },
+                { name: 'termsDiscount', label: 'Terms Discount Percent', hint: 'E.g., 2 for 2%', required: false },
+                { name: 'termsDiscountDays', label: 'Terms Discount Days Due', hint: 'E.g., 10', required: false },
+                { name: 'termsNetDays', label: 'Terms Net Days', hint: 'E.g., 30', required: false }
+            ],
+            'TDS': [
+                { name: 'totalAmount', label: 'Total Invoice Amount', hint: 'In cents (e.g., 97000 = $970.00)', required: true },
+                { name: 'totalAmountDue', label: 'Total Amount Subject to Terms', hint: 'In cents (optional)', required: false },
+                { name: 'discountedAmount', label: 'Amount Due if Paid by Discount Date', hint: 'In cents (optional)', required: false },
+                { name: 'termsDiscountAmount', label: 'Terms Discount Amount', hint: 'In cents (optional)', required: false }
+            ],
+            // EDI 856 ASN Segments
+            'BSN': [
+                { name: 'purposeCode', label: 'Purpose Code', hint: '00 = Original', required: true, default: '00' },
+                { name: 'shipmentId', label: 'Shipment ID', hint: 'Unique shipment identifier', required: true },
+                { name: 'date', label: 'Ship Date', hint: 'YYYYMMDD', required: true },
+                { name: 'time', label: 'Ship Time', hint: 'HHMM', required: true },
+                { name: 'hierarchicalStructure', label: 'Hierarchical Structure Code', hint: '0001, 0002, etc.', required: false }
+            ],
+            'HL': [
+                { name: 'id', label: 'Hierarchical ID', hint: 'Unique ID for this level', required: true },
+                { name: 'parentId', label: 'Parent Hierarchical ID', hint: 'Leave empty for top level', required: false },
+                { name: 'levelCode', label: 'Level Code', hint: 'S=Shipment, O=Order, P=Pack, I=Item', required: true },
+                { name: 'childCode', label: 'Child Code', hint: '1=Has children, 0=No children', required: false }
+            ],
+            'PRF': [
+                { name: 'poNumber', label: 'PO Number', hint: 'Purchase order reference', required: true },
+                { name: 'releaseNumber', label: 'Release Number', hint: 'Optional', required: false },
+                { name: 'changeNumber', label: 'Change Order Number', hint: 'Optional', required: false },
+                { name: 'poDate', label: 'PO Date', hint: 'YYYYMMDD (optional)', required: false }
+            ],
+            'LIN': [
+                { name: 'lineNumber', label: 'Line Number', hint: 'Sequential item number', required: false },
+                { name: 'productIdQualifier', label: 'Product ID Qualifier', hint: 'UP = UPC, IN = Buyer Item', required: true },
+                { name: 'productId', label: 'Product ID', hint: 'Product identifier', required: true }
+            ],
+            'SN1': [
+                { name: 'lineNumber', label: 'Line Number', hint: 'Optional', required: false },
+                { name: 'quantity', label: 'Quantity Shipped', hint: 'Number of units', required: true },
+                { name: 'unitOfMeasure', label: 'Unit of Measure', hint: 'EA = Each, CS = Case', required: true, default: 'EA' }
+            ],
+            // EDI 846 Inventory Inquiry Segments
+            'BIA': [
+                { name: 'reportType', label: 'Report Type Code', hint: '00 = Original, 13 = Inquiry, SI = Status Info', required: true, default: '00' },
+                { name: 'referenceId', label: 'Reference ID', hint: 'Unique inventory reference', required: true },
+                { name: 'date', label: 'Date', hint: 'YYYYMMDD', required: true },
+                { name: 'time', label: 'Time', hint: 'HHMM (optional)', required: false },
+                { name: 'actionCode', label: 'Action Code', hint: 'Optional', required: false }
+            ],
+            'QTY': [
+                { name: 'qualifierCode', label: 'Quantity Qualifier', hint: '17=On Hand, 26=Available, 33=On Order', required: true },
+                { name: 'quantity', label: 'Quantity', hint: 'Number of units', required: true },
+                { name: 'unitOfMeasure', label: 'Unit of Measure', hint: 'EA = Each, CS = Case', required: false, default: 'EA' }
+            ],
+            // EDI 997 Functional Acknowledgment Segments
+            'AK1': [
+                { name: 'functionalIdCode', label: 'Functional ID Code', hint: 'PO, IN, SH, IB, etc.', required: true },
+                { name: 'groupControlNumber', label: 'Group Control Number', hint: 'From original GS06', required: true }
+            ],
+            'AK2': [
+                { name: 'transactionSetId', label: 'Transaction Set ID', hint: '850, 810, 856, 846, etc.', required: true },
+                { name: 'transactionControlNumber', label: 'Transaction Control Number', hint: 'From original ST02', required: true }
+            ],
+            'AK3': [
+                { name: 'segmentId', label: 'Segment ID', hint: 'Segment with error (e.g., BEG, REF)', required: true },
+                { name: 'segmentPosition', label: 'Segment Position', hint: 'Position in transaction set', required: true },
+                { name: 'loopId', label: 'Loop Identifier', hint: 'Optional', required: false },
+                { name: 'errorCode', label: 'Segment Syntax Error Code', hint: '1-8', required: false }
+            ],
+            'AK4': [
+                { name: 'position', label: 'Element Position', hint: 'Position in segment', required: true },
+                { name: 'elementPosition', label: 'Composite Element Position', hint: 'Optional', required: false },
+                { name: 'errorCode', label: 'Data Element Syntax Error Code', hint: '1-10', required: true },
+                { name: 'copyOfBadElement', label: 'Copy of Bad Data Element', hint: 'Optional', required: false }
+            ],
+            'AK5': [
+                { name: 'status', label: 'Transaction Set Acknowledgment Code', hint: 'A=Accepted, E=Errors, R=Rejected', required: true },
+                { name: 'errorCode1', label: 'Transaction Set Syntax Error Code 1', hint: 'Optional (1-7)', required: false },
+                { name: 'errorCode2', label: 'Transaction Set Syntax Error Code 2', hint: 'Optional (1-7)', required: false },
+                { name: 'errorCode3', label: 'Transaction Set Syntax Error Code 3', hint: 'Optional (1-7)', required: false },
+                { name: 'errorCode4', label: 'Transaction Set Syntax Error Code 4', hint: 'Optional (1-7)', required: false }
+            ],
+            'AK9': [
+                { name: 'status', label: 'Functional Group Acknowledgment Code', hint: 'A=Accepted, E=Errors, R=Rejected, P=Partial', required: true },
+                { name: 'transactionSetsIncluded', label: 'Number of Transaction Sets Included', hint: 'Total in group', required: true },
+                { name: 'transactionSetsReceived', label: 'Number of Received Transaction Sets', hint: 'Successfully received', required: true },
+                { name: 'transactionSetsAccepted', label: 'Number of Accepted Transaction Sets', hint: 'Without errors', required: true },
+                { name: 'errorCode1', label: 'Functional Group Syntax Error Code 1', hint: 'Optional', required: false },
+                { name: 'errorCode2', label: 'Functional Group Syntax Error Code 2', hint: 'Optional', required: false },
+                { name: 'errorCode3', label: 'Functional Group Syntax Error Code 3', hint: 'Optional', required: false }
+            ]
+        };
+
+        function updateEncoderFields() {
+            const segmentType = document.getElementById('segment-type').value;
+            const container = document.getElementById('dynamic-fields');
+
+            if (!segmentType) {
+                container.innerHTML = '';
+                return;
+            }
+
+            const fields = segmentFields[segmentType];
+            if (!fields) {
+                container.innerHTML = '<p style="color: #8e8e93;">No fields defined for this segment</p>';
+                return;
+            }
+
+            let html = '';
+            fields.forEach(field => {
+                let defaultValue = field.default || '';
+
+                // Set transaction-specific defaults
+                if (segmentType === 'ST' && field.name === 'identifier') {
+                    defaultValue = currentTransactionType;
+                } else if (segmentType === 'GS' && field.name === 'functionalCode') {
+                    if (currentTransactionType === '810') {
+                        defaultValue = 'IN';
+                    } else if (currentTransactionType === '856') {
+                        defaultValue = 'SH';
+                    } else if (currentTransactionType === '846') {
+                        defaultValue = 'IB';
+                    } else if (currentTransactionType === '997') {
+                        defaultValue = 'FA';
+                    } else {
+                        defaultValue = 'PO';
+                    }
+                }
+
+                html += `
+                    <div class="form-group">
+                        <label for="field-${field.name}">
+                            ${field.label} ${field.required ? '<span style="color: #f48771;">*</span>' : ''}
+                        </label>
+                        <input type="text"
+                               id="field-${field.name}"
+                               placeholder="${field.hint}"
+                               value="${defaultValue}"
+                               ${field.required ? 'required' : ''}>
+                        <div class="form-hint">${field.hint}</div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function addSegment() {
+            if (currentTransactionType !== '850' && currentTransactionType !== '810' && currentTransactionType !== '856' && currentTransactionType !== '846' && currentTransactionType !== '997') {
+                setStatus('error', `EDI ${currentTransactionType} is not yet supported`);
+                return;
+            }
+
+            const segmentType = document.getElementById('segment-type').value;
+
+            if (!segmentType) {
+                setStatus('error', 'Please select a segment type');
+                return;
+            }
+
+            const fields = segmentFields[segmentType];
+            const values = [segmentType];
+            let isValid = true;
+
+            fields.forEach(field => {
+                const input = document.getElementById('field-' + field.name);
+                const value = input ? input.value.trim() : '';
+
+                if (field.required && !value) {
+                    isValid = false;
+                    if (input) input.style.borderColor = '#f48771';
+                } else {
+                    if (input) input.style.borderColor = '#555555';
+                }
+
+                values.push(value);
+            });
+
+            if (!isValid) {
+                setStatus('error', 'Please fill in all required fields');
+                return;
+            }
+
+            // For ISA segment, ensure proper formatting (106 characters)
+            if (segmentType === 'ISA') {
+                const isaSegment = formatISASegment(values);
+                segmentsList.push(isaSegment);
+            } else {
+                segmentsList.push(values.join('*'));
+            }
+
+            renderSegmentList();
+            generateEDI();
+
+            // Reset form
+            document.getElementById('segment-type').value = '';
+            updateEncoderFields();
+
+            setStatus('success', `${segmentType} segment added`);
+        }
+
+        function formatISASegment(values) {
+            // ISA segment must be exactly 106 characters
+            // Format: ISA*00*          *00*          *ZZ*SENDER         *ZZ*RECEIVER       *YYMMDD*HHMM*U*00401*000000001*0*T*:~
+
+            const padRight = (str, len) => (str + ' '.repeat(len)).substring(0, len);
+            const padLeft = (str, len) => ('0'.repeat(len) + str).slice(-len);
+
+            return 'ISA' +
+                '*' + padRight(values[1], 2) +  // Auth Info Qualifier
+                '*' + padRight(values[2], 10) + // Auth Info
+                '*' + padRight(values[3], 2) +  // Security Qualifier
+                '*' + padRight(values[4], 10) + // Security Info
+                '*' + padRight(values[5], 2) +  // Sender Qualifier
+                '*' + padRight(values[6], 15) + // Sender ID
+                '*' + padRight(values[7], 2) +  // Receiver Qualifier
+                '*' + padRight(values[8], 15) + // Receiver ID
+                '*' + values[9] +               // Date (6 chars)
+                '*' + values[10] +              // Time (4 chars)
+                '*' + values[11] +              // Standards (1 char)
+                '*' + padRight(values[12], 5) + // Version
+                '*' + padLeft(values[13], 9) +  // Control Number
+                '*' + values[14] +              // Ack Requested
+                '*' + values[15] +              // Usage Indicator
+                '*:';                           // Sub-element separator
+        }
+
+        function renderSegmentList() {
+            const container = document.getElementById('segment-list');
+
+            if (segmentsList.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+
+            let html = '<div style="margin: 20px 0;"><strong>Segments:</strong></div>';
+
+            segmentsList.forEach((segment, index) => {
+                const code = segment.substring(0, 3);
+                html += `
+                    <div class="segment-item">
+                        <div>
+                            <span class="segment-item-code">${code}</span>
+                            <span style="color: #8e8e93; font-size: 11px; margin-left: 8px;">${segmentNames[code] || ''}</span>
+                        </div>
+                        <div class="segment-item-actions">
+                            <button class="btn btn-small" onclick="moveSegmentUp(${index})" ${index === 0 ? 'disabled' : ''}>↑</button>
+                            <button class="btn btn-small" onclick="moveSegmentDown(${index})" ${index === segmentsList.length - 1 ? 'disabled' : ''}>↓</button>
+                            <button class="btn btn-secondary btn-small" onclick="deleteSegment(${index})">Delete</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function moveSegmentUp(index) {
+            if (index > 0) {
+                [segmentsList[index], segmentsList[index - 1]] = [segmentsList[index - 1], segmentsList[index]];
+                renderSegmentList();
+                generateEDI();
+            }
+        }
+
+        function moveSegmentDown(index) {
+            if (index < segmentsList.length - 1) {
+                [segmentsList[index], segmentsList[index + 1]] = [segmentsList[index + 1], segmentsList[index]];
+                renderSegmentList();
+                generateEDI();
+            }
+        }
+
+        function deleteSegment(index) {
+            segmentsList.splice(index, 1);
+            renderSegmentList();
+            generateEDI();
+            setStatus('success', 'Segment deleted');
+        }
+
+        function generateEDI() {
+            const edi = segmentsList.join('~\n') + (segmentsList.length > 0 ? '~' : '');
+            document.getElementById('generated-edi').value = edi;
+        }
+
+        // Initialize
+        document.getElementById('input-text').addEventListener('input', hideStatus);
+    </script>
+</body>
+</html>
