@@ -494,7 +494,7 @@
                 <option value="850">EDI 850 - Purchase Order</option>
                 <option value="810">EDI 810 - Invoice</option>
                 <option value="856">EDI 856 - Advance Ship Notice</option>
-                <option value="846">EDI 846 - Inventory Inquiry (Coming Soon)</option>
+                <option value="846">EDI 846 - Inventory Inquiry</option>
                 <option value="997">EDI 997 - Functional Acknowledgment (Coming Soon)</option>
             </select>
         </div>
@@ -635,7 +635,7 @@
             // Update encoder segment dropdown
             updateSegmentDropdown();
 
-            if (currentTransactionType !== '850' && currentTransactionType !== '810' && currentTransactionType !== '856') {
+            if (currentTransactionType !== '850' && currentTransactionType !== '810' && currentTransactionType !== '856' && currentTransactionType !== '846') {
                 showPlaceholder();
             } else {
                 hidePlaceholder();
@@ -690,6 +690,17 @@
                     <option value="LIN">LIN - Item Identification</option>
                     <option value="SN1">SN1 - Item Detail (Shipment)</option>
                 `;
+            } else if (currentTransactionType === '846') {
+                options += `
+                    <option value="BIA">BIA - Beginning Segment (Inventory Advice)</option>
+                    <option value="DTM">DTM - Date/Time Reference</option>
+                    <option value="REF">REF - Reference Identification</option>
+                    <option value="N1">N1 - Name</option>
+                    <option value="N3">N3 - Address</option>
+                    <option value="N4">N4 - Geographic Location</option>
+                    <option value="LIN">LIN - Item Identification</option>
+                    <option value="QTY">QTY - Quantity Information</option>
+                `;
             }
 
             // Common trailer segments
@@ -715,7 +726,8 @@
                     <p style="margin-top: 12px;">Currently supported:<br>
                     • EDI 850 (Purchase Order)<br>
                     • EDI 810 (Invoice)<br>
-                    • EDI 856 (Advance Ship Notice)<br><br>
+                    • EDI 856 (Advance Ship Notice)<br>
+                    • EDI 846 (Inventory Inquiry/Advice)<br><br>
                     Additional transaction types will be added in future updates.</p>
                 </div>
             `;
@@ -895,7 +907,9 @@
             'BEG': 'Beginning Segment for Purchase Order',
             'BIG': 'Beginning Segment for Invoice',
             'BSN': 'Beginning Segment for Ship Notice',
+            'BIA': 'Beginning Segment for Inventory Inquiry/Advice',
             'REF': 'Reference Identification',
+            'QTY': 'Quantity Information',
             'PER': 'Administrative Communications Contact',
             'DTM': 'Date/Time Reference',
             'ITD': 'Terms of Sale/Deferred Terms',
@@ -1338,6 +1352,9 @@
                 } else if (currentTransactionType === '856') {
                     parsedData = parseEDI856(input);
                     html = renderEDI856(parsedData);
+                } else if (currentTransactionType === '846') {
+                    parsedData = parseEDI846(input);
+                    html = renderEDI846(parsedData);
                 } else {
                     setStatus('error', `EDI ${currentTransactionType} is not yet supported`);
                     return;
@@ -2158,6 +2175,330 @@
             return html;
         }
 
+        // ==================== EDI 846 DECODER ====================
+
+        function parseEDI846(content) {
+            try {
+                // Detect delimiters from ISA segment
+                const delimiters = detectDelimiters(content);
+
+                // Split into segments
+                const segments = content.split(delimiters.segment)
+                    .map(s => s.trim())
+                    .filter(s => s.length > 0);
+
+                const result = {
+                    delimiters: delimiters,
+                    interchange: {},
+                    functionalGroup: {},
+                    transactionSet: {},
+                    inventoryAdvice: {},
+                    items: [],
+                    segments: []
+                };
+
+                let currentItem = null;
+
+                segments.forEach(segment => {
+                    const elements = segment.split(delimiters.element);
+                    const segmentCode = elements[0];
+
+                    result.segments.push({
+                        code: segmentCode,
+                        elements: elements
+                    });
+
+                    switch (segmentCode) {
+                        case 'ISA':
+                            result.interchange = {
+                                authInfoQualifier: elements[1],
+                                authInfo: elements[2],
+                                securityInfoQualifier: elements[3],
+                                securityInfo: elements[4],
+                                senderQualifier: elements[5],
+                                senderId: elements[6],
+                                receiverQualifier: elements[7],
+                                receiverId: elements[8],
+                                date: elements[9],
+                                time: elements[10],
+                                standards: elements[11],
+                                version: elements[12],
+                                controlNumber: elements[13],
+                                ackRequested: elements[14],
+                                usageIndicator: elements[15]
+                            };
+                            break;
+
+                        case 'GS':
+                            result.functionalGroup = {
+                                functionalCode: elements[1],
+                                senderCode: elements[2],
+                                receiverCode: elements[3],
+                                date: elements[4],
+                                time: elements[5],
+                                controlNumber: elements[6],
+                                agency: elements[7],
+                                version: elements[8]
+                            };
+                            break;
+
+                        case 'ST':
+                            result.transactionSet = {
+                                identifier: elements[1],
+                                controlNumber: elements[2]
+                            };
+                            break;
+
+                        case 'BIA':
+                            result.inventoryAdvice = {
+                                reportType: elements[1],
+                                referenceId: elements[2],
+                                date: elements[3],
+                                time: elements[4],
+                                actionCode: elements[5]
+                            };
+                            break;
+
+                        case 'LIN':
+                            if (currentItem) {
+                                result.items.push(currentItem);
+                            }
+                            currentItem = {
+                                lineNumber: elements[1],
+                                productIdQualifier: elements[2],
+                                productId: elements[3],
+                                quantities: []
+                            };
+                            break;
+
+                        case 'QTY':
+                            if (currentItem) {
+                                currentItem.quantities.push({
+                                    qualifierCode: elements[1],
+                                    quantity: elements[2],
+                                    unitOfMeasure: elements[3]
+                                });
+                            }
+                            break;
+                    }
+                });
+
+                if (currentItem) {
+                    result.items.push(currentItem);
+                }
+
+                return result;
+            } catch (error) {
+                throw new Error('Failed to parse EDI 846: ' + error.message);
+            }
+        }
+
+        function renderEDI846(data) {
+            let html = '';
+
+            // Interchange Header
+            if (data.interchange && data.interchange.senderId) {
+                html += `
+                    <div class="edi-segment">
+                        <div class="segment-header">
+                            <div>
+                                <span class="segment-code">ISA</span>
+                                <span class="segment-name"> - ${segmentNames['ISA']}</span>
+                            </div>
+                        </div>
+                        <div class="segment-fields">
+                            <div class="field">
+                                <div class="field-label">Sender ID</div>
+                                <div class="field-value">${data.interchange.senderId || ''}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Receiver ID</div>
+                                <div class="field-value">${data.interchange.receiverId || ''}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Date</div>
+                                <div class="field-value">${formatEDIDate(data.interchange.date || '')}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Time</div>
+                                <div class="field-value">${formatEDITime(data.interchange.time || '')}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Control Number</div>
+                                <div class="field-value">${data.interchange.controlNumber || ''}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Functional Group
+            if (data.functionalGroup && data.functionalGroup.senderCode) {
+                html += `
+                    <div class="edi-segment">
+                        <div class="segment-header">
+                            <div>
+                                <span class="segment-code">GS</span>
+                                <span class="segment-name"> - ${segmentNames['GS']}</span>
+                            </div>
+                        </div>
+                        <div class="segment-fields">
+                            <div class="field">
+                                <div class="field-label">Functional Code</div>
+                                <div class="field-value">${data.functionalGroup.functionalCode || ''}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Sender Code</div>
+                                <div class="field-value">${data.functionalGroup.senderCode || ''}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Receiver Code</div>
+                                <div class="field-value">${data.functionalGroup.receiverCode || ''}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Date</div>
+                                <div class="field-value">${formatEDIDate(data.functionalGroup.date || '')}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Inventory Advice Header
+            if (data.inventoryAdvice && data.inventoryAdvice.referenceId) {
+                const reportTypes = {
+                    '00': 'Original',
+                    '13': 'Inquiry',
+                    'SI': 'Status Information'
+                };
+
+                html += `
+                    <div class="edi-segment" style="border-left-color: #4ec9b0;">
+                        <div class="segment-header">
+                            <div>
+                                <span class="segment-code">BIA</span>
+                                <span class="segment-name"> - Inventory Advice Information</span>
+                            </div>
+                        </div>
+                        <div class="segment-fields">
+                            <div class="field">
+                                <div class="field-label">Reference ID</div>
+                                <div class="field-value">${data.inventoryAdvice.referenceId || ''}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Report Type</div>
+                                <div class="field-value">${reportTypes[data.inventoryAdvice.reportType] || data.inventoryAdvice.reportType || ''}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Date</div>
+                                <div class="field-value">${formatEDIDate(data.inventoryAdvice.date || '')}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Time</div>
+                                <div class="field-value">${formatEDITime(data.inventoryAdvice.time || '')}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Inventory Items
+            if (data.items && data.items.length > 0) {
+                html += '<div class="nested-section">';
+                html += '<div class="item-header">📦 Inventory Items (' + data.items.length + ')</div>';
+
+                const qtyCodeDescriptions = {
+                    '01': 'Discrete Quantity',
+                    '17': 'On Hand',
+                    '26': 'Quantity Available',
+                    '33': 'Quantity on Order',
+                    'QH': 'Quantity on Hold',
+                    'QT': 'Quantity in Transit'
+                };
+
+                data.items.forEach((item, index) => {
+                    html += `
+                        <div class="edi-segment" style="border-left-color: #dcdcaa;">
+                            <div class="segment-header">
+                                <div>
+                                    <span class="segment-code">LIN</span>
+                                    <span class="segment-name"> - Item #${item.lineNumber || index + 1}</span>
+                                </div>
+                            </div>
+                            <div class="segment-fields">
+                                <div class="field">
+                                    <div class="field-label">Product ID</div>
+                                    <div class="field-value">${item.productId || ''}</div>
+                                </div>
+                                <div class="field">
+                                    <div class="field-label">Product ID Qualifier</div>
+                                    <div class="field-value">${item.productIdQualifier || ''}</div>
+                                </div>
+                    `;
+
+                    if (item.quantities && item.quantities.length > 0) {
+                        item.quantities.forEach((qty, qtyIndex) => {
+                            const qtyDesc = qtyCodeDescriptions[qty.qualifierCode] || qty.qualifierCode;
+                            html += `
+                                <div class="field">
+                                    <div class="field-label">${qtyDesc}</div>
+                                    <div class="field-value">${qty.quantity || ''} ${qty.unitOfMeasure || ''}</div>
+                                </div>
+                            `;
+                        });
+                    }
+
+                    html += `
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += '</div>';
+            }
+
+            // All other segments
+            if (data.segments && data.segments.length > 0) {
+                const processedCodes = ['ISA', 'GS', 'ST', 'BIA', 'LIN', 'QTY', 'SE', 'GE', 'IEA'];
+                const otherSegments = data.segments.filter(s => !processedCodes.includes(s.code));
+
+                if (otherSegments.length > 0) {
+                    html += '<div class="item-header">📄 Additional Segments</div>';
+
+                    otherSegments.forEach(segment => {
+                        html += `
+                            <div class="edi-segment">
+                                <div class="segment-header">
+                                    <div>
+                                        <span class="segment-code">${segment.code}</span>
+                                        <span class="segment-name"> - ${segmentNames[segment.code] || 'Unknown'}</span>
+                                    </div>
+                                </div>
+                                <div class="segment-fields">
+                        `;
+
+                        segment.elements.slice(1).forEach((element, idx) => {
+                            if (element) {
+                                html += `
+                                    <div class="field">
+                                        <div class="field-label">Element ${idx + 1}</div>
+                                        <div class="field-value">${element}</div>
+                                    </div>
+                                `;
+                            }
+                        });
+
+                        html += `
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+            }
+
+            return html;
+        }
+
         // ==================== EDI 850 ENCODER ====================
 
         const segmentFields = {
@@ -2308,6 +2649,19 @@
                 { name: 'lineNumber', label: 'Line Number', hint: 'Optional', required: false },
                 { name: 'quantity', label: 'Quantity Shipped', hint: 'Number of units', required: true },
                 { name: 'unitOfMeasure', label: 'Unit of Measure', hint: 'EA = Each, CS = Case', required: true, default: 'EA' }
+            ],
+            // EDI 846 Inventory Inquiry Segments
+            'BIA': [
+                { name: 'reportType', label: 'Report Type Code', hint: '00 = Original, 13 = Inquiry, SI = Status Info', required: true, default: '00' },
+                { name: 'referenceId', label: 'Reference ID', hint: 'Unique inventory reference', required: true },
+                { name: 'date', label: 'Date', hint: 'YYYYMMDD', required: true },
+                { name: 'time', label: 'Time', hint: 'HHMM (optional)', required: false },
+                { name: 'actionCode', label: 'Action Code', hint: 'Optional', required: false }
+            ],
+            'QTY': [
+                { name: 'qualifierCode', label: 'Quantity Qualifier', hint: '17=On Hand, 26=Available, 33=On Order', required: true },
+                { name: 'quantity', label: 'Quantity', hint: 'Number of units', required: true },
+                { name: 'unitOfMeasure', label: 'Unit of Measure', hint: 'EA = Each, CS = Case', required: false, default: 'EA' }
             ]
         };
 
@@ -2338,6 +2692,8 @@
                         defaultValue = 'IN';
                     } else if (currentTransactionType === '856') {
                         defaultValue = 'SH';
+                    } else if (currentTransactionType === '846') {
+                        defaultValue = 'IB';
                     } else {
                         defaultValue = 'PO';
                     }
@@ -2362,7 +2718,7 @@
         }
 
         function addSegment() {
-            if (currentTransactionType !== '850' && currentTransactionType !== '810' && currentTransactionType !== '856') {
+            if (currentTransactionType !== '850' && currentTransactionType !== '810' && currentTransactionType !== '856' && currentTransactionType !== '846') {
                 setStatus('error', `EDI ${currentTransactionType} is not yet supported`);
                 return;
             }
