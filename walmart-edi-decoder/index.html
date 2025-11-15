@@ -495,7 +495,7 @@
                 <option value="810">EDI 810 - Invoice</option>
                 <option value="856">EDI 856 - Advance Ship Notice</option>
                 <option value="846">EDI 846 - Inventory Inquiry</option>
-                <option value="997">EDI 997 - Functional Acknowledgment (Coming Soon)</option>
+                <option value="997">EDI 997 - Functional Acknowledgment
             </select>
         </div>
 
@@ -635,7 +635,7 @@
             // Update encoder segment dropdown
             updateSegmentDropdown();
 
-            if (currentTransactionType !== '850' && currentTransactionType !== '810' && currentTransactionType !== '856' && currentTransactionType !== '846') {
+            if (currentTransactionType !== '850' && currentTransactionType !== '810' && currentTransactionType !== '856' && currentTransactionType !== '846' && currentTransactionType !== '997') {
                 showPlaceholder();
             } else {
                 hidePlaceholder();
@@ -700,6 +700,15 @@
                     <option value="N4">N4 - Geographic Location</option>
                     <option value="LIN">LIN - Item Identification</option>
                     <option value="QTY">QTY - Quantity Information</option>
+                `;
+            } else if (currentTransactionType === '997') {
+                options += `
+                    <option value="AK1">AK1 - Functional Group Response Header</option>
+                    <option value="AK2">AK2 - Transaction Set Response Header</option>
+                    <option value="AK3">AK3 - Data Segment Note</option>
+                    <option value="AK4">AK4 - Data Element Note</option>
+                    <option value="AK5">AK5 - Transaction Set Response Trailer</option>
+                    <option value="AK9">AK9 - Functional Group Response Trailer</option>
                 `;
             }
 
@@ -908,6 +917,12 @@
             'BIG': 'Beginning Segment for Invoice',
             'BSN': 'Beginning Segment for Ship Notice',
             'BIA': 'Beginning Segment for Inventory Inquiry/Advice',
+            'AK1': 'Functional Group Response Header',
+            'AK2': 'Transaction Set Response Header',
+            'AK3': 'Data Segment Note',
+            'AK4': 'Data Element Note',
+            'AK5': 'Transaction Set Response Trailer',
+            'AK9': 'Functional Group Response Trailer',
             'REF': 'Reference Identification',
             'QTY': 'Quantity Information',
             'PER': 'Administrative Communications Contact',
@@ -1355,6 +1370,9 @@
                 } else if (currentTransactionType === '846') {
                     parsedData = parseEDI846(input);
                     html = renderEDI846(parsedData);
+                } else if (currentTransactionType === '997') {
+                    parsedData = parseEDI997(input);
+                    html = renderEDI997(parsedData);
                 } else {
                     setStatus('error', `EDI ${currentTransactionType} is not yet supported`);
                     return;
@@ -2499,6 +2517,482 @@
             return html;
         }
 
+        // ==================== EDI 997 DECODER ====================
+
+        function parseEDI997(content) {
+            try {
+                // Detect delimiters from ISA segment
+                const delimiters = detectDelimiters(content);
+
+                // Split into segments
+                const segments = content.split(delimiters.segment)
+                    .map(s => s.trim())
+                    .filter(s => s.length > 0);
+
+                const result = {
+                    delimiters: delimiters,
+                    interchange: {},
+                    functionalGroup: {},
+                    transactionSet: {},
+                    acknowledgment: {},
+                    transactions: [],
+                    items: [],
+                    segments: []
+                };
+
+                let currentTransaction = null;
+                let currentSegment = null;
+
+                segments.forEach(segment => {
+                    const elements = segment.split(delimiters.element);
+                    const segmentCode = elements[0];
+
+                    result.segments.push({
+                        code: segmentCode,
+                        elements: elements
+                    });
+
+                    switch (segmentCode) {
+                        case 'ISA':
+                            result.interchange = {
+                                authInfoQualifier: elements[1],
+                                authInfo: elements[2],
+                                securityInfoQualifier: elements[3],
+                                securityInfo: elements[4],
+                                senderQualifier: elements[5],
+                                senderId: elements[6],
+                                receiverQualifier: elements[7],
+                                receiverId: elements[8],
+                                date: elements[9],
+                                time: elements[10],
+                                standards: elements[11],
+                                version: elements[12],
+                                controlNumber: elements[13],
+                                ackRequested: elements[14],
+                                usageIndicator: elements[15]
+                            };
+                            break;
+
+                        case 'GS':
+                            result.functionalGroup = {
+                                functionalCode: elements[1],
+                                senderCode: elements[2],
+                                receiverCode: elements[3],
+                                date: elements[4],
+                                time: elements[5],
+                                controlNumber: elements[6],
+                                agency: elements[7],
+                                version: elements[8]
+                            };
+                            break;
+
+                        case 'ST':
+                            result.transactionSet = {
+                                identifier: elements[1],
+                                controlNumber: elements[2]
+                            };
+                            break;
+
+                        case 'AK1':
+                            result.acknowledgment = {
+                                functionalIdCode: elements[1],
+                                groupControlNumber: elements[2]
+                            };
+                            break;
+
+                        case 'AK2':
+                            if (currentTransaction) {
+                                result.transactions.push(currentTransaction);
+                            }
+                            currentTransaction = {
+                                transactionSetId: elements[1],
+                                transactionControlNumber: elements[2],
+                                segments: [],
+                                status: null,
+                                errorCodes: []
+                            };
+                            currentSegment = null;
+                            break;
+
+                        case 'AK3':
+                            if (currentTransaction) {
+                                currentSegment = {
+                                    segmentId: elements[1],
+                                    segmentPosition: elements[2],
+                                    loopId: elements[3],
+                                    errorCode: elements[4],
+                                    elements: []
+                                };
+                                currentTransaction.segments.push(currentSegment);
+                            }
+                            break;
+
+                        case 'AK4':
+                            if (currentSegment) {
+                                currentSegment.elements.push({
+                                    position: elements[1],
+                                    elementPosition: elements[2],
+                                    errorCode: elements[3],
+                                    copyOfBadElement: elements[4]
+                                });
+                            }
+                            break;
+
+                        case 'AK5':
+                            if (currentTransaction) {
+                                currentTransaction.status = elements[1];
+                                // Elements 2-5 are error codes
+                                for (let i = 2; i <= 5; i++) {
+                                    if (elements[i]) {
+                                        currentTransaction.errorCodes.push(elements[i]);
+                                    }
+                                }
+                            }
+                            break;
+
+                        case 'AK9':
+                            result.acknowledgment.status = elements[1];
+                            result.acknowledgment.transactionSetsIncluded = elements[2];
+                            result.acknowledgment.transactionSetsReceived = elements[3];
+                            result.acknowledgment.transactionSetsAccepted = elements[4];
+                            // Elements 5-7 are error codes
+                            result.acknowledgment.errorCodes = [];
+                            for (let i = 5; i <= 7; i++) {
+                                if (elements[i]) {
+                                    result.acknowledgment.errorCodes.push(elements[i]);
+                                }
+                            }
+                            break;
+                    }
+                });
+
+                if (currentTransaction) {
+                    result.transactions.push(currentTransaction);
+                }
+
+                // For consistency with other parsers, set items to transactions
+                result.items = result.transactions;
+
+                return result;
+            } catch (error) {
+                throw new Error('Failed to parse EDI 997: ' + error.message);
+            }
+        }
+
+        function renderEDI997(data) {
+            let html = '';
+
+            // Interchange Header
+            if (data.interchange && data.interchange.senderId) {
+                html += `
+                    <div class="edi-segment">
+                        <div class="segment-header">
+                            <div>
+                                <span class="segment-code">ISA</span>
+                                <span class="segment-name"> - ${segmentNames['ISA']}</span>
+                            </div>
+                        </div>
+                        <div class="segment-fields">
+                            <div class="field">
+                                <div class="field-label">Sender ID</div>
+                                <div class="field-value">${data.interchange.senderId || ''}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Receiver ID</div>
+                                <div class="field-value">${data.interchange.receiverId || ''}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Date</div>
+                                <div class="field-value">${formatEDIDate(data.interchange.date || '')}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Time</div>
+                                <div class="field-value">${formatEDITime(data.interchange.time || '')}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Control Number</div>
+                                <div class="field-value">${data.interchange.controlNumber || ''}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Functional Group
+            if (data.functionalGroup && data.functionalGroup.senderCode) {
+                html += `
+                    <div class="edi-segment">
+                        <div class="segment-header">
+                            <div>
+                                <span class="segment-code">GS</span>
+                                <span class="segment-name"> - ${segmentNames['GS']}</span>
+                            </div>
+                        </div>
+                        <div class="segment-fields">
+                            <div class="field">
+                                <div class="field-label">Functional Code</div>
+                                <div class="field-value">${data.functionalGroup.functionalCode || ''}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Sender Code</div>
+                                <div class="field-value">${data.functionalGroup.senderCode || ''}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Receiver Code</div>
+                                <div class="field-value">${data.functionalGroup.receiverCode || ''}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Date</div>
+                                <div class="field-value">${formatEDIDate(data.functionalGroup.date || '')}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Acknowledgment Header (AK1)
+            if (data.acknowledgment && data.acknowledgment.functionalIdCode) {
+                const statusDescriptions = {
+                    'A': 'Accepted',
+                    'E': 'Accepted with Errors',
+                    'R': 'Rejected',
+                    'P': 'Partially Accepted'
+                };
+
+                html += `
+                    <div class="edi-segment" style="border-left-color: #4ec9b0;">
+                        <div class="segment-header">
+                            <div>
+                                <span class="segment-code">AK1</span>
+                                <span class="segment-name"> - Functional Group Response</span>
+                            </div>
+                        </div>
+                        <div class="segment-fields">
+                            <div class="field">
+                                <div class="field-label">Functional ID Code</div>
+                                <div class="field-value">${data.acknowledgment.functionalIdCode || ''}</div>
+                            </div>
+                            <div class="field">
+                                <div class="field-label">Group Control Number</div>
+                                <div class="field-value">${data.acknowledgment.groupControlNumber || ''}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // AK9 Summary
+                if (data.acknowledgment.status) {
+                    const statusDesc = statusDescriptions[data.acknowledgment.status] || data.acknowledgment.status;
+                    const statusColor = data.acknowledgment.status === 'A' ? '#4ec9b0' :
+                                       data.acknowledgment.status === 'E' ? '#dcdcaa' : '#f48771';
+
+                    html += `
+                        <div class="edi-segment" style="border-left-color: ${statusColor};">
+                            <div class="segment-header">
+                                <div>
+                                    <span class="segment-code">AK9</span>
+                                    <span class="segment-name"> - Functional Group Status: ${statusDesc}</span>
+                                </div>
+                            </div>
+                            <div class="segment-fields">
+                                <div class="field">
+                                    <div class="field-label">Status</div>
+                                    <div class="field-value">${statusDesc}</div>
+                                </div>
+                                <div class="field">
+                                    <div class="field-label">Transaction Sets Included</div>
+                                    <div class="field-value">${data.acknowledgment.transactionSetsIncluded || '0'}</div>
+                                </div>
+                                <div class="field">
+                                    <div class="field-label">Transaction Sets Received</div>
+                                    <div class="field-value">${data.acknowledgment.transactionSetsReceived || '0'}</div>
+                                </div>
+                                <div class="field">
+                                    <div class="field-label">Transaction Sets Accepted</div>
+                                    <div class="field-value">${data.acknowledgment.transactionSetsAccepted || '0'}</div>
+                                </div>
+                    `;
+
+                    if (data.acknowledgment.errorCodes && data.acknowledgment.errorCodes.length > 0) {
+                        html += `
+                            <div class="field">
+                                <div class="field-label">Error Codes</div>
+                                <div class="field-value">${data.acknowledgment.errorCodes.join(', ')}</div>
+                            </div>
+                        `;
+                    }
+
+                    html += `
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+
+            // Acknowledged Transactions
+            if (data.transactions && data.transactions.length > 0) {
+                html += '<div class="nested-section">';
+                html += '<div class="item-header">✓ Acknowledged Transactions (' + data.transactions.length + ')</div>';
+
+                const statusDescriptions = {
+                    'A': 'Accepted',
+                    'E': 'Accepted with Errors',
+                    'R': 'Rejected',
+                    'P': 'Partially Accepted'
+                };
+
+                const errorCodeDescriptions = {
+                    '1': 'Transaction Set Not Supported',
+                    '2': 'Transaction Set Trailer Missing',
+                    '3': 'Transaction Set Control Number Mismatch',
+                    '4': 'Number of Included Segments Does Not Match Count',
+                    '5': 'One or More Segments in Error',
+                    '6': 'Missing or Invalid Transaction Set Identifier',
+                    '7': 'Missing or Invalid Transaction Set Control Number'
+                };
+
+                const elementErrorDescriptions = {
+                    '1': 'Mandatory Data Element Missing',
+                    '2': 'Conditional Required Data Element Missing',
+                    '3': 'Too Many Data Elements',
+                    '4': 'Data Element Too Short',
+                    '5': 'Data Element Too Long',
+                    '6': 'Invalid Character in Data Element',
+                    '7': 'Invalid Code Value',
+                    '8': 'Invalid Date',
+                    '9': 'Invalid Time',
+                    '10': 'Exclusion Condition Violated'
+                };
+
+                data.transactions.forEach((txn, index) => {
+                    const statusDesc = statusDescriptions[txn.status] || txn.status || 'Unknown';
+                    const statusColor = txn.status === 'A' ? '#4ec9b0' :
+                                       txn.status === 'E' ? '#dcdcaa' : '#f48771';
+
+                    html += `
+                        <div class="edi-segment" style="border-left-color: ${statusColor};">
+                            <div class="segment-header">
+                                <div>
+                                    <span class="segment-code">AK2/AK5</span>
+                                    <span class="segment-name"> - Transaction ${txn.transactionSetId} (${statusDesc})</span>
+                                </div>
+                            </div>
+                            <div class="segment-fields">
+                                <div class="field">
+                                    <div class="field-label">Transaction Set ID</div>
+                                    <div class="field-value">${txn.transactionSetId || ''}</div>
+                                </div>
+                                <div class="field">
+                                    <div class="field-label">Control Number</div>
+                                    <div class="field-value">${txn.transactionControlNumber || ''}</div>
+                                </div>
+                                <div class="field">
+                                    <div class="field-label">Status</div>
+                                    <div class="field-value">${statusDesc}</div>
+                                </div>
+                    `;
+
+                    if (txn.errorCodes && txn.errorCodes.length > 0) {
+                        html += `
+                            <div class="field">
+                                <div class="field-label">Error Codes</div>
+                                <div class="field-value">`;
+
+                        txn.errorCodes.forEach((code, idx) => {
+                            const desc = errorCodeDescriptions[code] || code;
+                            html += `${idx > 0 ? '<br>' : ''}${code}: ${desc}`;
+                        });
+
+                        html += `</div>
+                            </div>
+                        `;
+                    }
+
+                    html += `</div>`;
+
+                    // Show segment-level errors (AK3/AK4)
+                    if (txn.segments && txn.segments.length > 0) {
+                        html += `<div style="margin-left: 20px; margin-top: 8px;">`;
+                        html += `<div style="color: #dcdcaa; font-weight: 600; margin-bottom: 4px;">Segment Errors:</div>`;
+
+                        txn.segments.forEach((seg, segIdx) => {
+                            html += `
+                                <div style="background: #252526; padding: 8px; margin-bottom: 4px; border-radius: 4px; border-left: 2px solid #f48771;">
+                                    <div style="color: #9cdcfe;">Segment: ${seg.segmentId} (Position: ${seg.segmentPosition || 'N/A'})</div>
+                            `;
+
+                            if (seg.errorCode) {
+                                html += `<div style="color: #ce9178; font-size: 12px;">Error: ${seg.errorCode}</div>`;
+                            }
+
+                            if (seg.elements && seg.elements.length > 0) {
+                                html += `<div style="margin-top: 4px; font-size: 12px;">`;
+                                seg.elements.forEach((elem, elemIdx) => {
+                                    const elemDesc = elementErrorDescriptions[elem.errorCode] || elem.errorCode;
+                                    html += `
+                                        <div style="color: #8e8e93; margin-top: 2px;">
+                                            • Element ${elem.position || 'N/A'}: ${elemDesc}
+                                            ${elem.copyOfBadElement ? ` (Value: "${elem.copyOfBadElement}")` : ''}
+                                        </div>
+                                    `;
+                                });
+                                html += `</div>`;
+                            }
+
+                            html += `</div>`;
+                        });
+
+                        html += `</div>`;
+                    }
+
+                    html += `</div>`;
+                });
+
+                html += '</div>';
+            }
+
+            // All other segments
+            if (data.segments && data.segments.length > 0) {
+                const processedCodes = ['ISA', 'GS', 'ST', 'AK1', 'AK2', 'AK3', 'AK4', 'AK5', 'AK9', 'SE', 'GE', 'IEA'];
+                const otherSegments = data.segments.filter(s => !processedCodes.includes(s.code));
+
+                if (otherSegments.length > 0) {
+                    html += '<div class="item-header">📄 Additional Segments</div>';
+
+                    otherSegments.forEach(segment => {
+                        html += `
+                            <div class="edi-segment">
+                                <div class="segment-header">
+                                    <div>
+                                        <span class="segment-code">${segment.code}</span>
+                                        <span class="segment-name"> - ${segmentNames[segment.code] || 'Unknown'}</span>
+                                    </div>
+                                </div>
+                                <div class="segment-fields">
+                        `;
+
+                        segment.elements.slice(1).forEach((element, idx) => {
+                            if (element) {
+                                html += `
+                                    <div class="field">
+                                        <div class="field-label">Element ${idx + 1}</div>
+                                        <div class="field-value">${element}</div>
+                                    </div>
+                                `;
+                            }
+                        });
+
+                        html += `
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+            }
+
+            return html;
+        }
+
         // ==================== EDI 850 ENCODER ====================
 
         const segmentFields = {
@@ -2662,6 +3156,43 @@
                 { name: 'qualifierCode', label: 'Quantity Qualifier', hint: '17=On Hand, 26=Available, 33=On Order', required: true },
                 { name: 'quantity', label: 'Quantity', hint: 'Number of units', required: true },
                 { name: 'unitOfMeasure', label: 'Unit of Measure', hint: 'EA = Each, CS = Case', required: false, default: 'EA' }
+            ],
+            // EDI 997 Functional Acknowledgment Segments
+            'AK1': [
+                { name: 'functionalIdCode', label: 'Functional ID Code', hint: 'PO, IN, SH, IB, etc.', required: true },
+                { name: 'groupControlNumber', label: 'Group Control Number', hint: 'From original GS06', required: true }
+            ],
+            'AK2': [
+                { name: 'transactionSetId', label: 'Transaction Set ID', hint: '850, 810, 856, 846, etc.', required: true },
+                { name: 'transactionControlNumber', label: 'Transaction Control Number', hint: 'From original ST02', required: true }
+            ],
+            'AK3': [
+                { name: 'segmentId', label: 'Segment ID', hint: 'Segment with error (e.g., BEG, REF)', required: true },
+                { name: 'segmentPosition', label: 'Segment Position', hint: 'Position in transaction set', required: true },
+                { name: 'loopId', label: 'Loop Identifier', hint: 'Optional', required: false },
+                { name: 'errorCode', label: 'Segment Syntax Error Code', hint: '1-8', required: false }
+            ],
+            'AK4': [
+                { name: 'position', label: 'Element Position', hint: 'Position in segment', required: true },
+                { name: 'elementPosition', label: 'Composite Element Position', hint: 'Optional', required: false },
+                { name: 'errorCode', label: 'Data Element Syntax Error Code', hint: '1-10', required: true },
+                { name: 'copyOfBadElement', label: 'Copy of Bad Data Element', hint: 'Optional', required: false }
+            ],
+            'AK5': [
+                { name: 'status', label: 'Transaction Set Acknowledgment Code', hint: 'A=Accepted, E=Errors, R=Rejected', required: true },
+                { name: 'errorCode1', label: 'Transaction Set Syntax Error Code 1', hint: 'Optional (1-7)', required: false },
+                { name: 'errorCode2', label: 'Transaction Set Syntax Error Code 2', hint: 'Optional (1-7)', required: false },
+                { name: 'errorCode3', label: 'Transaction Set Syntax Error Code 3', hint: 'Optional (1-7)', required: false },
+                { name: 'errorCode4', label: 'Transaction Set Syntax Error Code 4', hint: 'Optional (1-7)', required: false }
+            ],
+            'AK9': [
+                { name: 'status', label: 'Functional Group Acknowledgment Code', hint: 'A=Accepted, E=Errors, R=Rejected, P=Partial', required: true },
+                { name: 'transactionSetsIncluded', label: 'Number of Transaction Sets Included', hint: 'Total in group', required: true },
+                { name: 'transactionSetsReceived', label: 'Number of Received Transaction Sets', hint: 'Successfully received', required: true },
+                { name: 'transactionSetsAccepted', label: 'Number of Accepted Transaction Sets', hint: 'Without errors', required: true },
+                { name: 'errorCode1', label: 'Functional Group Syntax Error Code 1', hint: 'Optional', required: false },
+                { name: 'errorCode2', label: 'Functional Group Syntax Error Code 2', hint: 'Optional', required: false },
+                { name: 'errorCode3', label: 'Functional Group Syntax Error Code 3', hint: 'Optional', required: false }
             ]
         };
 
@@ -2694,6 +3225,8 @@
                         defaultValue = 'SH';
                     } else if (currentTransactionType === '846') {
                         defaultValue = 'IB';
+                    } else if (currentTransactionType === '997') {
+                        defaultValue = 'FA';
                     } else {
                         defaultValue = 'PO';
                     }
@@ -2718,7 +3251,7 @@
         }
 
         function addSegment() {
-            if (currentTransactionType !== '850' && currentTransactionType !== '810' && currentTransactionType !== '856' && currentTransactionType !== '846') {
+            if (currentTransactionType !== '850' && currentTransactionType !== '810' && currentTransactionType !== '856' && currentTransactionType !== '846' && currentTransactionType !== '997') {
                 setStatus('error', `EDI ${currentTransactionType} is not yet supported`);
                 return;
             }
