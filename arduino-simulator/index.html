@@ -735,6 +735,7 @@
                             <option value="button">Digital Read (Simulated)</option>
                             <option value="synthesizer">Tone Synthesizer (Musical Scale)</option>
                             <option value="advSynth">🎛 Advanced Synthesizer (Filters & Envelopes)</option>
+                            <option value="ringModSynth">🔔 Ring Mod Synth (Evolving Soundscape)</option>
                         </select>
                     </div>
                     <textarea id="codeEditor" spellcheck="false" placeholder="// Write your Arduino code here..."></textarea>
@@ -1024,6 +1025,77 @@
                             <button id="resetAdvSynthBtn" class="btn">Reset to Defaults</button>
                         </div>
                         </div>
+
+                        <!-- Ring Mod Synthesizer Controls -->
+                        <div class="synth-controls" id="ringModSynthControls" style="display: none;">
+                        <div class="control-section">
+                            <label class="control-label">Waveform Type:</label>
+                            <select id="ringModWaveformSelect" class="synth-select">
+                                <option value="sine">Sine</option>
+                                <option value="square">Square</option>
+                                <option value="triangle">Triangle</option>
+                                <option value="sawtooth">Sawtooth</option>
+                            </select>
+                        </div>
+
+                        <div class="control-section">
+                            <label class="control-label">Volume: <span id="ringModVolumeDisplay">10%</span></label>
+                            <input type="range" id="ringModVolumeSlider" min="0" max="100" value="10" class="synth-slider">
+                        </div>
+
+                        <div class="control-section">
+                            <label class="control-label">🔔 Ring Modulation</label>
+                            <div class="control-subsection">
+                                <label class="control-sublabel">Ring Mod Frequency: <span id="ringModFreqDisplay">30</span> Hz</label>
+                                <input type="range" id="ringModFreqSlider" min="1" max="200" value="30" class="synth-slider">
+                            </div>
+                            <div class="control-subsection">
+                                <label class="control-sublabel">Ring Mod Depth: <span id="ringModDepthDisplay">100</span>%</label>
+                                <input type="range" id="ringModDepthSlider" min="0" max="100" value="100" class="synth-slider">
+                            </div>
+                        </div>
+
+                        <div class="control-section">
+                            <label class="control-label">🎚 Filter Controls</label>
+                            <div class="filter-controls">
+                                <div class="control-subsection">
+                                    <label class="control-sublabel">Filter Type:</label>
+                                    <select id="ringModFilterTypeSelect" class="synth-select">
+                                        <option value="lowpass">Lowpass</option>
+                                        <option value="highpass">Highpass</option>
+                                        <option value="bandpass">Bandpass</option>
+                                        <option value="notch">Notch</option>
+                                    </select>
+                                </div>
+
+                                <div class="control-subsection">
+                                    <label class="control-sublabel">Cutoff Frequency: <span id="ringModFilterFreqDisplay">1000</span> Hz</label>
+                                    <input type="range" id="ringModFilterFreqSlider" min="50" max="5000" value="1000" class="synth-slider">
+                                </div>
+
+                                <div class="control-subsection">
+                                    <label class="control-sublabel">Resonance (Q): <span id="ringModFilterQDisplay">1.0</span></label>
+                                    <input type="range" id="ringModFilterQSlider" min="0.1" max="20" value="1" step="0.1" class="synth-slider">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="control-section">
+                            <label class="control-label">📈 Envelope (ADSR)</label>
+                            <div class="control-subsection">
+                                <label class="control-sublabel">Attack: <span id="ringModAttackDisplay">0.1</span> s</label>
+                                <input type="range" id="ringModAttackSlider" min="0" max="1" value="0.1" step="0.01" class="synth-slider">
+                            </div>
+                            <div class="control-subsection">
+                                <label class="control-sublabel">Release: <span id="ringModReleaseDisplay">0.3</span> s</label>
+                                <input type="range" id="ringModReleaseSlider" min="0" max="2" value="0.3" step="0.01" class="synth-slider">
+                            </div>
+                        </div>
+
+                        <div class="control-section">
+                            <button id="resetRingModSynthBtn" class="btn">Reset to Defaults</button>
+                        </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1078,6 +1150,13 @@
                     detune: 0,
                     attack: 0.01,
                     release: 0.1
+                };
+
+                // Ring modulation synthesizer settings
+                this.ringModSettings = {
+                    enabled: false,
+                    modFrequency: 30,
+                    modDepth: 1.0
                 };
 
                 // Constants
@@ -1189,6 +1268,21 @@
                 gainNode.gain.setValueAtTime(0, now);
                 gainNode.gain.linearRampToValueAtTime(this.synthSettings.volume, now + attackTime);
 
+                // Create ring modulation if enabled
+                let modulator = null;
+                let ringModGain = null;
+                if (this.ringModSettings.enabled) {
+                    modulator = this.audioContext.createOscillator();
+                    modulator.frequency.setValueAtTime(this.ringModSettings.modFrequency, now);
+
+                    ringModGain = this.audioContext.createGain();
+                    ringModGain.gain.setValueAtTime(0, now);
+
+                    // Connect modulator to control the ring mod gain
+                    modulator.connect(ringModGain.gain);
+                    modulator.start(now);
+                }
+
                 // Create and configure filter if enabled
                 let filterNode = null;
                 if (this.advSynthSettings.filterEnabled) {
@@ -1198,8 +1292,14 @@
                     filterNode.Q.setValueAtTime(this.advSynthSettings.filterResonance, now);
                 }
 
-                // Connect audio nodes
-                oscillator.connect(gainNode);
+                // Connect audio nodes with ring modulation if enabled
+                if (this.ringModSettings.enabled && ringModGain) {
+                    oscillator.connect(ringModGain);
+                    ringModGain.connect(gainNode);
+                } else {
+                    oscillator.connect(gainNode);
+                }
+
                 if (filterNode) {
                     gainNode.connect(filterNode);
                     filterNode.connect(this.audioContext.destination);
@@ -1213,6 +1313,12 @@
                 // Store references
                 this.oscillators[pin] = oscillator;
                 this.gainNodes[pin] = gainNode;
+                if (modulator) {
+                    this.oscillators[pin + '_mod'] = modulator;
+                }
+                if (ringModGain) {
+                    this.gainNodes[pin + '_ringmod'] = ringModGain;
+                }
 
                 // If duration is specified, automatically stop after duration
                 if (duration) {
@@ -1258,6 +1364,17 @@
                         delete this.oscillators[pin];
                     }
 
+                    // Clean up ring mod oscillator
+                    if (this.oscillators[pin + '_mod']) {
+                        try {
+                            this.oscillators[pin + '_mod'].stop();
+                            this.oscillators[pin + '_mod'].disconnect();
+                        } catch (e) {
+                            // Modulator might already be stopped
+                        }
+                        delete this.oscillators[pin + '_mod'];
+                    }
+
                     // Clean up gain node
                     if (this.gainNodes[pin]) {
                         try {
@@ -1266,6 +1383,16 @@
                             // Gain node might already be disconnected
                         }
                         delete this.gainNodes[pin];
+                    }
+
+                    // Clean up ring mod gain node
+                    if (this.gainNodes[pin + '_ringmod']) {
+                        try {
+                            this.gainNodes[pin + '_ringmod'].disconnect();
+                        } catch (e) {
+                            // Ring mod gain might already be disconnected
+                        }
+                        delete this.gainNodes[pin + '_ringmod'];
                     }
 
                     // Clean up filter node
@@ -1333,6 +1460,18 @@
 
             setRelease(seconds) {
                 this.advSynthSettings.release = seconds;
+            }
+
+            setRingModEnabled(enabled) {
+                this.ringModSettings.enabled = enabled;
+            }
+
+            setRingModFrequency(freq) {
+                this.ringModSettings.modFrequency = freq;
+            }
+
+            setRingModDepth(depth) {
+                this.ringModSettings.modDepth = depth;
             }
 
             addToSerial(text, newline = true) {
@@ -1554,6 +1693,74 @@ void loop() {
 
   Serial.println("--- Repeating ---");
   delay(1000);
+}`,
+            ringModSynth: `// Ring Modulation Synthesizer - Evolving Soundscape
+// This synth uses ring modulation to create metallic, bell-like tones
+// Filters and ring mod frequency evolve over time to build complexity
+
+void setup() {
+  pinMode(8, OUTPUT);
+  Serial.begin(9600);
+  Serial.println("=== Ring Modulation Synthesizer ===");
+  Serial.println("Building evolving soundscape...");
+
+  // Enable ring modulation and filter
+  setRingModEnabled(1);
+  setFilterEnabled(1);
+  setFilterType("lowpass");
+
+  // Set envelopes for smooth transitions
+  setAttack(0.1);
+  setRelease(0.3);
+}
+
+void loop() {
+  int baseFreq = 110; // A2 fundamental
+
+  // Evolving sequence - builds over 4 phases
+  for (int phase = 0; phase < 4; phase++) {
+    Serial.print("Phase ");
+    Serial.println(phase + 1);
+
+    // Each phase adds complexity
+    int steps = 4 + (phase * 2);
+
+    for (int i = 0; i < steps; i++) {
+      // Calculate note frequency (harmonic series)
+      int harmonic = (i % 5) + 1;
+      int freq = baseFreq * harmonic;
+
+      // Evolve ring mod frequency (creates metallic texture)
+      int ringModFreq = 20 + (phase * 30) + (i * 10);
+      setRingModFrequency(ringModFreq);
+
+      // Evolve filter cutoff (brightens over time)
+      int filterFreq = 200 + (phase * 400) + (i * 50);
+      setFilterFrequency(filterFreq);
+
+      // Increase resonance in later phases
+      float resonance = 1.0 + (phase * 2.0);
+      setFilterResonance(resonance);
+
+      Serial.print("  Freq: ");
+      Serial.print(freq);
+      Serial.print(" Hz, RingMod: ");
+      Serial.print(ringModFreq);
+      Serial.print(" Hz, Filter: ");
+      Serial.print(filterFreq);
+      Serial.println(" Hz");
+
+      tone(8, freq);
+      delay(300 - (phase * 40)); // Speed up over time
+      noTone(8);
+      delay(100);
+    }
+
+    delay(500);
+  }
+
+  Serial.println("--- Cycling ---");
+  delay(2000);
 }`
         };
 
@@ -1662,6 +1869,9 @@ void loop() {
             code = replaceOutsideStrings(code, /\bsetDetune\s*\(/g, 'arduino.setDetune(');
             code = replaceOutsideStrings(code, /\bsetAttack\s*\(/g, 'arduino.setAttack(');
             code = replaceOutsideStrings(code, /\bsetRelease\s*\(/g, 'arduino.setRelease(');
+            code = replaceOutsideStrings(code, /\bsetRingModEnabled\s*\(/g, 'arduino.setRingModEnabled(');
+            code = replaceOutsideStrings(code, /\bsetRingModFrequency\s*\(/g, 'arduino.setRingModFrequency(');
+            code = replaceOutsideStrings(code, /\bsetRingModDepth\s*\(/g, 'arduino.setRingModDepth(');
 
             // Replace Serial functions (avoiding string literals)
             code = replaceOutsideStrings(code, /\bSerial\.begin\s*\(/g, 'arduino.Serial.begin(');
@@ -1891,24 +2101,35 @@ void loop() {
                 const boardTab = document.querySelector('.board-tab[data-tab="board"]');
                 const basicSynthControls = document.getElementById('basicSynthControls');
                 const advSynthControls = document.getElementById('advSynthControls');
+                const ringModSynthControls = document.getElementById('ringModSynthControls');
                 const noControlsMessage = document.getElementById('noControlsMessage');
 
                 if (example === 'synthesizer') {
                     // Show basic synth controls
                     basicSynthControls.style.display = 'flex';
                     advSynthControls.style.display = 'none';
+                    ringModSynthControls.style.display = 'none';
                     noControlsMessage.style.display = 'none';
                     controlsTab.click();
                 } else if (example === 'advSynth') {
                     // Show advanced synth controls
                     basicSynthControls.style.display = 'none';
                     advSynthControls.style.display = 'flex';
+                    ringModSynthControls.style.display = 'none';
+                    noControlsMessage.style.display = 'none';
+                    controlsTab.click();
+                } else if (example === 'ringModSynth') {
+                    // Show ring mod synth controls
+                    basicSynthControls.style.display = 'none';
+                    advSynthControls.style.display = 'none';
+                    ringModSynthControls.style.display = 'flex';
                     noControlsMessage.style.display = 'none';
                     controlsTab.click();
                 } else {
                     // Hide all synth controls for other examples
                     basicSynthControls.style.display = 'none';
                     advSynthControls.style.display = 'none';
+                    ringModSynthControls.style.display = 'none';
                     noControlsMessage.style.display = 'flex';
                     boardTab.click();
                 }
@@ -2035,6 +2256,81 @@ void loop() {
             document.getElementById('attackDisplay').textContent = '0.01';
             document.getElementById('releaseSlider').value = 0.1;
             document.getElementById('releaseDisplay').textContent = '0.10';
+        });
+
+        // Ring Mod Synthesizer Controls
+        document.getElementById('ringModWaveformSelect').addEventListener('change', (e) => {
+            arduino.synthSettings.waveform = e.target.value;
+        });
+
+        document.getElementById('ringModVolumeSlider').addEventListener('input', (e) => {
+            const volume = parseInt(e.target.value) / 100;
+            arduino.synthSettings.volume = volume;
+            document.getElementById('ringModVolumeDisplay').textContent = e.target.value + '%';
+        });
+
+        document.getElementById('ringModFreqSlider').addEventListener('input', (e) => {
+            const freq = parseInt(e.target.value);
+            arduino.setRingModFrequency(freq);
+            document.getElementById('ringModFreqDisplay').textContent = freq;
+        });
+
+        document.getElementById('ringModDepthSlider').addEventListener('input', (e) => {
+            const depth = parseInt(e.target.value) / 100;
+            arduino.setRingModDepth(depth);
+            document.getElementById('ringModDepthDisplay').textContent = e.target.value;
+        });
+
+        document.getElementById('ringModFilterTypeSelect').addEventListener('change', (e) => {
+            arduino.setFilterType(e.target.value);
+        });
+
+        document.getElementById('ringModFilterFreqSlider').addEventListener('input', (e) => {
+            const freq = parseInt(e.target.value);
+            arduino.setFilterFrequency(freq);
+            document.getElementById('ringModFilterFreqDisplay').textContent = freq;
+        });
+
+        document.getElementById('ringModFilterQSlider').addEventListener('input', (e) => {
+            const q = parseFloat(e.target.value);
+            arduino.setFilterResonance(q);
+            document.getElementById('ringModFilterQDisplay').textContent = q.toFixed(1);
+        });
+
+        document.getElementById('ringModAttackSlider').addEventListener('input', (e) => {
+            const attack = parseFloat(e.target.value);
+            arduino.setAttack(attack);
+            document.getElementById('ringModAttackDisplay').textContent = attack.toFixed(2);
+        });
+
+        document.getElementById('ringModReleaseSlider').addEventListener('input', (e) => {
+            const release = parseFloat(e.target.value);
+            arduino.setRelease(release);
+            document.getElementById('ringModReleaseDisplay').textContent = release.toFixed(2);
+        });
+
+        document.getElementById('resetRingModSynthBtn').addEventListener('click', () => {
+            arduino.ringModSettings.modFrequency = 30;
+            arduino.ringModSettings.modDepth = 1.0;
+            arduino.advSynthSettings.filterType = 'lowpass';
+            arduino.advSynthSettings.filterFrequency = 1000;
+            arduino.advSynthSettings.filterResonance = 1;
+            arduino.advSynthSettings.attack = 0.1;
+            arduino.advSynthSettings.release = 0.3;
+
+            document.getElementById('ringModFreqSlider').value = 30;
+            document.getElementById('ringModFreqDisplay').textContent = '30';
+            document.getElementById('ringModDepthSlider').value = 100;
+            document.getElementById('ringModDepthDisplay').textContent = '100';
+            document.getElementById('ringModFilterTypeSelect').value = 'lowpass';
+            document.getElementById('ringModFilterFreqSlider').value = 1000;
+            document.getElementById('ringModFilterFreqDisplay').textContent = '1000';
+            document.getElementById('ringModFilterQSlider').value = 1;
+            document.getElementById('ringModFilterQDisplay').textContent = '1.0';
+            document.getElementById('ringModAttackSlider').value = 0.1;
+            document.getElementById('ringModAttackDisplay').textContent = '0.10';
+            document.getElementById('ringModReleaseSlider').value = 0.3;
+            document.getElementById('ringModReleaseDisplay').textContent = '0.30';
         });
 
         // Board panel tab switching
