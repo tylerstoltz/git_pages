@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CAN Signal Decoder - Developer Tools</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #1e1e1e 0%, #2d2d30 100%);
+            color: #d4d4d4;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: #252526;
+            padding: 1.5rem 2rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .header h1 {
+            color: #569cd6;
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+
+        .back-link {
+            color: #4ec9b0;
+            text-decoration: none;
+            font-size: 1rem;
+            padding: 0.5rem 1rem;
+            border: 1px solid #4ec9b0;
+            border-radius: 4px;
+            transition: all 0.3s;
+        }
+
+        .back-link:hover {
+            background: #4ec9b0;
+            color: #1e1e1e;
+        }
+
+        .container {
+            flex: 1;
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            overflow: auto;
+        }
+
+        .section {
+            background: #252526;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .section h2 {
+            color: #569cd6;
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+            border-bottom: 2px solid #569cd6;
+            padding-bottom: 0.5rem;
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .input-group label {
+            display: block;
+            color: #9cdcfe;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        textarea, input, select {
+            width: 100%;
+            background: #1e1e1e;
+            border: 1px solid #3e3e42;
+            color: #d4d4d4;
+            padding: 0.75rem;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.95rem;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus, input:focus, select:focus {
+            outline: none;
+            border-color: #569cd6;
+        }
+
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        button {
+            background: #569cd6;
+            color: #fff;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+
+        button:hover {
+            background: #4a8ac2;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(86, 156, 214, 0.3);
+        }
+
+        button.secondary {
+            background: #3e3e42;
+        }
+
+        button.secondary:hover {
+            background: #505053;
+        }
+
+        button.small {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.85rem;
+        }
+
+        button.danger {
+            background: #f48771;
+        }
+
+        button.danger:hover {
+            background: #e07660;
+        }
+
+        .signal-card {
+            background: #1e1e1e;
+            border: 1px solid #3e3e42;
+            border-radius: 6px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .signal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .signal-header h3 {
+            color: #4ec9b0;
+            font-size: 1rem;
+        }
+
+        .signal-fields {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+        }
+
+        .signal-field {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .signal-field label {
+            color: #9cdcfe;
+            font-size: 0.85rem;
+            margin-bottom: 0.3rem;
+        }
+
+        .signal-field input,
+        .signal-field select {
+            padding: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+
+        .results {
+            background: #1e1e1e;
+            border: 1px solid #3e3e42;
+            border-radius: 6px;
+            padding: 1rem;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .result-item {
+            padding: 0.75rem;
+            margin-bottom: 0.75rem;
+            background: #252526;
+            border-left: 3px solid #4ec9b0;
+            border-radius: 4px;
+        }
+
+        .result-name {
+            color: #4ec9b0;
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+        }
+
+        .result-value {
+            color: #d4d4d4;
+            font-family: 'Courier New', monospace;
+            font-size: 1.1rem;
+        }
+
+        .result-details {
+            color: #808080;
+            font-size: 0.85rem;
+            margin-top: 0.3rem;
+        }
+
+        .message-info {
+            background: #1e1e1e;
+            border: 1px solid #3e3e42;
+            border-radius: 6px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .message-info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .message-info-label {
+            color: #9cdcfe;
+        }
+
+        .message-info-value {
+            color: #d4d4d4;
+            font-family: 'Courier New', monospace;
+        }
+
+        .error {
+            background: #5a1e1e;
+            border-left: 3px solid #f48771;
+            color: #f48771;
+            padding: 0.75rem;
+            border-radius: 4px;
+            margin-top: 1rem;
+        }
+
+        .help-text {
+            color: #808080;
+            font-size: 0.85rem;
+            margin-top: 0.3rem;
+            font-style: italic;
+        }
+
+        .byte-display {
+            font-family: 'Courier New', monospace;
+            background: #1e1e1e;
+            border: 1px solid #3e3e42;
+            padding: 0.75rem;
+            border-radius: 4px;
+            margin-top: 0.5rem;
+            color: #d4d4d4;
+            word-break: break-all;
+        }
+
+        .addressing-mode {
+            background: #2d2d30;
+            border: 1px solid #3e3e42;
+            border-radius: 4px;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .addressing-mode label {
+            display: flex;
+            align-items: center;
+            color: #9cdcfe;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+        }
+
+        .addressing-mode input[type="radio"] {
+            width: auto;
+            margin-right: 0.5rem;
+        }
+
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .scrollable {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1e1e1e;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #3e3e42;
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #569cd6;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔍 CAN Signal Decoder</h1>
+        <a href="../" class="back-link">← Back to Tools</a>
+    </div>
+
+    <div class="container">
+        <!-- Input Section -->
+        <div class="section">
+            <h2>CAN Message Input</h2>
+
+            <div class="input-group">
+                <label>CAN Message</label>
+                <textarea id="canMessage" placeholder="Paste CAN message here, e.g.:
+vcan0  345   [8]  FF 00 00 00 00 00 00 00
+or just the payload:
+FF 00 00 00 00 00 00 00"></textarea>
+                <div class="help-text">Supports various CAN message formats. Hex bytes will be automatically extracted.</div>
+            </div>
+
+            <div class="message-info" id="messageInfo" style="display: none;">
+                <div class="message-info-row">
+                    <span class="message-info-label">CAN ID:</span>
+                    <span class="message-info-value" id="canId">-</span>
+                </div>
+                <div class="message-info-row">
+                    <span class="message-info-label">DLC:</span>
+                    <span class="message-info-value" id="dlc">-</span>
+                </div>
+                <div class="message-info-row">
+                    <span class="message-info-label">Payload (Hex):</span>
+                    <span class="message-info-value" id="payloadHex">-</span>
+                </div>
+                <div class="message-info-row">
+                    <span class="message-info-label">Payload (Dec):</span>
+                    <span class="message-info-value" id="payloadDec">-</span>
+                </div>
+            </div>
+
+            <h2 style="margin-top: 2rem;">Signal Definitions</h2>
+
+            <div class="addressing-mode">
+                <div style="color: #9cdcfe; margin-bottom: 0.5rem; font-weight: 500;">Addressing Mode</div>
+                <label>
+                    <input type="radio" name="addressingMode" value="byte" checked>
+                    Byte-based (specify start byte + number of bytes)
+                </label>
+                <label>
+                    <input type="radio" name="addressingMode" value="bit">
+                    Bit-based (specify start bit + number of bits)
+                </label>
+            </div>
+
+            <div class="scrollable" id="signalsContainer">
+                <!-- Signal definitions will be added here -->
+            </div>
+
+            <div class="button-group">
+                <button onclick="addSignal()">+ Add Signal</button>
+                <button class="secondary" onclick="clearSignals()">Clear All</button>
+            </div>
+        </div>
+
+        <!-- Output Section -->
+        <div class="section">
+            <h2>Decoded Signals</h2>
+            <div class="results" id="results">
+                <div style="color: #808080; text-align: center; padding: 2rem;">
+                    Add a CAN message and signal definitions to see decoded values
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button onclick="decodeSignals()">🔄 Decode</button>
+                <button class="secondary" onclick="copyResults()">📋 Copy Results</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let signalCount = 0;
+
+        // Initialize with one signal
+        window.addEventListener('DOMContentLoaded', () => {
+            addSignal();
+
+            // Auto-decode on input change
+            document.getElementById('canMessage').addEventListener('input', debounce(autoDecodeIfValid, 500));
+        });
+
+        function addSignal() {
+            const container = document.getElementById('signalsContainer');
+            const signalId = `signal-${signalCount++}`;
+            const addressingMode = document.querySelector('input[name="addressingMode"]:checked').value;
+
+            const signalHtml = `
+                <div class="signal-card" id="${signalId}">
+                    <div class="signal-header">
+                        <h3>Signal ${signalCount}</h3>
+                        <button class="small danger" onclick="removeSignal('${signalId}')">Remove</button>
+                    </div>
+                    <div class="signal-fields">
+                        <div class="signal-field full-width">
+                            <label>Signal Name</label>
+                            <input type="text" class="signal-name" placeholder="e.g., Engine Speed">
+                        </div>
+                        ${addressingMode === 'byte' ? `
+                        <div class="signal-field">
+                            <label>Start Byte (0-7)</label>
+                            <input type="number" class="start-byte" min="0" max="7" value="0">
+                        </div>
+                        <div class="signal-field">
+                            <label>Number of Bytes</label>
+                            <input type="number" class="num-bytes" min="1" max="8" value="1">
+                        </div>
+                        ` : `
+                        <div class="signal-field">
+                            <label>Start Bit (0-63)</label>
+                            <input type="number" class="start-bit" min="0" max="63" value="0">
+                        </div>
+                        <div class="signal-field">
+                            <label>Number of Bits</label>
+                            <input type="number" class="num-bits" min="1" max="64" value="8">
+                        </div>
+                        `}
+                        <div class="signal-field">
+                            <label>Endianness</label>
+                            <select class="endianness">
+                                <option value="big">Big Endian</option>
+                                <option value="little">Little Endian</option>
+                            </select>
+                        </div>
+                        <div class="signal-field">
+                            <label>Data Type</label>
+                            <select class="data-type">
+                                <option value="unsigned">Unsigned</option>
+                                <option value="signed">Signed (2's complement)</option>
+                            </select>
+                        </div>
+                        <div class="signal-field">
+                            <label>Scale Factor</label>
+                            <input type="number" class="scale" step="any" value="1" placeholder="1">
+                        </div>
+                        <div class="signal-field">
+                            <label>Offset</label>
+                            <input type="number" class="offset" step="any" value="0" placeholder="0">
+                        </div>
+                        <div class="signal-field full-width">
+                            <label>Unit (optional)</label>
+                            <input type="text" class="unit" placeholder="e.g., RPM, km/h, °C">
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            container.insertAdjacentHTML('beforeend', signalHtml);
+        }
+
+        function removeSignal(signalId) {
+            const signal = document.getElementById(signalId);
+            if (signal) {
+                signal.remove();
+            }
+        }
+
+        function clearSignals() {
+            if (confirm('Are you sure you want to clear all signal definitions?')) {
+                document.getElementById('signalsContainer').innerHTML = '';
+                signalCount = 0;
+                addSignal();
+            }
+        }
+
+        function parseCANMessage(input) {
+            const trimmed = input.trim();
+            if (!trimmed) return null;
+
+            // Extract hex bytes using regex
+            const hexPattern = /([0-9A-Fa-f]{2}[\s]*)+/g;
+            const matches = trimmed.match(hexPattern);
+
+            if (!matches) return null;
+
+            // Get all hex bytes
+            const allHex = matches.join(' ');
+            const bytes = allHex.match(/[0-9A-Fa-f]{2}/g);
+
+            if (!bytes || bytes.length === 0) return null;
+
+            // Try to extract CAN ID if present
+            let canId = null;
+            const idMatch = trimmed.match(/\b([0-9A-Fa-f]{3})\b/);
+            if (idMatch) {
+                canId = idMatch[1];
+            }
+
+            // Try to extract DLC if present
+            let dlc = null;
+            const dlcMatch = trimmed.match(/\[(\d+)\]/);
+            if (dlcMatch) {
+                dlc = parseInt(dlcMatch[1]);
+            } else {
+                dlc = bytes.length;
+            }
+
+            return {
+                canId: canId,
+                dlc: dlc,
+                data: bytes.map(b => parseInt(b, 16))
+            };
+        }
+
+        function extractByteBased(data, startByte, numBytes, endianness) {
+            if (startByte < 0 || startByte >= data.length) {
+                throw new Error(`Start byte ${startByte} is out of range`);
+            }
+
+            const endByte = Math.min(startByte + numBytes, data.length);
+            const extractedBytes = data.slice(startByte, endByte);
+
+            if (extractedBytes.length === 0) {
+                throw new Error('No bytes to extract');
+            }
+
+            // Convert bytes to value based on endianness
+            let value = 0;
+            if (endianness === 'big') {
+                // Big endian: MSB first
+                for (let i = 0; i < extractedBytes.length; i++) {
+                    value = (value << 8) | extractedBytes[i];
+                }
+            } else {
+                // Little endian: LSB first
+                for (let i = extractedBytes.length - 1; i >= 0; i--) {
+                    value = (value << 8) | extractedBytes[i];
+                }
+            }
+
+            return value;
+        }
+
+        function extractBitBased(data, startBit, numBits, endianness) {
+            if (startBit < 0 || startBit >= data.length * 8) {
+                throw new Error(`Start bit ${startBit} is out of range`);
+            }
+
+            if (numBits <= 0 || numBits > 64) {
+                throw new Error(`Number of bits ${numBits} is invalid`);
+            }
+
+            let value = 0;
+
+            if (endianness === 'big') {
+                // Big endian (Motorola) bit numbering
+                for (let i = 0; i < numBits; i++) {
+                    const bitPos = startBit + i;
+                    const byteIndex = Math.floor(bitPos / 8);
+                    const bitIndex = 7 - (bitPos % 8);
+
+                    if (byteIndex >= data.length) break;
+
+                    const bit = (data[byteIndex] >> bitIndex) & 1;
+                    value = (value << 1) | bit;
+                }
+            } else {
+                // Little endian (Intel) bit numbering
+                const startByte = Math.floor(startBit / 8);
+                const startBitInByte = startBit % 8;
+
+                let bitCount = 0;
+                let byteIndex = startByte;
+                let bitIndex = startBitInByte;
+
+                while (bitCount < numBits && byteIndex < data.length) {
+                    const bit = (data[byteIndex] >> bitIndex) & 1;
+                    value |= (bit << bitCount);
+
+                    bitCount++;
+                    bitIndex++;
+
+                    if (bitIndex >= 8) {
+                        bitIndex = 0;
+                        byteIndex++;
+                    }
+                }
+            }
+
+            return value;
+        }
+
+        function applySignedConversion(value, numBits) {
+            const maxValue = Math.pow(2, numBits);
+            const signBit = Math.pow(2, numBits - 1);
+
+            if (value >= signBit) {
+                // Negative number in 2's complement
+                return value - maxValue;
+            }
+            return value;
+        }
+
+        function decodeSignals() {
+            const messageInput = document.getElementById('canMessage').value;
+            const parsed = parseCANMessage(messageInput);
+
+            if (!parsed) {
+                document.getElementById('results').innerHTML = '<div class="error">Invalid CAN message format. Please enter a valid CAN message.</div>';
+                document.getElementById('messageInfo').style.display = 'none';
+                return;
+            }
+
+            // Display message info
+            document.getElementById('messageInfo').style.display = 'block';
+            document.getElementById('canId').textContent = parsed.canId ? `0x${parsed.canId}` : 'N/A';
+            document.getElementById('dlc').textContent = parsed.dlc;
+            document.getElementById('payloadHex').textContent = parsed.data.map(b => b.toString(16).toUpperCase().padStart(2, '0')).join(' ');
+            document.getElementById('payloadDec').textContent = parsed.data.join(' ');
+
+            // Decode signals
+            const signalCards = document.querySelectorAll('.signal-card');
+            const results = [];
+            const addressingMode = document.querySelector('input[name="addressingMode"]:checked').value;
+
+            signalCards.forEach((card) => {
+                try {
+                    const name = card.querySelector('.signal-name').value || 'Unnamed Signal';
+                    const endianness = card.querySelector('.endianness').value;
+                    const dataType = card.querySelector('.data-type').value;
+                    const scale = parseFloat(card.querySelector('.scale').value) || 1;
+                    const offset = parseFloat(card.querySelector('.offset').value) || 0;
+                    const unit = card.querySelector('.unit').value || '';
+
+                    let rawValue;
+                    let extractionInfo;
+
+                    if (addressingMode === 'byte') {
+                        const startByte = parseInt(card.querySelector('.start-byte').value);
+                        const numBytes = parseInt(card.querySelector('.num-bytes').value);
+
+                        rawValue = extractByteBased(parsed.data, startByte, numBytes, endianness);
+                        extractionInfo = `Bytes ${startByte}-${startByte + numBytes - 1}, ${endianness} endian`;
+
+                        if (dataType === 'signed') {
+                            rawValue = applySignedConversion(rawValue, numBytes * 8);
+                        }
+                    } else {
+                        const startBit = parseInt(card.querySelector('.start-bit').value);
+                        const numBits = parseInt(card.querySelector('.num-bits').value);
+
+                        rawValue = extractBitBased(parsed.data, startBit, numBits, endianness);
+                        extractionInfo = `Bits ${startBit}-${startBit + numBits - 1}, ${endianness} endian`;
+
+                        if (dataType === 'signed') {
+                            rawValue = applySignedConversion(rawValue, numBits);
+                        }
+                    }
+
+                    const scaledValue = (rawValue * scale) + offset;
+
+                    results.push({
+                        name,
+                        rawValue,
+                        scaledValue,
+                        unit,
+                        extractionInfo,
+                        dataType
+                    });
+                } catch (error) {
+                    results.push({
+                        name: card.querySelector('.signal-name').value || 'Unnamed Signal',
+                        error: error.message
+                    });
+                }
+            });
+
+            // Display results
+            displayResults(results);
+        }
+
+        function displayResults(results) {
+            const container = document.getElementById('results');
+
+            if (results.length === 0) {
+                container.innerHTML = '<div style="color: #808080; text-align: center; padding: 2rem;">No signals defined</div>';
+                return;
+            }
+
+            let html = '';
+            results.forEach((result) => {
+                if (result.error) {
+                    html += `
+                        <div class="result-item" style="border-left-color: #f48771;">
+                            <div class="result-name">${result.name}</div>
+                            <div style="color: #f48771; margin-top: 0.5rem;">Error: ${result.error}</div>
+                        </div>
+                    `;
+                } else {
+                    const displayValue = result.unit
+                        ? `${result.scaledValue} ${result.unit}`
+                        : result.scaledValue;
+
+                    html += `
+                        <div class="result-item">
+                            <div class="result-name">${result.name}</div>
+                            <div class="result-value">${displayValue}</div>
+                            <div class="result-details">
+                                Raw: ${result.rawValue} (${result.dataType}) |
+                                Scaled: ${result.scaledValue} |
+                                ${result.extractionInfo}
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+
+            container.innerHTML = html;
+        }
+
+        function copyResults() {
+            const results = document.querySelectorAll('.result-item');
+            if (results.length === 0) return;
+
+            let text = 'CAN Signal Decoding Results\n';
+            text += '='.repeat(50) + '\n\n';
+
+            results.forEach((item) => {
+                const name = item.querySelector('.result-name').textContent;
+                const value = item.querySelector('.result-value')?.textContent || 'Error';
+                const details = item.querySelector('.result-details')?.textContent || '';
+
+                text += `${name}: ${value}\n`;
+                if (details) {
+                    text += `  ${details}\n`;
+                }
+                text += '\n';
+            });
+
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Results copied to clipboard!');
+            }).catch(() => {
+                alert('Failed to copy results');
+            });
+        }
+
+        function autoDecodeIfValid() {
+            const messageInput = document.getElementById('canMessage').value;
+            const parsed = parseCANMessage(messageInput);
+
+            if (parsed && document.querySelectorAll('.signal-card').length > 0) {
+                decodeSignals();
+            }
+        }
+
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // Update signal cards when addressing mode changes
+        document.querySelectorAll('input[name="addressingMode"]').forEach((radio) => {
+            radio.addEventListener('change', () => {
+                const currentSignals = Array.from(document.querySelectorAll('.signal-card'));
+                if (currentSignals.length > 0) {
+                    if (confirm('Changing addressing mode will clear all current signal definitions. Continue?')) {
+                        clearSignals();
+                    } else {
+                        // Revert the radio button
+                        document.querySelectorAll('input[name="addressingMode"]').forEach((r) => {
+                            r.checked = r.value !== radio.value;
+                        });
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
