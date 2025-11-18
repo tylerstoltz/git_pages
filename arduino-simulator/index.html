@@ -399,6 +399,45 @@
             margin-left: auto;
         }
 
+        /* Board Panel Tabs */
+        .board-tabs {
+            display: flex;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: #1e1e1e;
+            border-bottom: 1px solid #404040;
+        }
+
+        .board-tab {
+            padding: 0.5rem 1rem;
+            background: transparent;
+            color: #858585;
+            border: none;
+            border-radius: 4px 4px 0 0;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .board-tab:hover {
+            background: #2d2d30;
+            color: #d4d4d4;
+        }
+
+        .board-tab.active {
+            background: #252526;
+            color: #d4d4d4;
+            border-bottom: 2px solid #569cd6;
+        }
+
+        .board-tab-content {
+            display: none;
+        }
+
+        .board-tab-content.active {
+            display: block;
+        }
+
         /* Serial Monitor */
         .serial-monitor {
             grid-column: 1 / -1;
@@ -430,10 +469,6 @@
         }
 
         /* Synthesizer Control Panel */
-        .synth-panel {
-            grid-column: 1 / -1;
-        }
-
         .synth-controls {
             display: flex;
             flex-direction: column;
@@ -663,9 +698,14 @@
             <!-- Arduino Board Panel -->
             <div class="panel board-panel">
                 <div class="panel-header">
-                    <span class="panel-title">Arduino UNO Board</span>
+                    <span class="panel-title">Arduino UNO</span>
                 </div>
-                <div class="board-container">
+                <div class="board-tabs">
+                    <button class="board-tab active" data-tab="board">Board</button>
+                    <button class="board-tab" data-tab="synth" id="synthTab" style="display: none;">🎹 Synthesizer</button>
+                </div>
+                <div class="board-tab-content active" id="boardTabContent">
+                    <div class="board-container">
                     <div class="arduino-board">
                         <div class="board-label">ARDUINO UNO</div>
 
@@ -770,16 +810,13 @@
                             <!-- Generated dynamically -->
                         </div>
                     </div>
+                    </div>
                 </div>
-            </div>
 
-            <!-- Synthesizer Control Panel -->
-            <div class="panel synth-panel" id="synthPanel" style="display: none;">
-                <div class="panel-header">
-                    <span class="panel-title">🎹 Synthesizer Controls</span>
-                </div>
-                <div class="panel-content">
-                    <div class="synth-controls">
+                <!-- Synthesizer Tab Content -->
+                <div class="board-tab-content" id="synthTabContent">
+                    <div class="panel-content">
+                        <div class="synth-controls">
                         <div class="control-section">
                             <label class="control-label">Waveform Type:</label>
                             <select id="waveformSelect" class="synth-select">
@@ -840,6 +877,7 @@
 
                         <div class="control-section">
                             <button id="resetNotesBtn" class="btn">Reset to Default Notes</button>
+                        </div>
                         </div>
                     </div>
                 </div>
@@ -1586,16 +1624,43 @@ void loop() {
             }
         });
 
-        // Show/hide synth panel based on selected example
+        // Board panel tab switching
+        document.querySelectorAll('.board-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabName = tab.getAttribute('data-tab');
+
+                // Update active tab
+                document.querySelectorAll('.board-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+
+                // Update active content
+                document.querySelectorAll('.board-tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+
+                if (tabName === 'board') {
+                    document.getElementById('boardTabContent').classList.add('active');
+                } else if (tabName === 'synth') {
+                    document.getElementById('synthTabContent').classList.add('active');
+                }
+            });
+        });
+
+        // Show/hide synth tab based on selected example
         document.getElementById('exampleSelect').addEventListener('change', (e) => {
             const example = e.target.value;
-            const synthPanel = document.getElementById('synthPanel');
+            const synthTab = document.getElementById('synthTab');
+            const boardTab = document.querySelector('.board-tab[data-tab="board"]');
 
-            // Show synth panel only for synthesizer example
+            // Show synth tab only for synthesizer example
             if (example === 'synthesizer') {
-                synthPanel.style.display = 'block';
+                synthTab.style.display = 'block';
+                // Auto-switch to synth tab
+                synthTab.click();
             } else {
-                synthPanel.style.display = 'none';
+                synthTab.style.display = 'none';
+                // Switch back to board tab
+                boardTab.click();
             }
         });
 
