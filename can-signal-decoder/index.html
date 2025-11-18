@@ -514,37 +514,52 @@ FF 00 00 00 00 00 00 00"></textarea>
             const trimmed = input.trim();
             if (!trimmed) return null;
 
-            // Extract hex bytes using regex
-            const hexPattern = /([0-9A-Fa-f]{2}[\s]*)+/g;
-            const matches = trimmed.match(hexPattern);
+            let canId = null;
+            let dlc = null;
+            let bytes = null;
 
-            if (!matches) return null;
+            // Try to parse structured CAN formats first
+            // Format 1: vcan0  123   [8]  DE AD BE EF CA FE BA BE
+            // Format 2: can0  1F334455   [8]  01 02 03 04 05 06 07 08
+            const candumpPattern = /(?:vcan\d+|can\d+)\s+([0-9A-Fa-f]+)\s+\[(\d+)\]\s+((?:[0-9A-Fa-f]{2}\s*)+)/;
+            const candumpMatch = trimmed.match(candumpPattern);
 
-            // Get all hex bytes
-            const allHex = matches.join(' ');
-            const bytes = allHex.match(/[0-9A-Fa-f]{2}/g);
+            if (candumpMatch) {
+                canId = candumpMatch[1];
+                dlc = parseInt(candumpMatch[2]);
+                const payloadStr = candumpMatch[3];
+                bytes = payloadStr.match(/[0-9A-Fa-f]{2}/g);
+            } else {
+                // Try to extract just from DLC marker: [8]  DE AD BE EF...
+                const dlcPattern = /\[(\d+)\]\s+((?:[0-9A-Fa-f]{2}\s*)+)/;
+                const dlcMatch = trimmed.match(dlcPattern);
+
+                if (dlcMatch) {
+                    dlc = parseInt(dlcMatch[1]);
+                    const payloadStr = dlcMatch[2];
+                    bytes = payloadStr.match(/[0-9A-Fa-f]{2}/g);
+
+                    // Try to get CAN ID if present before DLC
+                    const idMatch = trimmed.match(/\b([0-9A-Fa-f]{3,8})\b.*?\[/);
+                    if (idMatch) {
+                        canId = idMatch[1];
+                    }
+                } else {
+                    // Fallback: extract all hex byte pairs
+                    // This is for raw payload input like "DE AD BE EF CA FE BA BE"
+                    bytes = trimmed.match(/\b[0-9A-Fa-f]{2}\b/g);
+
+                    if (bytes) {
+                        dlc = bytes.length;
+                    }
+                }
+            }
 
             if (!bytes || bytes.length === 0) return null;
 
-            // Try to extract CAN ID if present
-            let canId = null;
-            const idMatch = trimmed.match(/\b([0-9A-Fa-f]{3})\b/);
-            if (idMatch) {
-                canId = idMatch[1];
-            }
-
-            // Try to extract DLC if present
-            let dlc = null;
-            const dlcMatch = trimmed.match(/\[(\d+)\]/);
-            if (dlcMatch) {
-                dlc = parseInt(dlcMatch[1]);
-            } else {
-                dlc = bytes.length;
-            }
-
             return {
                 canId: canId,
-                dlc: dlc,
+                dlc: dlc || bytes.length,
                 data: bytes.map(b => parseInt(b, 16))
             };
         }
