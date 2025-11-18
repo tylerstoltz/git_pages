@@ -499,6 +499,7 @@
                             <option value="multiple">Multiple LEDs (Knight Rider)</option>
                             <option value="fade">PWM Fade</option>
                             <option value="button">Digital Read (Simulated)</option>
+                            <option value="synthesizer">Tone Synthesizer (Musical Scale)</option>
                         </select>
                     </div>
                     <textarea id="codeEditor" spellcheck="false" placeholder="// Write your Arduino code here..."></textarea>
@@ -668,6 +669,11 @@
                 this.loopInterval = null;
                 this.speedMultiplier = 1.0;
 
+                // Audio support for tone() function
+                this.audioContext = null;
+                this.oscillators = {}; // Track oscillators by pin
+                this.gainNodes = {}; // Track gain nodes by pin
+
                 // Constants
                 this.HIGH = 1;
                 this.LOW = 0;
@@ -728,6 +734,80 @@
                 }
             }
 
+            tone(pin, frequency, duration) {
+                if (pin < 0 || pin >= 14) return;
+
+                // Initialize audio context on first use (requires user gesture)
+                if (!this.audioContext) {
+                    try {
+                        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    } catch (e) {
+                        console.error('Web Audio API not supported:', e);
+                        return;
+                    }
+                }
+
+                // Stop any existing tone on this pin
+                this.noTone(pin);
+
+                // Create oscillator and gain node
+                const oscillator = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+
+                oscillator.type = 'square'; // Square wave like Arduino
+                oscillator.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
+                gainNode.gain.setValueAtTime(0.1, this.audioContext.currentTime); // Lower volume
+
+                oscillator.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+
+                oscillator.start();
+
+                // Store references
+                this.oscillators[pin] = oscillator;
+                this.gainNodes[pin] = gainNode;
+
+                // If duration is specified, automatically stop after duration
+                if (duration) {
+                    setTimeout(() => {
+                        this.noTone(pin);
+                    }, duration / this.speedMultiplier);
+                }
+
+                // Set pin HIGH to indicate sound is playing
+                this.pins[pin] = 1;
+                updateUI();
+            }
+
+            noTone(pin) {
+                if (pin < 0 || pin >= 14) return;
+
+                // Stop and clean up oscillator if it exists
+                if (this.oscillators[pin]) {
+                    try {
+                        this.oscillators[pin].stop();
+                        this.oscillators[pin].disconnect();
+                    } catch (e) {
+                        // Oscillator might already be stopped
+                    }
+                    delete this.oscillators[pin];
+                }
+
+                // Clean up gain node
+                if (this.gainNodes[pin]) {
+                    try {
+                        this.gainNodes[pin].disconnect();
+                    } catch (e) {
+                        // Gain node might already be disconnected
+                    }
+                    delete this.gainNodes[pin];
+                }
+
+                // Set pin LOW
+                this.pins[pin] = 0;
+                updateUI();
+            }
+
             delay(ms) {
                 return new Promise(resolve =>
                     setTimeout(resolve, ms / this.speedMultiplier)
@@ -769,6 +849,11 @@
             }
 
             reset() {
+                // Stop all tones
+                for (let pin in this.oscillators) {
+                    this.noTone(parseInt(pin));
+                }
+
                 this.pins.fill(0);
                 this.pinModes.fill(0);
                 this.analogPins.fill(0);
@@ -867,6 +952,33 @@ void loop() {
   Serial.print("Button: ");
   Serial.println(buttonState);
   delay(100);
+}`,
+            synthesizer: `// Musical note frequencies (Hz)
+int notes[] = {262, 294, 330, 349, 392, 440, 494, 523};
+// Note names: C4, D4, E4, F4, G4, A4, B4, C5
+
+void setup() {
+  pinMode(8, OUTPUT);
+  Serial.begin(9600);
+  Serial.println("=== Arduino Synthesizer ===");
+  Serial.println("Playing musical scale...");
+}
+
+void loop() {
+  // Play ascending scale
+  for (int i = 0; i < 8; i++) {
+    Serial.print("Playing note: ");
+    Serial.print(notes[i]);
+    Serial.println(" Hz");
+    tone(8, notes[i]);
+    delay(400);
+    noTone(8);
+    delay(100);
+  }
+
+  // Pause between repetitions
+  Serial.println("---");
+  delay(1000);
 }`
         };
 
@@ -956,6 +1068,8 @@ void loop() {
             code = replaceOutsideStrings(code, /\banalogWrite\s*\(/g, 'arduino.analogWrite(');
             code = replaceOutsideStrings(code, /\bdelay\s*\(/g, 'await arduino.delay(');
             code = replaceOutsideStrings(code, /\bmillis\s*\(/g, 'arduino.millis(');
+            code = replaceOutsideStrings(code, /\btone\s*\(/g, 'arduino.tone(');
+            code = replaceOutsideStrings(code, /\bnoTone\s*\(/g, 'arduino.noTone(');
 
             // Replace Serial functions (avoiding string literals)
             code = replaceOutsideStrings(code, /\bSerial\.begin\s*\(/g, 'arduino.Serial.begin(');
