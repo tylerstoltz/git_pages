@@ -625,6 +625,40 @@
             font-weight: 600;
         }
 
+        /* No Controls Message */
+        .no-controls-message {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem 2rem;
+            text-align: center;
+            color: #858585;
+        }
+
+        .no-controls-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .no-controls-message h3 {
+            color: #d4d4d4;
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .no-controls-message p {
+            margin: 0.5rem 0;
+            font-size: 0.9rem;
+        }
+
+        .no-controls-hint {
+            color: #4ec9b0;
+            font-style: italic;
+        }
+
         /* Responsive */
         @media (max-width: 1200px) {
             .main-grid {
@@ -851,6 +885,14 @@
                 <!-- Controls Tab Content -->
                 <div class="board-tab-content" id="controlsTabContent">
                     <div class="panel-content">
+                        <!-- Placeholder message when no controls are active -->
+                        <div id="noControlsMessage" class="no-controls-message">
+                            <div class="no-controls-icon">🎛</div>
+                            <h3>Hardware Controls</h3>
+                            <p>Select a sketch that uses hardware controls to see them here.</p>
+                            <p class="no-controls-hint">Try loading one of the synthesizer examples!</p>
+                        </div>
+
                         <!-- Basic Synthesizer Controls -->
                         <div class="synth-controls" id="basicSynthControls" style="display: none;">
                         <div class="control-section">
@@ -1996,22 +2038,26 @@ void loop() {
             const boardTab = document.querySelector('.board-tab[data-tab="board"]');
             const basicSynthControls = document.getElementById('basicSynthControls');
             const advSynthControls = document.getElementById('advSynthControls');
+            const noControlsMessage = document.getElementById('noControlsMessage');
 
             // Show/hide appropriate controls based on example
             if (example === 'synthesizer') {
                 // Show basic synth controls
                 basicSynthControls.style.display = 'flex';
                 advSynthControls.style.display = 'none';
+                noControlsMessage.style.display = 'none';
                 controlsTab.click();
             } else if (example === 'advSynth') {
                 // Show advanced synth controls
                 basicSynthControls.style.display = 'none';
                 advSynthControls.style.display = 'flex';
+                noControlsMessage.style.display = 'none';
                 controlsTab.click();
             } else {
                 // Hide all synth controls for other examples
                 basicSynthControls.style.display = 'none';
                 advSynthControls.style.display = 'none';
+                noControlsMessage.style.display = 'flex';
                 boardTab.click();
             }
         });
