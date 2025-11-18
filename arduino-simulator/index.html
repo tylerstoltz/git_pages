@@ -702,7 +702,7 @@
                 </div>
                 <div class="board-tabs">
                     <button class="board-tab active" data-tab="board">Board</button>
-                    <button class="board-tab" data-tab="synth" id="synthTab" style="display: none;">🎹 Synthesizer</button>
+                    <button class="board-tab" data-tab="controls" id="controlsTab">Controls</button>
                 </div>
                 <div class="board-tab-content active" id="boardTabContent">
                     <div class="board-container">
@@ -813,8 +813,8 @@
                     </div>
                 </div>
 
-                <!-- Synthesizer Tab Content -->
-                <div class="board-tab-content" id="synthTabContent">
+                <!-- Controls Tab Content -->
+                <div class="board-tab-content" id="controlsTabContent">
                     <div class="panel-content">
                         <div class="synth-controls">
                         <div class="control-section">
@@ -1640,26 +1640,23 @@ void loop() {
 
                 if (tabName === 'board') {
                     document.getElementById('boardTabContent').classList.add('active');
-                } else if (tabName === 'synth') {
-                    document.getElementById('synthTabContent').classList.add('active');
+                } else if (tabName === 'controls') {
+                    document.getElementById('controlsTabContent').classList.add('active');
                 }
             });
         });
 
-        // Show/hide synth tab based on selected example
+        // Auto-switch to controls tab when synthesizer example is loaded
         document.getElementById('exampleSelect').addEventListener('change', (e) => {
             const example = e.target.value;
-            const synthTab = document.getElementById('synthTab');
+            const controlsTab = document.getElementById('controlsTab');
             const boardTab = document.querySelector('.board-tab[data-tab="board"]');
 
-            // Show synth tab only for synthesizer example
+            // Auto-switch to controls tab for synthesizer example
             if (example === 'synthesizer') {
-                synthTab.style.display = 'block';
-                // Auto-switch to synth tab
-                synthTab.click();
+                controlsTab.click();
             } else {
-                synthTab.style.display = 'none';
-                // Switch back to board tab
+                // Switch back to board tab for other examples
                 boardTab.click();
             }
         });
