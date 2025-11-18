@@ -429,9 +429,140 @@
             background: #959595;
         }
 
+        /* Synthesizer Control Panel */
+        .synth-panel {
+            grid-column: 1 / -1;
+        }
+
+        .synth-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .control-section {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .control-label {
+            color: #858585;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .synth-select {
+            padding: 0.5rem;
+            background: #2d2d30;
+            color: #d4d4d4;
+            border: 1px solid #404040;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+
+        .synth-select:focus {
+            outline: 1px solid #569cd6;
+        }
+
+        .synth-slider {
+            width: 100%;
+            height: 6px;
+            background: #404040;
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .synth-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #569cd6;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .synth-slider::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            background: #569cd6;
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+        }
+
+        .notes-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-top: 0.5rem;
+        }
+
+        .note-control {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            padding: 0.75rem;
+            background: #2d2d30;
+            border-radius: 4px;
+            border: 1px solid #404040;
+        }
+
+        .note-control label {
+            color: #d4d4d4;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .note-slider {
+            width: 100%;
+            height: 4px;
+            background: #404040;
+            border-radius: 2px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .note-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 12px;
+            height: 12px;
+            background: #4ec9b0;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .note-slider::-moz-range-thumb {
+            width: 12px;
+            height: 12px;
+            background: #4ec9b0;
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+        }
+
+        #volumeDisplay,
+        #noteDurationDisplay {
+            color: #4ec9b0;
+            font-weight: 600;
+        }
+
+        [id^="note"][id$="Display"] {
+            color: #4ec9b0;
+            font-weight: 600;
+        }
+
         /* Responsive */
         @media (max-width: 1200px) {
             .main-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .notes-grid {
                 grid-template-columns: 1fr;
             }
         }
@@ -642,6 +773,78 @@
                 </div>
             </div>
 
+            <!-- Synthesizer Control Panel -->
+            <div class="panel synth-panel" id="synthPanel" style="display: none;">
+                <div class="panel-header">
+                    <span class="panel-title">🎹 Synthesizer Controls</span>
+                </div>
+                <div class="panel-content">
+                    <div class="synth-controls">
+                        <div class="control-section">
+                            <label class="control-label">Waveform Type:</label>
+                            <select id="waveformSelect" class="synth-select">
+                                <option value="square">Square (Arduino Default)</option>
+                                <option value="sine">Sine</option>
+                                <option value="triangle">Triangle</option>
+                                <option value="sawtooth">Sawtooth</option>
+                            </select>
+                        </div>
+
+                        <div class="control-section">
+                            <label class="control-label">Volume: <span id="volumeDisplay">10%</span></label>
+                            <input type="range" id="volumeSlider" min="0" max="100" value="10" class="synth-slider">
+                        </div>
+
+                        <div class="control-section">
+                            <label class="control-label">Note Duration: <span id="noteDurationDisplay">400ms</span></label>
+                            <input type="range" id="noteDurationSlider" min="100" max="2000" value="400" step="50" class="synth-slider">
+                        </div>
+
+                        <div class="control-section">
+                            <label class="control-label">Note Frequencies (Hz):</label>
+                            <div class="notes-grid">
+                                <div class="note-control">
+                                    <label>C4: <span id="note0Display">262</span> Hz</label>
+                                    <input type="range" id="note0Slider" min="100" max="800" value="262" class="note-slider">
+                                </div>
+                                <div class="note-control">
+                                    <label>D4: <span id="note1Display">294</span> Hz</label>
+                                    <input type="range" id="note1Slider" min="100" max="800" value="294" class="note-slider">
+                                </div>
+                                <div class="note-control">
+                                    <label>E4: <span id="note2Display">330</span> Hz</label>
+                                    <input type="range" id="note2Slider" min="100" max="800" value="330" class="note-slider">
+                                </div>
+                                <div class="note-control">
+                                    <label>F4: <span id="note3Display">349</span> Hz</label>
+                                    <input type="range" id="note3Slider" min="100" max="800" value="349" class="note-slider">
+                                </div>
+                                <div class="note-control">
+                                    <label>G4: <span id="note4Display">392</span> Hz</label>
+                                    <input type="range" id="note4Slider" min="100" max="800" value="392" class="note-slider">
+                                </div>
+                                <div class="note-control">
+                                    <label>A4: <span id="note5Display">440</span> Hz</label>
+                                    <input type="range" id="note5Slider" min="100" max="800" value="440" class="note-slider">
+                                </div>
+                                <div class="note-control">
+                                    <label>B4: <span id="note6Display">494</span> Hz</label>
+                                    <input type="range" id="note6Slider" min="100" max="800" value="494" class="note-slider">
+                                </div>
+                                <div class="note-control">
+                                    <label>C5: <span id="note7Display">523</span> Hz</label>
+                                    <input type="range" id="note7Slider" min="100" max="800" value="523" class="note-slider">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="control-section">
+                            <button id="resetNotesBtn" class="btn">Reset to Default Notes</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Serial Monitor Panel -->
             <div class="panel serial-monitor">
                 <div class="panel-header">
@@ -674,6 +877,14 @@
                 this.oscillators = {}; // Track oscillators by pin
                 this.gainNodes = {}; // Track gain nodes by pin
 
+                // Synthesizer settings
+                this.synthSettings = {
+                    waveform: 'square',
+                    volume: 0.1,
+                    noteDuration: 400,
+                    noteFrequencies: [262, 294, 330, 349, 392, 440, 494, 523]
+                };
+
                 // Constants
                 this.HIGH = 1;
                 this.LOW = 0;
@@ -686,6 +897,20 @@
                 this.A3 = 17;
                 this.A4 = 18;
                 this.A5 = 19;
+
+                // Create Serial object with proper 'this' binding
+                const self = this;
+                this.Serial = {
+                    begin: (baud) => {
+                        self.addToSerial(`Serial initialized at ${baud} baud`);
+                    },
+                    print: (text) => {
+                        self.addToSerial(text, false);
+                    },
+                    println: (text) => {
+                        self.addToSerial(text, true);
+                    }
+                };
             }
 
             pinMode(pin, mode) {
@@ -754,9 +979,9 @@
                 const oscillator = this.audioContext.createOscillator();
                 const gainNode = this.audioContext.createGain();
 
-                oscillator.type = 'square'; // Square wave like Arduino
+                oscillator.type = this.synthSettings.waveform;
                 oscillator.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
-                gainNode.gain.setValueAtTime(0.1, this.audioContext.currentTime); // Lower volume
+                gainNode.gain.setValueAtTime(this.synthSettings.volume, this.audioContext.currentTime);
 
                 oscillator.connect(gainNode);
                 gainNode.connect(this.audioContext.destination);
@@ -818,19 +1043,17 @@
                 return Math.floor((Date.now() - this.startTime) * this.speedMultiplier);
             }
 
-            // Create Serial object with proper 'this' binding
-            const self = this;
-            this.Serial = {
-                begin: (baud) => {
-                    self.addToSerial(`Serial initialized at ${baud} baud`);
-                },
-                print: (text) => {
-                    self.addToSerial(text, false);
-                },
-                println: (text) => {
-                    self.addToSerial(text, true);
+            // Synthesizer helper methods
+            getNoteFrequency(index) {
+                if (index >= 0 && index < this.synthSettings.noteFrequencies.length) {
+                    return this.synthSettings.noteFrequencies[index];
                 }
-            };
+                return 440; // Default to A4
+            }
+
+            getNoteDuration() {
+                return this.synthSettings.noteDuration;
+            }
 
             addToSerial(text, newline = true) {
                 const output = document.getElementById('serialOutput');
@@ -953,31 +1176,42 @@ void loop() {
   Serial.println(buttonState);
   delay(100);
 }`,
-            synthesizer: `// Musical note frequencies (Hz)
-int notes[] = {262, 294, 330, 349, 392, 440, 494, 523};
-// Note names: C4, D4, E4, F4, G4, A4, B4, C5
+            synthesizer: `// Arduino Synthesizer with Interactive Controls
+// Use the Synthesizer Controls panel to adjust:
+// - Waveform type (Square, Sine, Triangle, Sawtooth)
+// - Volume level
+// - Note duration
+// - Individual note frequencies
 
 void setup() {
   pinMode(8, OUTPUT);
   Serial.begin(9600);
   Serial.println("=== Arduino Synthesizer ===");
+  Serial.println("Use the control panel to customize your sounds!");
   Serial.println("Playing musical scale...");
 }
 
 void loop() {
-  // Play ascending scale
+  // Get note duration from control panel
+  int duration = getNoteDuration();
+
+  // Play ascending scale using frequencies from control panel
   for (int i = 0; i < 8; i++) {
-    Serial.print("Playing note: ");
-    Serial.print(notes[i]);
+    int freq = getNoteFrequency(i);
+    Serial.print("Note ");
+    Serial.print(i);
+    Serial.print(": ");
+    Serial.print(freq);
     Serial.println(" Hz");
-    tone(8, notes[i]);
-    delay(400);
+
+    tone(8, freq);
+    delay(duration);
     noTone(8);
     delay(100);
   }
 
   // Pause between repetitions
-  Serial.println("---");
+  Serial.println("--- Repeating ---");
   delay(1000);
 }`
         };
@@ -1070,6 +1304,8 @@ void loop() {
             code = replaceOutsideStrings(code, /\bmillis\s*\(/g, 'arduino.millis(');
             code = replaceOutsideStrings(code, /\btone\s*\(/g, 'arduino.tone(');
             code = replaceOutsideStrings(code, /\bnoTone\s*\(/g, 'arduino.noTone(');
+            code = replaceOutsideStrings(code, /\bgetNoteFrequency\s*\(/g, 'arduino.getNoteFrequency(');
+            code = replaceOutsideStrings(code, /\bgetNoteDuration\s*\(/g, 'arduino.getNoteDuration(');
 
             // Replace Serial functions (avoiding string literals)
             code = replaceOutsideStrings(code, /\bSerial\.begin\s*\(/g, 'arduino.Serial.begin(');
@@ -1297,6 +1533,54 @@ void loop() {
                 arduino.analogPins[pin] = value;
                 document.querySelector(`[data-value="${pin}"]`).textContent = value;
             });
+        });
+
+        // Synthesizer Controls
+        document.getElementById('waveformSelect').addEventListener('change', (e) => {
+            arduino.synthSettings.waveform = e.target.value;
+        });
+
+        document.getElementById('volumeSlider').addEventListener('input', (e) => {
+            const volume = parseInt(e.target.value) / 100;
+            arduino.synthSettings.volume = volume;
+            document.getElementById('volumeDisplay').textContent = e.target.value + '%';
+        });
+
+        document.getElementById('noteDurationSlider').addEventListener('input', (e) => {
+            arduino.synthSettings.noteDuration = parseInt(e.target.value);
+            document.getElementById('noteDurationDisplay').textContent = e.target.value + 'ms';
+        });
+
+        // Note frequency sliders
+        for (let i = 0; i < 8; i++) {
+            document.getElementById(`note${i}Slider`).addEventListener('input', (e) => {
+                const freq = parseInt(e.target.value);
+                arduino.synthSettings.noteFrequencies[i] = freq;
+                document.getElementById(`note${i}Display`).textContent = freq;
+            });
+        }
+
+        // Reset notes button
+        document.getElementById('resetNotesBtn').addEventListener('click', () => {
+            const defaultFreqs = [262, 294, 330, 349, 392, 440, 494, 523];
+            for (let i = 0; i < 8; i++) {
+                arduino.synthSettings.noteFrequencies[i] = defaultFreqs[i];
+                document.getElementById(`note${i}Slider`).value = defaultFreqs[i];
+                document.getElementById(`note${i}Display`).textContent = defaultFreqs[i];
+            }
+        });
+
+        // Show/hide synth panel based on selected example
+        document.getElementById('exampleSelect').addEventListener('change', (e) => {
+            const example = e.target.value;
+            const synthPanel = document.getElementById('synthPanel');
+
+            // Show synth panel only for synthesizer example
+            if (example === 'synthesizer') {
+                synthPanel.style.display = 'block';
+            } else {
+                synthPanel.style.display = 'none';
+            }
         });
 
         // Keyboard shortcuts
