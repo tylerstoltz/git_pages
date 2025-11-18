@@ -1593,6 +1593,14 @@ void loop() {
             code = replaceOutsideStrings(code, /\bA4\b/g, 'arduino.A4');
             code = replaceOutsideStrings(code, /\bA5\b/g, 'arduino.A5');
 
+            // Replace Math functions (avoiding string literals)
+            code = replaceOutsideStrings(code, /\bpow\s*\(/g, 'Math.pow(');
+            code = replaceOutsideStrings(code, /\bsqrt\s*\(/g, 'Math.sqrt(');
+            code = replaceOutsideStrings(code, /\babs\s*\(/g, 'Math.abs(');
+            code = replaceOutsideStrings(code, /\bsin\s*\(/g, 'Math.sin(');
+            code = replaceOutsideStrings(code, /\bcos\s*\(/g, 'Math.cos(');
+            code = replaceOutsideStrings(code, /\btan\s*\(/g, 'Math.tan(');
+
             // Replace Arduino functions (avoiding string literals)
             code = replaceOutsideStrings(code, /\bpinMode\s*\(/g, 'arduino.pinMode(');
             code = replaceOutsideStrings(code, /\bdigitalWrite\s*\(/g, 'arduino.digitalWrite(');
