@@ -1312,16 +1312,32 @@ void loop() {
             code = replaceOutsideStrings(code, /\bSerial\.print\s*\(/g, 'arduino.Serial.print(');
             code = replaceOutsideStrings(code, /\bSerial\.println\s*\(/g, 'arduino.Serial.println(');
 
-            // Extract setup and loop functions
-            const setupMatch = code.match(/void\s+setup\s*\(\s*\)\s*{([^}]*)}/s);
-            const loopMatch = code.match(/void\s+loop\s*\(\s*\)\s*{([^}]*)}/s);
+            // Extract setup and loop functions with proper brace matching
+            function extractFunction(code, functionName) {
+                const regex = new RegExp(`void\\s+${functionName}\\s*\\(\\s*\\)\\s*{`);
+                const match = code.match(regex);
+                if (!match) return null;
 
-            if (!setupMatch || !loopMatch) {
-                throw new Error('Code must contain both setup() and loop() functions');
+                const startIndex = match.index + match[0].length;
+                let braceCount = 1;
+                let i = startIndex;
+
+                while (i < code.length && braceCount > 0) {
+                    if (code[i] === '{') braceCount++;
+                    else if (code[i] === '}') braceCount--;
+                    i++;
+                }
+
+                if (braceCount !== 0) return null;
+                return code.substring(startIndex, i - 1);
             }
 
-            let setupBody = setupMatch[1];
-            let loopBody = loopMatch[1];
+            let setupBody = extractFunction(code, 'setup');
+            let loopBody = extractFunction(code, 'loop');
+
+            if (!setupBody || !loopBody) {
+                throw new Error('Code must contain both setup() and loop() functions');
+            }
 
             // Convert C++ types in setup and loop bodies
             setupBody = convertCppTypes(setupBody);
