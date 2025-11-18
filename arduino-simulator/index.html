@@ -1885,6 +1885,34 @@ void loop() {
                     return;
                 }
                 editor.value = examples[example];
+
+                // Show/hide appropriate controls based on example
+                const controlsTab = document.getElementById('controlsTab');
+                const boardTab = document.querySelector('.board-tab[data-tab="board"]');
+                const basicSynthControls = document.getElementById('basicSynthControls');
+                const advSynthControls = document.getElementById('advSynthControls');
+                const noControlsMessage = document.getElementById('noControlsMessage');
+
+                if (example === 'synthesizer') {
+                    // Show basic synth controls
+                    basicSynthControls.style.display = 'flex';
+                    advSynthControls.style.display = 'none';
+                    noControlsMessage.style.display = 'none';
+                    controlsTab.click();
+                } else if (example === 'advSynth') {
+                    // Show advanced synth controls
+                    basicSynthControls.style.display = 'none';
+                    advSynthControls.style.display = 'flex';
+                    noControlsMessage.style.display = 'none';
+                    controlsTab.click();
+                } else {
+                    // Hide all synth controls for other examples
+                    basicSynthControls.style.display = 'none';
+                    advSynthControls.style.display = 'none';
+                    noControlsMessage.style.display = 'flex';
+                    boardTab.click();
+                }
+
                 e.target.value = '';
             }
         });
@@ -2029,37 +2057,6 @@ void loop() {
                     document.getElementById('controlsTabContent').classList.add('active');
                 }
             });
-        });
-
-        // Auto-switch to controls tab when synthesizer example is loaded
-        document.getElementById('exampleSelect').addEventListener('change', (e) => {
-            const example = e.target.value;
-            const controlsTab = document.getElementById('controlsTab');
-            const boardTab = document.querySelector('.board-tab[data-tab="board"]');
-            const basicSynthControls = document.getElementById('basicSynthControls');
-            const advSynthControls = document.getElementById('advSynthControls');
-            const noControlsMessage = document.getElementById('noControlsMessage');
-
-            // Show/hide appropriate controls based on example
-            if (example === 'synthesizer') {
-                // Show basic synth controls
-                basicSynthControls.style.display = 'flex';
-                advSynthControls.style.display = 'none';
-                noControlsMessage.style.display = 'none';
-                controlsTab.click();
-            } else if (example === 'advSynth') {
-                // Show advanced synth controls
-                basicSynthControls.style.display = 'none';
-                advSynthControls.style.display = 'flex';
-                noControlsMessage.style.display = 'none';
-                controlsTab.click();
-            } else {
-                // Hide all synth controls for other examples
-                basicSynthControls.style.display = 'none';
-                advSynthControls.style.display = 'none';
-                noControlsMessage.style.display = 'flex';
-                boardTab.click();
-            }
         });
 
         // Keyboard shortcuts
