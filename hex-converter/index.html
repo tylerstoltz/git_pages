@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hex ↔ Decimal Converter - Code Tools</title>
+    <title>Hex ↔ Decimal ↔ Binary Converter - Code Tools</title>
     <style>
         * {
             margin: 0;
@@ -233,6 +233,10 @@
             color: #569cd6;
         }
 
+        .example-bin {
+            color: #c586c0;
+        }
+
         @media (max-width: 768px) {
             .container {
                 padding: 15px;
@@ -255,7 +259,7 @@
 </head>
 <body>
     <div class="header">
-        <h1>🔢 Hex ↔ Decimal Converter</h1>
+        <h1>🔢 Hex ↔ Decimal ↔ Binary Converter</h1>
         <a href="../" class="back-link">← Back to Tools</a>
     </div>
 
@@ -275,12 +279,19 @@
                     <input type="text" id="decInput" placeholder="Enter decimal value (e.g., 255)" />
                 </div>
                 <div class="error-message" id="decError">Invalid decimal value</div>
+
+                <div class="input-wrapper">
+                    <label for="binInput">Binary:</label>
+                    <input type="text" id="binInput" placeholder="Enter binary value (e.g., 11111111 or 0b11111111)" />
+                </div>
+                <div class="error-message" id="binError">Invalid binary value</div>
             </div>
 
             <div class="buttons">
                 <button onclick="clearAll()">🗑️ Clear All</button>
                 <button class="secondary" onclick="copyHex()">📋 Copy Hex</button>
                 <button class="secondary" onclick="copyDec()">📋 Copy Dec</button>
+                <button class="secondary" onclick="copyBin()">📋 Copy Bin</button>
             </div>
         </div>
 
@@ -289,77 +300,83 @@
 
             <div class="info-grid">
                 <div class="info-card">
-                    <h3>About Hexadecimal</h3>
-                    <p>Hexadecimal (hex) is a base-16 number system using digits 0-9 and letters A-F. It's commonly used in programming for representing binary data in a more compact form.</p>
+                    <h3>About Number Systems</h3>
+                    <p>Hexadecimal (base-16), decimal (base-10), and binary (base-2) are different ways to represent numbers. Hex uses 0-9 and A-F, decimal uses 0-9, and binary uses only 0 and 1.</p>
                 </div>
 
                 <div class="info-card">
-                    <h3>Hex Format</h3>
-                    <p>You can enter hex values with or without the <code>0x</code> prefix. Both <code>FF</code> and <code>0xFF</code> are valid and equal to 255 in decimal.</p>
+                    <h3>Hex & Binary Format</h3>
+                    <p>Hex values can use <code>0x</code> prefix (e.g., <code>0xFF</code>). Binary values can use <code>0b</code> prefix (e.g., <code>0b11111111</code>). Prefixes are optional.</p>
                 </div>
 
                 <div class="info-card">
                     <h3>Common Uses</h3>
-                    <p>Hex is used for memory addresses, color codes (#FFFFFF), byte representation, and low-level programming. It's more compact than binary and easier to read.</p>
+                    <p>Hex is used for memory addresses, color codes, and compact byte representation. Binary is used for bit manipulation, flags, and understanding machine-level operations.</p>
                 </div>
 
                 <div class="info-card">
-                    <h3>Case Insensitive</h3>
-                    <p>Hex digits A-F can be uppercase or lowercase. <code>0xFF</code>, <code>0xff</code>, and <code>0xFf</code> all represent the same value: 255.</p>
+                    <h3>Conversion Tips</h3>
+                    <p>Each hex digit represents 4 binary bits. For example, <code>F</code> = <code>1111</code>, <code>A</code> = <code>1010</code>. This makes hex-binary conversion straightforward.</p>
                 </div>
             </div>
 
             <div class="conversion-examples">
                 <div class="section-title" style="font-size: 14px; margin-top: 20px;">Quick Examples (click to use)</div>
-                <div class="example-row" onclick="useExample('0x00', '0')">
+                <div class="example-row" onclick="useExample('0x00', '0', '0b0')">
                     <span class="example-hex">0x00</span>
                     <span>→</span>
                     <span class="example-dec">0</span>
+                    <span>→</span>
+                    <span class="example-bin">0b0</span>
                 </div>
-                <div class="example-row" onclick="useExample('0x0F', '15')">
+                <div class="example-row" onclick="useExample('0x0F', '15', '0b1111')">
                     <span class="example-hex">0x0F</span>
                     <span>→</span>
                     <span class="example-dec">15</span>
+                    <span>→</span>
+                    <span class="example-bin">0b1111</span>
                 </div>
-                <div class="example-row" onclick="useExample('0x10', '16')">
+                <div class="example-row" onclick="useExample('0x10', '16', '0b10000')">
                     <span class="example-hex">0x10</span>
                     <span>→</span>
                     <span class="example-dec">16</span>
+                    <span>→</span>
+                    <span class="example-bin">0b10000</span>
                 </div>
-                <div class="example-row" onclick="useExample('0xFF', '255')">
+                <div class="example-row" onclick="useExample('0xFF', '255', '0b11111111')">
                     <span class="example-hex">0xFF</span>
                     <span>→</span>
                     <span class="example-dec">255</span>
+                    <span>→</span>
+                    <span class="example-bin">0b11111111</span>
                 </div>
-                <div class="example-row" onclick="useExample('0x100', '256')">
+                <div class="example-row" onclick="useExample('0x100', '256', '0b100000000')">
                     <span class="example-hex">0x100</span>
                     <span>→</span>
                     <span class="example-dec">256</span>
+                    <span>→</span>
+                    <span class="example-bin">0b100000000</span>
                 </div>
-                <div class="example-row" onclick="useExample('0x3FF', '1023')">
+                <div class="example-row" onclick="useExample('0x3FF', '1023', '0b1111111111')">
                     <span class="example-hex">0x3FF</span>
                     <span>→</span>
                     <span class="example-dec">1023</span>
+                    <span>→</span>
+                    <span class="example-bin">0b1111111111</span>
                 </div>
-                <div class="example-row" onclick="useExample('0x400', '1024')">
+                <div class="example-row" onclick="useExample('0x400', '1024', '0b10000000000')">
                     <span class="example-hex">0x400</span>
                     <span>→</span>
                     <span class="example-dec">1024</span>
+                    <span>→</span>
+                    <span class="example-bin">0b10000000000</span>
                 </div>
-                <div class="example-row" onclick="useExample('0xFFFF', '65535')">
+                <div class="example-row" onclick="useExample('0xFFFF', '65535', '0b1111111111111111')">
                     <span class="example-hex">0xFFFF</span>
                     <span>→</span>
                     <span class="example-dec">65535</span>
-                </div>
-                <div class="example-row" onclick="useExample('0xDEADBEEF', '3735928559')">
-                    <span class="example-hex">0xDEADBEEF</span>
                     <span>→</span>
-                    <span class="example-dec">3735928559</span>
-                </div>
-                <div class="example-row" onclick="useExample('0xCAFEBABE', '3405691582')">
-                    <span class="example-hex">0xCAFEBABE</span>
-                    <span>→</span>
-                    <span class="example-dec">3405691582</span>
+                    <span class="example-bin">0b1111111111111111</span>
                 </div>
             </div>
         </div>
@@ -368,15 +385,18 @@
     <script>
         const hexInput = document.getElementById('hexInput');
         const decInput = document.getElementById('decInput');
+        const binInput = document.getElementById('binInput');
         const hexError = document.getElementById('hexError');
         const decError = document.getElementById('decError');
+        const binError = document.getElementById('binError');
 
-        // Convert hex to decimal
+        // Convert hex to decimal and binary
         hexInput.addEventListener('input', function() {
             const value = this.value.trim();
 
             if (value === '') {
                 decInput.value = '';
+                binInput.value = '';
                 hexError.classList.remove('show');
                 hexInput.classList.remove('error');
                 return;
@@ -390,23 +410,26 @@
                 hexError.classList.add('show');
                 hexInput.classList.add('error');
                 decInput.value = '';
+                binInput.value = '';
                 return;
             }
 
             hexError.classList.remove('show');
             hexInput.classList.remove('error');
 
-            // Convert to decimal
+            // Convert to decimal and binary
             const decimal = parseInt(cleanValue, 16);
             decInput.value = decimal;
+            binInput.value = '0b' + decimal.toString(2);
         });
 
-        // Convert decimal to hex
+        // Convert decimal to hex and binary
         decInput.addEventListener('input', function() {
             const value = this.value.trim();
 
             if (value === '') {
                 hexInput.value = '';
+                binInput.value = '';
                 decError.classList.remove('show');
                 decInput.classList.remove('error');
                 return;
@@ -417,32 +440,71 @@
                 decError.classList.add('show');
                 decInput.classList.add('error');
                 hexInput.value = '';
+                binInput.value = '';
                 return;
             }
 
             decError.classList.remove('show');
             decInput.classList.remove('error');
 
-            // Convert to hex
+            // Convert to hex and binary
             const decimal = parseInt(value, 10);
             if (isNaN(decimal) || decimal < 0) {
                 decError.classList.add('show');
                 decInput.classList.add('error');
                 hexInput.value = '';
+                binInput.value = '';
                 return;
             }
 
             const hex = '0x' + decimal.toString(16).toUpperCase();
             hexInput.value = hex;
+            binInput.value = '0b' + decimal.toString(2);
+        });
+
+        // Convert binary to hex and decimal
+        binInput.addEventListener('input', function() {
+            const value = this.value.trim();
+
+            if (value === '') {
+                hexInput.value = '';
+                decInput.value = '';
+                binError.classList.remove('show');
+                binInput.classList.remove('error');
+                return;
+            }
+
+            // Remove 0b prefix if present
+            const cleanValue = value.replace(/^0b/i, '');
+
+            // Validate binary
+            if (!/^[01]+$/.test(cleanValue)) {
+                binError.classList.add('show');
+                binInput.classList.add('error');
+                hexInput.value = '';
+                decInput.value = '';
+                return;
+            }
+
+            binError.classList.remove('show');
+            binInput.classList.remove('error');
+
+            // Convert to decimal and hex
+            const decimal = parseInt(cleanValue, 2);
+            decInput.value = decimal;
+            hexInput.value = '0x' + decimal.toString(16).toUpperCase();
         });
 
         function clearAll() {
             hexInput.value = '';
             decInput.value = '';
+            binInput.value = '';
             hexError.classList.remove('show');
             decError.classList.remove('show');
+            binError.classList.remove('show');
             hexInput.classList.remove('error');
             decInput.classList.remove('error');
+            binInput.classList.remove('error');
         }
 
         function copyHex() {
@@ -473,13 +535,30 @@
             }
         }
 
-        function useExample(hex, dec) {
+        function copyBin() {
+            if (binInput.value) {
+                binInput.select();
+                document.execCommand('copy');
+
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = '✓ Copied!';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                }, 2000);
+            }
+        }
+
+        function useExample(hex, dec, bin) {
             hexInput.value = hex;
             decInput.value = dec;
+            binInput.value = bin;
             hexError.classList.remove('show');
             decError.classList.remove('show');
+            binError.classList.remove('show');
             hexInput.classList.remove('error');
             decInput.classList.remove('error');
+            binInput.classList.remove('error');
         }
     </script>
 </body>
