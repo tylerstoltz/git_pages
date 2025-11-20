@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cron Expression Builder</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-size: 1.3em;
+            color: #667eea;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .presets {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .preset-btn {
+            padding: 10px 15px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9em;
+        }
+
+        .preset-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .builder-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .field-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .field-group label {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #333;
+            font-size: 0.9em;
+        }
+
+        .field-group input,
+        .field-group select {
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        .field-group input:focus,
+        .field-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .cron-expression {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 2px solid #667eea;
+        }
+
+        .cron-expression label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .cron-value {
+            font-family: 'Courier New', monospace;
+            font-size: 1.5em;
+            color: #667eea;
+            word-break: break-all;
+        }
+
+        .description {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #2196f3;
+        }
+
+        .description-text {
+            color: #1976d2;
+            font-size: 1.1em;
+        }
+
+        .next-runs {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .next-runs ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .next-runs li {
+            padding: 10px;
+            margin-bottom: 8px;
+            background: white;
+            border-radius: 6px;
+            border-left: 4px solid #4caf50;
+            font-family: 'Courier New', monospace;
+        }
+
+        .parser-section {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .input-group input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 1em;
+            font-family: 'Courier New', monospace;
+        }
+
+        .input-group button {
+            padding: 12px 30px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        .input-group button:hover {
+            background: #5568d3;
+        }
+
+        .help-text {
+            color: #666;
+            font-size: 0.85em;
+            margin-top: 5px;
+        }
+
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border-left: 4px solid #c62828;
+        }
+
+        .info-box {
+            background: #fff3e0;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border-left: 4px solid #ff9800;
+        }
+
+        .info-box h3 {
+            color: #f57c00;
+            margin-bottom: 10px;
+        }
+
+        .info-box ul {
+            margin-left: 20px;
+            color: #666;
+        }
+
+        .info-box li {
+            margin-bottom: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .builder-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .presets {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⏰ Cron Expression Builder</h1>
+            <p>Visual cron schedule builder with parser and next run calculator</p>
+        </div>
+
+        <div class="main-content">
+            <!-- Presets Section -->
+            <div class="section">
+                <h2 class="section-title">Quick Presets</h2>
+                <div class="presets">
+                    <button class="preset-btn" onclick="applyPreset('* * * * *')">Every Minute</button>
+                    <button class="preset-btn" onclick="applyPreset('0 * * * *')">Every Hour</button>
+                    <button class="preset-btn" onclick="applyPreset('0 0 * * *')">Daily at Midnight</button>
+                    <button class="preset-btn" onclick="applyPreset('0 9 * * *')">Daily at 9 AM</button>
+                    <button class="preset-btn" onclick="applyPreset('0 0 * * 0')">Weekly (Sunday)</button>
+                    <button class="preset-btn" onclick="applyPreset('0 0 1 * *')">Monthly (1st)</button>
+                    <button class="preset-btn" onclick="applyPreset('0 0 1 1 *')">Yearly (Jan 1st)</button>
+                    <button class="preset-btn" onclick="applyPreset('*/5 * * * *')">Every 5 Minutes</button>
+                    <button class="preset-btn" onclick="applyPreset('*/15 * * * *')">Every 15 Minutes</button>
+                    <button class="preset-btn" onclick="applyPreset('0 */2 * * *')">Every 2 Hours</button>
+                    <button class="preset-btn" onclick="applyPreset('0 9-17 * * 1-5')">Weekdays 9-5</button>
+                    <button class="preset-btn" onclick="applyPreset('0 0 * * 1')">Every Monday</button>
+                </div>
+            </div>
+
+            <!-- Visual Builder -->
+            <div class="section">
+                <h2 class="section-title">Visual Builder</h2>
+                <div class="builder-grid">
+                    <div class="field-group">
+                        <label>Minute (0-59)</label>
+                        <input type="text" id="minute" value="*" oninput="updateCron()">
+                        <span class="help-text">* = every minute</span>
+                    </div>
+                    <div class="field-group">
+                        <label>Hour (0-23)</label>
+                        <input type="text" id="hour" value="*" oninput="updateCron()">
+                        <span class="help-text">* = every hour</span>
+                    </div>
+                    <div class="field-group">
+                        <label>Day of Month (1-31)</label>
+                        <input type="text" id="day" value="*" oninput="updateCron()">
+                        <span class="help-text">* = every day</span>
+                    </div>
+                    <div class="field-group">
+                        <label>Month (1-12)</label>
+                        <input type="text" id="month" value="*" oninput="updateCron()">
+                        <span class="help-text">* = every month</span>
+                    </div>
+                    <div class="field-group">
+                        <label>Day of Week (0-6)</label>
+                        <input type="text" id="dayOfWeek" value="*" oninput="updateCron()">
+                        <span class="help-text">0 = Sunday, 6 = Saturday</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cron Expression Display -->
+            <div class="cron-expression">
+                <label>Cron Expression:</label>
+                <div class="cron-value" id="cronExpression">* * * * *</div>
+            </div>
+
+            <!-- Description -->
+            <div class="description">
+                <div class="description-text" id="cronDescription">Runs every minute</div>
+            </div>
+
+            <!-- Next Runs -->
+            <div class="section">
+                <h2 class="section-title">Next 10 Executions</h2>
+                <div class="next-runs">
+                    <ul id="nextRuns"></ul>
+                </div>
+            </div>
+
+            <!-- Parser Section -->
+            <div class="parser-section">
+                <h2 class="section-title">Parse Existing Cron Expression</h2>
+                <div class="input-group">
+                    <input type="text" id="parseInput" placeholder="Enter cron expression (e.g., 0 9 * * 1-5)">
+                    <button onclick="parseCron()">Parse</button>
+                </div>
+                <div id="parseError"></div>
+            </div>
+
+            <!-- Help Section -->
+            <div class="info-box">
+                <h3>Cron Expression Format</h3>
+                <ul>
+                    <li><strong>* (asterisk)</strong> - Every value (e.g., every minute, every day)</li>
+                    <li><strong>/ (slash)</strong> - Step values (e.g., */5 = every 5 minutes)</li>
+                    <li><strong>- (dash)</strong> - Range (e.g., 1-5 = 1 through 5)</li>
+                    <li><strong>, (comma)</strong> - Multiple values (e.g., 1,3,5 = 1, 3, and 5)</li>
+                    <li><strong>Format:</strong> minute hour day_of_month month day_of_week</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Cron parser and generator
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+        function updateCron() {
+            const minute = document.getElementById('minute').value.trim() || '*';
+            const hour = document.getElementById('hour').value.trim() || '*';
+            const day = document.getElementById('day').value.trim() || '*';
+            const month = document.getElementById('month').value.trim() || '*';
+            const dayOfWeek = document.getElementById('dayOfWeek').value.trim() || '*';
+
+            const cronExpression = `${minute} ${hour} ${day} ${month} ${dayOfWeek}`;
+            document.getElementById('cronExpression').textContent = cronExpression;
+
+            try {
+                const description = describeCron(cronExpression);
+                document.getElementById('cronDescription').textContent = description;
+                calculateNextRuns(cronExpression);
+            } catch (error) {
+                document.getElementById('cronDescription').textContent = 'Invalid cron expression';
+                document.getElementById('nextRuns').innerHTML = '<li style="color: red;">Cannot calculate next runs for invalid expression</li>';
+            }
+        }
+
+        function applyPreset(cron) {
+            const parts = cron.split(' ');
+            document.getElementById('minute').value = parts[0];
+            document.getElementById('hour').value = parts[1];
+            document.getElementById('day').value = parts[2];
+            document.getElementById('month').value = parts[3];
+            document.getElementById('dayOfWeek').value = parts[4];
+            updateCron();
+        }
+
+        function parseCron() {
+            const input = document.getElementById('parseInput').value.trim();
+            const errorDiv = document.getElementById('parseError');
+            errorDiv.innerHTML = '';
+
+            if (!input) {
+                errorDiv.innerHTML = '<div class="error">Please enter a cron expression</div>';
+                return;
+            }
+
+            const parts = input.split(/\s+/);
+            if (parts.length !== 5) {
+                errorDiv.innerHTML = '<div class="error">Invalid cron expression. Must have 5 parts: minute hour day month dayOfWeek</div>';
+                return;
+            }
+
+            document.getElementById('minute').value = parts[0];
+            document.getElementById('hour').value = parts[1];
+            document.getElementById('day').value = parts[2];
+            document.getElementById('month').value = parts[3];
+            document.getElementById('dayOfWeek').value = parts[4];
+            updateCron();
+
+            // Scroll to builder
+            document.querySelector('.builder-grid').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        function describeCron(cron) {
+            const parts = cron.split(' ');
+            const [minute, hour, day, month, dayOfWeek] = parts;
+
+            let description = 'Runs ';
+
+            // Minute description
+            if (minute === '*') {
+                description += 'every minute';
+            } else if (minute.includes('/')) {
+                const step = minute.split('/')[1];
+                description += `every ${step} minute${step !== '1' ? 's' : ''}`;
+            } else if (minute.includes(',')) {
+                description += `at minutes ${minute}`;
+            } else if (minute.includes('-')) {
+                description += `at minutes ${minute}`;
+            } else {
+                description += `at minute ${minute}`;
+            }
+
+            // Hour description
+            if (hour !== '*') {
+                if (hour.includes('/')) {
+                    const step = hour.split('/')[1];
+                    description += `, every ${step} hour${step !== '1' ? 's' : ''}`;
+                } else if (hour.includes(',')) {
+                    description += `, at hours ${hour}`;
+                } else if (hour.includes('-')) {
+                    description += `, between hours ${hour}`;
+                } else {
+                    const h = parseInt(hour);
+                    const ampm = h >= 12 ? 'PM' : 'AM';
+                    const h12 = h % 12 || 12;
+                    description += `, at ${h12}:00 ${ampm}`;
+                }
+            }
+
+            // Day of month description
+            if (day !== '*') {
+                if (day.includes('/')) {
+                    const step = day.split('/')[1];
+                    description += `, every ${step} day${step !== '1' ? 's' : ''}`;
+                } else if (day.includes(',')) {
+                    description += `, on days ${day}`;
+                } else if (day.includes('-')) {
+                    description += `, on days ${day}`;
+                } else {
+                    description += `, on day ${day}`;
+                }
+            }
+
+            // Month description
+            if (month !== '*') {
+                if (month.includes(',')) {
+                    description += `, in months ${month}`;
+                } else if (month.includes('-')) {
+                    description += `, between months ${month}`;
+                } else {
+                    const m = parseInt(month) - 1;
+                    description += `, in ${monthNames[m]}`;
+                }
+            }
+
+            // Day of week description
+            if (dayOfWeek !== '*') {
+                if (dayOfWeek.includes(',')) {
+                    const days = dayOfWeek.split(',').map(d => dayNames[parseInt(d)]).join(', ');
+                    description += `, on ${days}`;
+                } else if (dayOfWeek.includes('-')) {
+                    const range = dayOfWeek.split('-');
+                    description += `, on ${dayNames[parseInt(range[0])]} through ${dayNames[parseInt(range[1])]}`;
+                } else {
+                    description += `, on ${dayNames[parseInt(dayOfWeek)]}s`;
+                }
+            }
+
+            return description;
+        }
+
+        function calculateNextRuns(cron) {
+            const parts = cron.split(' ');
+            const [minute, hour, day, month, dayOfWeek] = parts;
+
+            const nextRuns = [];
+            const now = new Date();
+            let current = new Date(now.getTime());
+
+            // Calculate next 10 runs
+            for (let i = 0; i < 10 && nextRuns.length < 10; i++) {
+                current = getNextRun(current, parts);
+                if (current) {
+                    nextRuns.push(new Date(current.getTime()));
+                    current = new Date(current.getTime() + 60000); // Add 1 minute
+                } else {
+                    break;
+                }
+            }
+
+            const ul = document.getElementById('nextRuns');
+            ul.innerHTML = nextRuns.map(date => {
+                const formatted = date.toLocaleString('en-US', {
+                    weekday: 'short',
+                    year: 'numeric',
+                    month: 'short',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: true
+                });
+                return `<li>${formatted}</li>`;
+            }).join('');
+        }
+
+        function getNextRun(from, parts) {
+            const [minute, hour, day, month, dayOfWeek] = parts;
+            const current = new Date(from.getTime());
+            current.setSeconds(0);
+            current.setMilliseconds(0);
+
+            // Brute force search for next matching time (up to 2 years)
+            const maxIterations = 366 * 24 * 60 * 2;
+            for (let i = 0; i < maxIterations; i++) {
+                current.setMinutes(current.getMinutes() + 1);
+
+                if (!matchesCronPart(current.getMinutes(), minute)) continue;
+                if (!matchesCronPart(current.getHours(), hour)) continue;
+                if (!matchesCronPart(current.getDate(), day)) continue;
+                if (!matchesCronPart(current.getMonth() + 1, month)) continue;
+                if (!matchesCronPart(current.getDay(), dayOfWeek)) continue;
+
+                return current;
+            }
+
+            return null;
+        }
+
+        function matchesCronPart(value, pattern) {
+            if (pattern === '*') return true;
+
+            // Handle step values (*/5)
+            if (pattern.includes('/')) {
+                const [range, step] = pattern.split('/');
+                if (range === '*') {
+                    return value % parseInt(step) === 0;
+                }
+            }
+
+            // Handle ranges (1-5)
+            if (pattern.includes('-')) {
+                const [start, end] = pattern.split('-').map(Number);
+                return value >= start && value <= end;
+            }
+
+            // Handle lists (1,3,5)
+            if (pattern.includes(',')) {
+                const values = pattern.split(',').map(Number);
+                return values.includes(value);
+            }
+
+            // Exact match
+            return value === parseInt(pattern);
+        }
+
+        // Initialize on load
+        updateCron();
+    </script>
+</body>
+</html>
