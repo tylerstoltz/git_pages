@@ -308,6 +308,7 @@
                             <option value="row-crop">Row Crop (need adjustable wheel track)</option>
                             <option value="orchard">Orchard / Vineyard (need narrow profile)</option>
                             <option value="wet-conditions">Wet Conditions / Wet Lime</option>
+                            <option value="boom-spreader">Boom Spreader (specialty precision spreading)</option>
                         </select>
                     </div>
 
@@ -354,7 +355,7 @@
                     "Wide spread pattern"
                 ],
                 farmSize: ["small", "medium"],
-                specialUse: ["wet-conditions"],
+                specialUse: ["wet-conditions", "boom-spreader"],
                 budgetClass: "mid"
             },
             {
@@ -373,8 +374,124 @@
                     "Larger capacity for bigger operations"
                 ],
                 farmSize: ["medium", "large"],
-                specialUse: ["wet-conditions"],
+                specialUse: ["wet-conditions", "boom-spreader"],
                 budgetClass: "mid"
+            },
+            // RCB Boom Drop Spreaders
+            {
+                name: "RCB-5 Ton Boom Drop Spreader",
+                category: "RCB Boom Drop Spreader",
+                capacity: 5,
+                capacityCuFt: 155,
+                materials: ["lime", "fertilizer", "chicken-litter", "compost", "gypsum", "biochar"],
+                driveType: "pto",
+                features: [
+                    "Precision boom drop technology",
+                    "155 cu. ft. capacity",
+                    "Enhanced spread pattern control",
+                    "Specialty product for targeted applications",
+                    "Ideal for precision agriculture"
+                ],
+                farmSize: ["small", "medium"],
+                specialUse: ["boom-spreader"],
+                budgetClass: "premium"
+            },
+            {
+                name: "RCB-8 Ton Boom Drop Spreader",
+                category: "RCB Boom Drop Spreader",
+                capacity: 8,
+                capacityCuFt: 242,
+                materials: ["lime", "fertilizer", "chicken-litter", "compost", "gypsum", "biochar"],
+                driveType: "pto",
+                features: [
+                    "Precision boom drop technology",
+                    "242 cu. ft. capacity",
+                    "Enhanced spread pattern control",
+                    "Specialty product for targeted applications",
+                    "Heavy-duty construction",
+                    "Commercial-grade precision"
+                ],
+                farmSize: ["medium", "large"],
+                specialUse: ["boom-spreader"],
+                budgetClass: "premium"
+            },
+            {
+                name: "RCB-12 Ton Boom Drop Spreader",
+                category: "RCB Boom Drop Spreader",
+                capacity: 12,
+                capacityCuFt: 350,
+                materials: ["lime", "fertilizer", "chicken-litter", "compost", "gypsum", "biochar"],
+                driveType: "pto",
+                features: [
+                    "Precision boom drop technology",
+                    "350 cu. ft. capacity",
+                    "Enhanced spread pattern control",
+                    "Large capacity for commercial operations",
+                    "Specialty product for targeted applications",
+                    "Maximum precision at scale"
+                ],
+                farmSize: ["large", "xlarge"],
+                specialUse: ["boom-spreader"],
+                budgetClass: "premium"
+            },
+            // WC-50 (W-Chain) Boom Spreaders
+            {
+                name: "WC-50 (W-Chain) Boom Spreader - 5 Ton",
+                category: "W-Chain Boom Spreader",
+                capacity: 5,
+                capacityCuFt: 155,
+                materials: ["lime", "fertilizer", "chicken-litter", "compost", "gypsum", "bulk"],
+                driveType: "hydraulic",
+                features: [
+                    "W-Chain boom technology",
+                    "155 cu. ft. capacity",
+                    "Specialty product for precision spreading",
+                    "Hydraulic-driven boom system",
+                    "Excellent for variable rate applications",
+                    "Compact and maneuverable"
+                ],
+                farmSize: ["small", "medium"],
+                specialUse: ["boom-spreader"],
+                budgetClass: "premium"
+            },
+            {
+                name: "WC-50 (W-Chain) Boom Spreader - 8 Ton",
+                category: "W-Chain Boom Spreader",
+                capacity: 8,
+                capacityCuFt: 242,
+                materials: ["lime", "fertilizer", "chicken-litter", "compost", "gypsum", "bulk"],
+                driveType: "hydraulic",
+                features: [
+                    "W-Chain boom technology",
+                    "242 cu. ft. capacity",
+                    "Specialty product for precision spreading",
+                    "Hydraulic-driven boom system",
+                    "Excellent for variable rate applications",
+                    "Heavy-duty construction"
+                ],
+                farmSize: ["medium", "large"],
+                specialUse: ["boom-spreader"],
+                budgetClass: "premium"
+            },
+            {
+                name: "WC-50 (W-Chain) Boom Spreader - 12 Ton",
+                category: "W-Chain Boom Spreader",
+                capacity: 12,
+                capacityCuFt: 350,
+                materials: ["lime", "fertilizer", "chicken-litter", "compost", "gypsum", "bulk"],
+                driveType: "hydraulic",
+                features: [
+                    "W-Chain boom technology",
+                    "350 cu. ft. capacity",
+                    "Specialty product for precision spreading",
+                    "Hydraulic-driven boom system",
+                    "Excellent for variable rate applications",
+                    "Large capacity for commercial operations",
+                    "Maximum efficiency at scale"
+                ],
+                farmSize: ["large", "xlarge"],
+                specialUse: ["boom-spreader"],
+                budgetClass: "premium"
             },
             // Ground Drive Spreaders (Redhawk Series)
             {
@@ -807,7 +924,27 @@
                 // Farm size matching (weight: 20 points)
                 maxScore += 20;
                 if (formData.farmSize && spreader.farmSize.includes(formData.farmSize)) {
-                    score += 20;
+                    // Base score for farm size match
+                    let farmSizeScore = 15;
+
+                    // Add granular bonus based on how well capacity aligns with farm size expectations
+                    const farmSizeCapacityMap = {
+                        "small": { ideal: 3, min: 2, max: 5 },
+                        "medium": { ideal: 6, min: 4, max: 8 },
+                        "large": { ideal: 11, min: 8, max: 15 },
+                        "xlarge": { ideal: 17, min: 15, max: 20 }
+                    };
+
+                    const sizeProfile = farmSizeCapacityMap[formData.farmSize];
+                    if (sizeProfile) {
+                        // Calculate how close the spreader's capacity is to the ideal for this farm size
+                        const capacityDiff = Math.abs(spreader.capacity - sizeProfile.ideal);
+                        const maxDiff = Math.max(sizeProfile.ideal - sizeProfile.min, sizeProfile.max - sizeProfile.ideal);
+                        const capacityBonus = Math.max(0, 5 - (capacityDiff / maxDiff * 5));
+                        farmSizeScore += capacityBonus;
+                    }
+
+                    score += farmSizeScore;
                 } else if (formData.farmSize) {
                     // Partial credit for adjacent sizes
                     const sizeOrder = ["small", "medium", "large", "xlarge"];
@@ -834,7 +971,17 @@
                     };
                     const range = capacityRanges[formData.capacity];
                     if (range && spreader.capacity >= range[0] && spreader.capacity <= range[1]) {
-                        score += 20;
+                        // Give full points for being in range
+                        let capacityScore = 15;
+
+                        // Add granular bonus for being closer to the middle of the range
+                        const rangeMid = (range[0] + range[1]) / 2;
+                        const rangeSpan = range[1] - range[0];
+                        const distanceFromMid = Math.abs(spreader.capacity - rangeMid);
+                        const proximityBonus = Math.max(0, 5 - (distanceFromMid / rangeSpan * 5));
+                        capacityScore += proximityBonus;
+
+                        score += capacityScore;
                     } else if (range) {
                         // Partial credit based on how close
                         const diff = Math.min(
