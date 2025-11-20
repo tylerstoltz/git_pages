@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Serial Protocol Decoder</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .tab {
+            padding: 12px 30px;
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            color: #666;
+            transition: all 0.3s;
+        }
+
+        .tab:hover {
+            color: #667eea;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .config-section {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .config-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .config-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .config-item label {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #333;
+            font-size: 0.9em;
+        }
+
+        .config-item select,
+        .config-item input {
+            padding: 8px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 0.9em;
+        }
+
+        .input-section {
+            margin-bottom: 20px;
+        }
+
+        .input-label {
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .input-area {
+            width: 100%;
+            min-height: 150px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            resize: vertical;
+        }
+
+        .input-area:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 600;
+            transition: background 0.3s;
+            margin-right: 10px;
+        }
+
+        .btn:hover {
+            background: #5568d3;
+        }
+
+        .btn-secondary {
+            background: #4caf50;
+        }
+
+        .btn-secondary:hover {
+            background: #45a049;
+        }
+
+        .output-section {
+            margin-top: 20px;
+        }
+
+        .output-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+        }
+
+        .output-table th,
+        .output-table td {
+            border: 1px solid #e0e0e0;
+            padding: 10px;
+            text-align: left;
+        }
+
+        .output-table th {
+            background: #667eea;
+            color: white;
+            font-weight: 600;
+        }
+
+        .output-table tr:nth-child(even) {
+            background: #f5f5f5;
+        }
+
+        .output-table tr:hover {
+            background: #e3f2fd;
+        }
+
+        .status-read {
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .status-write {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .status-ack {
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        .status-nack {
+            background: #ffebee;
+            color: #c62828;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        .status-error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .message.error {
+            background: #ffebee;
+            color: #c62828;
+            border-left: 4px solid #c62828;
+        }
+
+        .message.success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border-left: 4px solid #4caf50;
+        }
+
+        .stats {
+            display: flex;
+            gap: 20px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-label {
+            font-size: 0.85em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .examples {
+            background: #fff3e0;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border-left: 4px solid #ff9800;
+        }
+
+        .examples h3 {
+            color: #f57c00;
+            margin-bottom: 10px;
+        }
+
+        .example-btn {
+            display: inline-block;
+            padding: 8px 15px;
+            margin: 5px;
+            background: #ff9800;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85em;
+            transition: background 0.3s;
+        }
+
+        .example-btn:hover {
+            background: #f57c00;
+        }
+
+        .help-text {
+            color: #666;
+            font-size: 0.85em;
+            margin-top: 5px;
+        }
+
+        .waveform {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border: 2px solid #e0e0e0;
+        }
+
+        .waveform-title {
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #667eea;
+        }
+
+        .waveform-canvas {
+            width: 100%;
+            height: 200px;
+            background: white;
+            border-radius: 4px;
+        }
+
+        @media (max-width: 768px) {
+            .config-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📡 Serial Protocol Decoder</h1>
+            <p>Decode I2C, SPI, and UART serial communications with timing analysis</p>
+        </div>
+
+        <div class="main-content">
+            <!-- Tabs -->
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('i2c')">I²C</button>
+                <button class="tab" onclick="switchTab('spi')">SPI</button>
+                <button class="tab" onclick="switchTab('uart')">UART</button>
+            </div>
+
+            <!-- I2C Tab -->
+            <div id="i2c" class="tab-content active">
+                <div class="config-section">
+                    <h3 style="margin-bottom: 15px; color: #667eea;">I²C Configuration</h3>
+                    <div class="config-grid">
+                        <div class="config-item">
+                            <label>Address Format</label>
+                            <select id="i2c-addr-format">
+                                <option value="7bit">7-bit</option>
+                                <option value="10bit">10-bit</option>
+                            </select>
+                        </div>
+                        <div class="config-item">
+                            <label>Display Format</label>
+                            <select id="i2c-display-format">
+                                <option value="hex">Hexadecimal</option>
+                                <option value="binary">Binary</option>
+                                <option value="decimal">Decimal</option>
+                                <option value="ascii">ASCII</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="input-section">
+                    <div class="input-label">I²C Data (hex format)</div>
+                    <textarea class="input-area" id="i2c-input" placeholder="Enter I2C data in hex format, e.g.:
+S 0x50 W A 0x12 A 0x34 A P
+S 0x50 R A 0xAB A 0xCD N P
+
+Format: S=Start, P=Stop, R=Read, W=Write, A=ACK, N=NACK"></textarea>
+                    <div class="help-text">Format: S (Start), P (Stop), Address, R/W (Read/Write), A (ACK), N (NACK), Data bytes in hex</div>
+                </div>
+
+                <button class="btn" onclick="decodeI2C()">Decode I²C</button>
+                <button class="btn btn-secondary" onclick="clearOutput('i2c')">Clear</button>
+
+                <div id="i2c-message"></div>
+
+                <div class="stats" id="i2c-stats" style="display: none;">
+                    <div class="stat-item">
+                        <span class="stat-label">Transactions</span>
+                        <span class="stat-value" id="i2c-transactions">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Bytes Transferred</span>
+                        <span class="stat-value" id="i2c-bytes">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Errors</span>
+                        <span class="stat-value" id="i2c-errors">0</span>
+                    </div>
+                </div>
+
+                <div class="output-section" id="i2c-output-section" style="display: none;">
+                    <h3>Decoded I²C Data</h3>
+                    <table class="output-table" id="i2c-output"></table>
+                </div>
+
+                <div class="examples">
+                    <h3>Load Sample I²C Data</h3>
+                    <button class="example-btn" onclick="loadI2CSampleEEPROM()">EEPROM Write</button>
+                    <button class="example-btn" onclick="loadI2CSampleSensor()">Sensor Read</button>
+                    <button class="example-btn" onclick="loadI2CSampleRTC()">RTC Access</button>
+                </div>
+            </div>
+
+            <!-- SPI Tab -->
+            <div id="spi" class="tab-content">
+                <div class="config-section">
+                    <h3 style="margin-bottom: 15px; color: #667eea;">SPI Configuration</h3>
+                    <div class="config-grid">
+                        <div class="config-item">
+                            <label>Bit Order</label>
+                            <select id="spi-bit-order">
+                                <option value="msb">MSB First</option>
+                                <option value="lsb">LSB First</option>
+                            </select>
+                        </div>
+                        <div class="config-item">
+                            <label>Clock Polarity (CPOL)</label>
+                            <select id="spi-cpol">
+                                <option value="0">0 (Low when idle)</option>
+                                <option value="1">1 (High when idle)</option>
+                            </select>
+                        </div>
+                        <div class="config-item">
+                            <label>Clock Phase (CPHA)</label>
+                            <select id="spi-cpha">
+                                <option value="0">0 (Sample on leading edge)</option>
+                                <option value="1">1 (Sample on trailing edge)</option>
+                            </select>
+                        </div>
+                        <div class="config-item">
+                            <label>Display Format</label>
+                            <select id="spi-display-format">
+                                <option value="hex">Hexadecimal</option>
+                                <option value="binary">Binary</option>
+                                <option value="decimal">Decimal</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="input-section">
+                    <div class="input-label">SPI Data (MOSI and MISO in hex)</div>
+                    <textarea class="input-area" id="spi-input" placeholder="Enter SPI data in hex format:
+MOSI: 0x9F 0x00 0x00 0x00
+MISO: 0xFF 0xEF 0x40 0x18
+
+Or single line format:
+MOSI: 0x9F 0x00 | MISO: 0xFF 0xEF"></textarea>
+                    <div class="help-text">Enter MOSI (Master Out Slave In) and MISO (Master In Slave Out) data in hex format</div>
+                </div>
+
+                <button class="btn" onclick="decodeSPI()">Decode SPI</button>
+                <button class="btn btn-secondary" onclick="clearOutput('spi')">Clear</button>
+
+                <div id="spi-message"></div>
+
+                <div class="stats" id="spi-stats" style="display: none;">
+                    <div class="stat-item">
+                        <span class="stat-label">Bytes Exchanged</span>
+                        <span class="stat-value" id="spi-bytes">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Mode</span>
+                        <span class="stat-value" id="spi-mode">0</span>
+                    </div>
+                </div>
+
+                <div class="output-section" id="spi-output-section" style="display: none;">
+                    <h3>Decoded SPI Data</h3>
+                    <table class="output-table" id="spi-output"></table>
+                </div>
+
+                <div class="examples">
+                    <h3>Load Sample SPI Data</h3>
+                    <button class="example-btn" onclick="loadSPISampleFlash()">Flash Memory Read</button>
+                    <button class="example-btn" onclick="loadSPISampleADC()">ADC Read</button>
+                    <button class="example-btn" onclick="loadSPISampleSD()">SD Card Command</button>
+                </div>
+            </div>
+
+            <!-- UART Tab -->
+            <div id="uart" class="tab-content">
+                <div class="config-section">
+                    <h3 style="margin-bottom: 15px; color: #667eea;">UART Configuration</h3>
+                    <div class="config-grid">
+                        <div class="config-item">
+                            <label>Baud Rate</label>
+                            <select id="uart-baud">
+                                <option value="9600">9600</option>
+                                <option value="19200">19200</option>
+                                <option value="38400">38400</option>
+                                <option value="57600">57600</option>
+                                <option value="115200" selected>115200</option>
+                            </select>
+                        </div>
+                        <div class="config-item">
+                            <label>Data Bits</label>
+                            <select id="uart-data-bits">
+                                <option value="7">7</option>
+                                <option value="8" selected>8</option>
+                            </select>
+                        </div>
+                        <div class="config-item">
+                            <label>Parity</label>
+                            <select id="uart-parity">
+                                <option value="none" selected>None</option>
+                                <option value="even">Even</option>
+                                <option value="odd">Odd</option>
+                            </select>
+                        </div>
+                        <div class="config-item">
+                            <label>Stop Bits</label>
+                            <select id="uart-stop-bits">
+                                <option value="1" selected>1</option>
+                                <option value="2">2</option>
+                            </select>
+                        </div>
+                        <div class="config-item">
+                            <label>Display Format</label>
+                            <select id="uart-display-format">
+                                <option value="hex">Hexadecimal</option>
+                                <option value="ascii" selected>ASCII</option>
+                                <option value="decimal">Decimal</option>
+                                <option value="binary">Binary</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="input-section">
+                    <div class="input-label">UART Data (hex or ASCII)</div>
+                    <textarea class="input-area" id="uart-input" placeholder="Enter UART data in hex format:
+0x48 0x65 0x6C 0x6C 0x6F
+
+Or ASCII text:
+Hello World"></textarea>
+                    <div class="help-text">Enter data in hex format (0x48 0x65...) or plain ASCII text</div>
+                </div>
+
+                <button class="btn" onclick="decodeUART()">Decode UART</button>
+                <button class="btn btn-secondary" onclick="clearOutput('uart')">Clear</button>
+
+                <div id="uart-message"></div>
+
+                <div class="stats" id="uart-stats" style="display: none;">
+                    <div class="stat-item">
+                        <span class="stat-label">Bytes</span>
+                        <span class="stat-value" id="uart-bytes">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Parity Errors</span>
+                        <span class="stat-value" id="uart-errors">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Transfer Time</span>
+                        <span class="stat-value" id="uart-time">0 ms</span>
+                    </div>
+                </div>
+
+                <div class="output-section" id="uart-output-section" style="display: none;">
+                    <h3>Decoded UART Data</h3>
+                    <table class="output-table" id="uart-output"></table>
+                </div>
+
+                <div class="examples">
+                    <h3>Load Sample UART Data</h3>
+                    <button class="example-btn" onclick="loadUARTSampleText()">Text Message</button>
+                    <button class="example-btn" onclick="loadUARTSampleCommand()">AT Commands</button>
+                    <button class="example-btn" onclick="loadUARTSampleBinary()">Binary Data</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function decodeI2C() {
+            const input = document.getElementById('i2c-input').value.trim();
+            const addrFormat = document.getElementById('i2c-addr-format').value;
+            const displayFormat = document.getElementById('i2c-display-format').value;
+
+            if (!input) {
+                showMessage('i2c-message', 'Please enter I²C data', 'error');
+                return;
+            }
+
+            try {
+                const tokens = input.toUpperCase().split(/\s+/);
+                const table = document.getElementById('i2c-output');
+                table.innerHTML = '<tr><th>#</th><th>Type</th><th>Address</th><th>R/W</th><th>Data</th><th>ACK/NACK</th><th>Description</th></tr>';
+
+                let transactions = 0;
+                let totalBytes = 0;
+                let errors = 0;
+                let rowNum = 0;
+                let currentAddr = '';
+                let currentRW = '';
+
+                for (let i = 0; i < tokens.length; i++) {
+                    const token = tokens[i];
+                    const row = table.insertRow();
+
+                    if (token === 'S') {
+                        transactions++;
+                        row.innerHTML = `<td>${++rowNum}</td><td>Start</td><td>-</td><td>-</td><td>-</td><td>-</td><td>Start condition</td>`;
+                    } else if (token === 'P') {
+                        row.innerHTML = `<td>${++rowNum}</td><td>Stop</td><td>-</td><td>-</td><td>-</td><td>-</td><td>Stop condition</td>`;
+                        currentAddr = '';
+                        currentRW = '';
+                    } else if (token === 'R') {
+                        currentRW = 'Read';
+                        row.innerHTML = `<td>${++rowNum}</td><td>Direction</td><td>-</td><td><span class="status-read">READ</span></td><td>-</td><td>-</td><td>Read operation</td>`;
+                    } else if (token === 'W') {
+                        currentRW = 'Write';
+                        row.innerHTML = `<td>${++rowNum}</td><td>Direction</td><td>-</td><td><span class="status-write">WRITE</span></td><td>-</td><td>-</td><td>Write operation</td>`;
+                    } else if (token === 'A') {
+                        row.innerHTML = `<td>${++rowNum}</td><td>ACK</td><td>-</td><td>-</td><td>-</td><td><span class="status-ack">ACK</span></td><td>Acknowledge</td>`;
+                    } else if (token === 'N') {
+                        errors++;
+                        row.innerHTML = `<td>${++rowNum}</td><td>NACK</td><td>-</td><td>-</td><td>-</td><td><span class="status-nack">NACK</span></td><td>Not Acknowledge</td>`;
+                    } else if (token.startsWith('0X')) {
+                        const value = parseInt(token, 16);
+                        const formatted = formatValue(value, displayFormat);
+
+                        if (!currentAddr && (currentRW === 'Read' || currentRW === 'Write')) {
+                            // This is address
+                            currentAddr = token;
+                            row.innerHTML = `<td>${++rowNum}</td><td>Address</td><td>${token}</td><td>${currentRW}</td><td>-</td><td>-</td><td>Device address</td>`;
+                        } else {
+                            // This is data
+                            totalBytes++;
+                            const ascii = (value >= 32 && value <= 126) ? String.fromCharCode(value) : '.';
+                            row.innerHTML = `<td>${++rowNum}</td><td>Data</td><td>${currentAddr}</td><td>${currentRW}</td><td>${formatted}</td><td>-</td><td>ASCII: '${ascii}'</td>`;
+                        }
+                    }
+                }
+
+                document.getElementById('i2c-stats').style.display = 'flex';
+                document.getElementById('i2c-transactions').textContent = transactions;
+                document.getElementById('i2c-bytes').textContent = totalBytes;
+                document.getElementById('i2c-errors').textContent = errors;
+                document.getElementById('i2c-output-section').style.display = 'block';
+
+                showMessage('i2c-message', `Successfully decoded ${transactions} I²C transaction(s)`, 'success');
+            } catch (error) {
+                showMessage('i2c-message', 'Error decoding I²C data: ' + error.message, 'error');
+            }
+        }
+
+        function decodeSPI() {
+            const input = document.getElementById('spi-input').value.trim();
+            const bitOrder = document.getElementById('spi-bit-order').value;
+            const cpol = document.getElementById('spi-cpol').value;
+            const cpha = document.getElementById('spi-cpha').value;
+            const displayFormat = document.getElementById('spi-display-format').value;
+
+            if (!input) {
+                showMessage('spi-message', 'Please enter SPI data', 'error');
+                return;
+            }
+
+            try {
+                const lines = input.split('\n');
+                let mosiData = [];
+                let misoData = [];
+
+                lines.forEach(line => {
+                    if (line.toUpperCase().includes('MOSI')) {
+                        const match = line.match(/0x[0-9A-Fa-f]+/g);
+                        if (match) mosiData = mosiData.concat(match.map(h => parseInt(h, 16)));
+                    } else if (line.toUpperCase().includes('MISO')) {
+                        const match = line.match(/0x[0-9A-Fa-f]+/g);
+                        if (match) misoData = misoData.concat(match.map(h => parseInt(h, 16)));
+                    }
+                });
+
+                const maxLen = Math.max(mosiData.length, misoData.length);
+                const table = document.getElementById('spi-output');
+                table.innerHTML = '<tr><th>Byte #</th><th>MOSI (Hex)</th><th>MOSI (Binary)</th><th>MISO (Hex)</th><th>MISO (Binary)</th><th>Notes</th></tr>';
+
+                for (let i = 0; i < maxLen; i++) {
+                    const row = table.insertRow();
+                    const mosiVal = mosiData[i] !== undefined ? mosiData[i] : 0xFF;
+                    const misoVal = misoData[i] !== undefined ? misoData[i] : 0xFF;
+
+                    const mosiHex = '0x' + mosiVal.toString(16).toUpperCase().padStart(2, '0');
+                    const mosiBin = '0b' + mosiVal.toString(2).padStart(8, '0');
+                    const misoHex = '0x' + misoVal.toString(16).toUpperCase().padStart(2, '0');
+                    const misoBin = '0b' + misoVal.toString(2).padStart(8, '0');
+
+                    let notes = '';
+                    if (i === 0) notes = 'Command/Address byte';
+                    else if (mosiData[i] === undefined) notes = 'Read operation';
+                    else if (misoData[i] === undefined || misoData[i] === 0xFF) notes = 'Write operation';
+
+                    row.innerHTML = `<td>${i + 1}</td><td>${mosiHex}</td><td>${mosiBin}</td><td>${misoHex}</td><td>${misoBin}</td><td>${notes}</td>`;
+                }
+
+                const mode = parseInt(cpol) * 2 + parseInt(cpha);
+                document.getElementById('spi-stats').style.display = 'flex';
+                document.getElementById('spi-bytes').textContent = maxLen;
+                document.getElementById('spi-mode').textContent = mode;
+                document.getElementById('spi-output-section').style.display = 'block';
+
+                showMessage('spi-message', `Successfully decoded ${maxLen} byte(s) of SPI data (Mode ${mode})`, 'success');
+            } catch (error) {
+                showMessage('spi-message', 'Error decoding SPI data: ' + error.message, 'error');
+            }
+        }
+
+        function decodeUART() {
+            const input = document.getElementById('uart-input').value.trim();
+            const baud = parseInt(document.getElementById('uart-baud').value);
+            const dataBits = parseInt(document.getElementById('uart-data-bits').value);
+            const parity = document.getElementById('uart-parity').value;
+            const stopBits = parseInt(document.getElementById('uart-stop-bits').value);
+            const displayFormat = document.getElementById('uart-display-format').value;
+
+            if (!input) {
+                showMessage('uart-message', 'Please enter UART data', 'error');
+                return;
+            }
+
+            try {
+                let bytes = [];
+
+                // Check if input is hex or ASCII
+                if (input.includes('0x') || input.match(/^[0-9A-Fa-f\s]+$/)) {
+                    const hexMatches = input.match(/0x[0-9A-Fa-f]+/g) || input.match(/[0-9A-Fa-f]{2}/g);
+                    if (hexMatches) {
+                        bytes = hexMatches.map(h => parseInt(h, 16));
+                    }
+                } else {
+                    // ASCII input
+                    bytes = Array.from(input).map(c => c.charCodeAt(0));
+                }
+
+                const table = document.getElementById('uart-output');
+                table.innerHTML = '<tr><th>Byte #</th><th>Hex</th><th>Binary</th><th>Decimal</th><th>ASCII</th><th>Parity</th><th>Time (μs)</th></tr>';
+
+                let errors = 0;
+                const bitTime = 1000000 / baud; // microseconds per bit
+                const frameTime = bitTime * (1 + dataBits + (parity !== 'none' ? 1 : 0) + stopBits);
+
+                bytes.forEach((byte, i) => {
+                    const row = table.insertRow();
+                    const hex = '0x' + byte.toString(16).toUpperCase().padStart(2, '0');
+                    const bin = '0b' + byte.toString(2).padStart(8, '0');
+                    const dec = byte;
+                    const ascii = (byte >= 32 && byte <= 126) ? String.fromCharCode(byte) : '.';
+
+                    let parityBit = 0;
+                    let parityStatus = 'N/A';
+                    if (parity === 'even') {
+                        parityBit = byte.toString(2).split('1').length % 2 === 0 ? 0 : 1;
+                        parityStatus = '<span class="status-ack">OK</span>';
+                    } else if (parity === 'odd') {
+                        parityBit = byte.toString(2).split('1').length % 2 === 0 ? 1 : 0;
+                        parityStatus = '<span class="status-ack">OK</span>';
+                    }
+
+                    const time = (i * frameTime).toFixed(2);
+
+                    row.innerHTML = `<td>${i + 1}</td><td>${hex}</td><td>${bin}</td><td>${dec}</td><td>${ascii}</td><td>${parityStatus}</td><td>${time}</td>`;
+                });
+
+                const totalTime = (bytes.length * frameTime / 1000).toFixed(3);
+
+                document.getElementById('uart-stats').style.display = 'flex';
+                document.getElementById('uart-bytes').textContent = bytes.length;
+                document.getElementById('uart-errors').textContent = errors;
+                document.getElementById('uart-time').textContent = totalTime + ' ms';
+                document.getElementById('uart-output-section').style.display = 'block';
+
+                showMessage('uart-message', `Successfully decoded ${bytes.length} byte(s) of UART data`, 'success');
+            } catch (error) {
+                showMessage('uart-message', 'Error decoding UART data: ' + error.message, 'error');
+            }
+        }
+
+        function formatValue(value, format) {
+            switch (format) {
+                case 'hex':
+                    return '0x' + value.toString(16).toUpperCase().padStart(2, '0');
+                case 'binary':
+                    return '0b' + value.toString(2).padStart(8, '0');
+                case 'decimal':
+                    return value.toString();
+                case 'ascii':
+                    return (value >= 32 && value <= 126) ? String.fromCharCode(value) : '.';
+                default:
+                    return value.toString(16);
+            }
+        }
+
+        function clearOutput(protocol) {
+            document.getElementById(`${protocol}-input`).value = '';
+            document.getElementById(`${protocol}-output-section`).style.display = 'none';
+            document.getElementById(`${protocol}-stats`).style.display = 'none';
+            document.getElementById(`${protocol}-message`).innerHTML = '';
+        }
+
+        function showMessage(elementId, text, type) {
+            const messageDiv = document.getElementById(elementId);
+            messageDiv.innerHTML = `<div class="message ${type}">${text}</div>`;
+            setTimeout(() => {
+                messageDiv.innerHTML = '';
+            }, 3000);
+        }
+
+        // Sample data loaders
+        function loadI2CSampleEEPROM() {
+            document.getElementById('i2c-input').value = `S 0x50 W A 0x00 A 0x12 A 0x34 A 0x56 A P
+S 0x50 W A 0x00 A S 0x50 R A 0x12 A 0x34 A 0x56 N P`;
+            decodeI2C();
+        }
+
+        function loadI2CSampleSensor() {
+            document.getElementById('i2c-input').value = `S 0x68 W A 0x75 A P
+S 0x68 R A 0x71 N P`;
+            decodeI2C();
+        }
+
+        function loadI2CSampleRTC() {
+            document.getElementById('i2c-input').value = `S 0x68 W A 0x00 A S 0x68 R A 0x30 A 0x15 A 0x12 N P`;
+            decodeI2C();
+        }
+
+        function loadSPISampleFlash() {
+            document.getElementById('spi-input').value = `MOSI: 0x9F 0x00 0x00 0x00
+MISO: 0xFF 0xEF 0x40 0x18`;
+            decodeSPI();
+        }
+
+        function loadSPISampleADC() {
+            document.getElementById('spi-input').value = `MOSI: 0x01 0x80 0x00
+MISO: 0x00 0x0F 0xFF`;
+            decodeSPI();
+        }
+
+        function loadSPISampleSD() {
+            document.getElementById('spi-input').value = `MOSI: 0x40 0x00 0x00 0x00 0x00 0x95
+MISO: 0xFF 0xFF 0xFF 0xFF 0xFF 0x01`;
+            decodeSPI();
+        }
+
+        function loadUARTSampleText() {
+            document.getElementById('uart-input').value = 'Hello World!';
+            decodeUART();
+        }
+
+        function loadUARTSampleCommand() {
+            document.getElementById('uart-input').value = 'AT+CGMI\r\nOK\r\n';
+            decodeUART();
+        }
+
+        function loadUARTSampleBinary() {
+            document.getElementById('uart-input').value = '0x02 0x10 0x00 0x0A 0xFF 0xAA 0x55 0x03';
+            decodeUART();
+        }
+    </script>
+</body>
+</html>

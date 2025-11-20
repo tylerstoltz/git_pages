@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XML Formatter & Validator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        .btn:hover {
+            background: #5568d3;
+        }
+
+        .btn-secondary {
+            background: #4caf50;
+        }
+
+        .btn-secondary:hover {
+            background: #45a049;
+        }
+
+        .btn-danger {
+            background: #f44336;
+        }
+
+        .btn-danger:hover {
+            background: #d32f2f;
+        }
+
+        .editor-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .editor-panel {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-title {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .editor {
+            width: 100%;
+            min-height: 400px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            resize: vertical;
+            line-height: 1.6;
+        }
+
+        .editor:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .output {
+            width: 100%;
+            min-height: 400px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            background: #f5f5f5;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            overflow: auto;
+            line-height: 1.6;
+            white-space: pre;
+        }
+
+        .stats {
+            display: flex;
+            gap: 20px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-label {
+            font-size: 0.85em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #c62828;
+        }
+
+        .success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #4caf50;
+        }
+
+        .xpath-section {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        .section-title {
+            font-size: 1.3em;
+            color: #667eea;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .xpath-input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .xpath-input-group input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 1em;
+        }
+
+        .xpath-results {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .xpath-result-item {
+            background: white;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            border-left: 4px solid #4caf50;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        .examples {
+            background: #fff3e0;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border-left: 4px solid #ff9800;
+        }
+
+        .examples h3 {
+            color: #f57c00;
+            margin-bottom: 10px;
+        }
+
+        .example-btn {
+            display: inline-block;
+            padding: 8px 15px;
+            margin: 5px;
+            background: #ff9800;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85em;
+            transition: background 0.3s;
+        }
+
+        .example-btn:hover {
+            background: #f57c00;
+        }
+
+        .tree-view {
+            font-family: 'Courier New', monospace;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 6px;
+            max-height: 400px;
+            overflow: auto;
+        }
+
+        .tree-node {
+            margin-left: 20px;
+            margin-top: 5px;
+        }
+
+        .tree-tag {
+            color: #d32f2f;
+            font-weight: 600;
+        }
+
+        .tree-attr {
+            color: #1976d2;
+        }
+
+        .tree-text {
+            color: #388e3c;
+        }
+
+        @media (max-width: 1024px) {
+            .editor-container {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📄 XML Formatter & Validator</h1>
+            <p>Format, validate, and query XML with XPath support</p>
+        </div>
+
+        <div class="main-content">
+            <!-- Controls -->
+            <div class="controls">
+                <button class="btn" onclick="formatXML()">Format XML</button>
+                <button class="btn" onclick="minifyXML()">Minify XML</button>
+                <button class="btn" onclick="validateXML()">Validate XML</button>
+                <button class="btn btn-secondary" onclick="copyOutput()">Copy Output</button>
+                <button class="btn btn-danger" onclick="clearAll()">Clear All</button>
+            </div>
+
+            <!-- Stats -->
+            <div class="stats" id="stats">
+                <div class="stat-item">
+                    <span class="stat-label">Characters</span>
+                    <span class="stat-value" id="charCount">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Lines</span>
+                    <span class="stat-value" id="lineCount">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Elements</span>
+                    <span class="stat-value" id="elementCount">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Attributes</span>
+                    <span class="stat-value" id="attrCount">0</span>
+                </div>
+            </div>
+
+            <!-- Message area -->
+            <div id="message"></div>
+
+            <!-- Editor -->
+            <div class="editor-container">
+                <div class="editor-panel">
+                    <div class="panel-title">Input XML</div>
+                    <textarea class="editor" id="xmlInput" placeholder="Paste or type XML here..." oninput="updateStats()"></textarea>
+                </div>
+                <div class="editor-panel">
+                    <div class="panel-title">Output</div>
+                    <div class="output" id="xmlOutput">Formatted XML will appear here...</div>
+                </div>
+            </div>
+
+            <!-- XPath Section -->
+            <div class="xpath-section">
+                <h2 class="section-title">XPath Query Tester</h2>
+
+                <div class="xpath-input-group">
+                    <input type="text" id="xpathInput" placeholder="Enter XPath query (e.g., //book/title or //book[@category='cooking'])">
+                    <button class="btn" onclick="executeXPath()">Execute XPath</button>
+                </div>
+
+                <div id="xpathResultsContainer" style="display: none;">
+                    <h3 style="margin-bottom: 10px; color: #333;">Results (<span id="resultCount">0</span> matches)</h3>
+                    <div class="xpath-results" id="xpathResults"></div>
+                </div>
+
+                <div class="examples">
+                    <h3>Common XPath Examples</h3>
+                    <button class="example-btn" onclick="setXPath('//book')">All books</button>
+                    <button class="example-btn" onclick="setXPath('//book/title')">All titles</button>
+                    <button class="example-btn" onclick="setXPath('//book[@category]')">Books with category</button>
+                    <button class="example-btn" onclick="setXPath('//book[price>30]')">Books over $30</button>
+                    <button class="example-btn" onclick="setXPath('//@*')">All attributes</button>
+                    <button class="example-btn" onclick="setXPath('count(//book)')">Count books</button>
+                </div>
+            </div>
+
+            <!-- Sample XML -->
+            <div class="examples">
+                <h3>Load Sample XML</h3>
+                <button class="example-btn" onclick="loadSampleBookstore()">Bookstore</button>
+                <button class="example-btn" onclick="loadSampleMenu()">Restaurant Menu</button>
+                <button class="example-btn" onclick="loadSampleRSS()">RSS Feed</button>
+                <button class="example-btn" onclick="loadSampleSOAP()">SOAP Message</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let parsedDoc = null;
+
+        function formatXML() {
+            const input = document.getElementById('xmlInput').value.trim();
+            if (!input) {
+                showMessage('Please enter XML to format', 'error');
+                return;
+            }
+
+            try {
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(input, 'text/xml');
+
+                // Check for parsing errors
+                const parserError = xmlDoc.getElementsByTagName('parsererror');
+                if (parserError.length > 0) {
+                    throw new Error(parserError[0].textContent);
+                }
+
+                const formatted = formatXMLString(xmlDoc);
+                document.getElementById('xmlOutput').textContent = formatted;
+                parsedDoc = xmlDoc;
+                showMessage('XML formatted successfully!', 'success');
+                updateStats();
+            } catch (error) {
+                showMessage('Error formatting XML: ' + error.message, 'error');
+            }
+        }
+
+        function formatXMLString(xml, indent = 0) {
+            const serializer = new XMLSerializer();
+            const xmlString = serializer.serializeToString(xml);
+
+            let formatted = '';
+            let indentLevel = 0;
+            const regex = /(>)(<)(\/*)/g;
+            const xmlWithNewlines = xmlString.replace(regex, '$1\n$2$3');
+            const lines = xmlWithNewlines.split('\n');
+
+            lines.forEach(line => {
+                let indent = 0;
+                if (line.match(/.+<\/\w[^>]*>$/)) {
+                    // Same line open/close tag
+                    indent = 0;
+                } else if (line.match(/^<\/\w/)) {
+                    // Closing tag
+                    if (indentLevel > 0) indentLevel--;
+                } else if (line.match(/^<\w([^>]*[^\/])?>.*$/)) {
+                    // Opening tag
+                    indent = 1;
+                }
+
+                formatted += '  '.repeat(indentLevel) + line.trim() + '\n';
+                indentLevel += indent;
+            });
+
+            return formatted.trim();
+        }
+
+        function minifyXML() {
+            const input = document.getElementById('xmlInput').value.trim();
+            if (!input) {
+                showMessage('Please enter XML to minify', 'error');
+                return;
+            }
+
+            try {
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(input, 'text/xml');
+
+                const parserError = xmlDoc.getElementsByTagName('parsererror');
+                if (parserError.length > 0) {
+                    throw new Error(parserError[0].textContent);
+                }
+
+                const serializer = new XMLSerializer();
+                const minified = serializer.serializeToString(xmlDoc)
+                    .replace(/>\s+</g, '><')
+                    .replace(/\s+/g, ' ');
+
+                document.getElementById('xmlOutput').textContent = minified;
+                parsedDoc = xmlDoc;
+                showMessage('XML minified successfully!', 'success');
+                updateStats();
+            } catch (error) {
+                showMessage('Error minifying XML: ' + error.message, 'error');
+            }
+        }
+
+        function validateXML() {
+            const input = document.getElementById('xmlInput').value.trim();
+            if (!input) {
+                showMessage('Please enter XML to validate', 'error');
+                return;
+            }
+
+            try {
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(input, 'text/xml');
+
+                const parserError = xmlDoc.getElementsByTagName('parsererror');
+                if (parserError.length > 0) {
+                    throw new Error(parserError[0].textContent);
+                }
+
+                parsedDoc = xmlDoc;
+                showMessage('✓ Valid XML!', 'success');
+                updateStats();
+            } catch (error) {
+                showMessage('✗ Invalid XML: ' + error.message, 'error');
+            }
+        }
+
+        function executeXPath() {
+            const xpath = document.getElementById('xpathInput').value.trim();
+            const input = document.getElementById('xmlInput').value.trim();
+
+            if (!input) {
+                showMessage('Please enter XML first', 'error');
+                return;
+            }
+
+            if (!xpath) {
+                showMessage('Please enter an XPath query', 'error');
+                return;
+            }
+
+            try {
+                // Parse XML if not already parsed
+                if (!parsedDoc) {
+                    const parser = new DOMParser();
+                    parsedDoc = parser.parseFromString(input, 'text/xml');
+
+                    const parserError = parsedDoc.getElementsByTagName('parsererror');
+                    if (parserError.length > 0) {
+                        throw new Error('Invalid XML: ' + parserError[0].textContent);
+                    }
+                }
+
+                // Execute XPath
+                const result = parsedDoc.evaluate(xpath, parsedDoc, null, XPathResult.ANY_TYPE, null);
+                const resultsContainer = document.getElementById('xpathResultsContainer');
+                const resultsDiv = document.getElementById('xpathResults');
+                const resultCountSpan = document.getElementById('resultCount');
+
+                resultsDiv.innerHTML = '';
+                let count = 0;
+
+                // Handle different result types
+                let node = result.iterateNext();
+                while (node) {
+                    count++;
+                    const div = document.createElement('div');
+                    div.className = 'xpath-result-item';
+
+                    if (node.nodeType === Node.ELEMENT_NODE) {
+                        const serializer = new XMLSerializer();
+                        div.textContent = serializer.serializeToString(node);
+                    } else if (node.nodeType === Node.ATTRIBUTE_NODE) {
+                        div.textContent = `${node.name}="${node.value}"`;
+                    } else {
+                        div.textContent = node.textContent;
+                    }
+
+                    resultsDiv.appendChild(div);
+                    node = result.iterateNext();
+                }
+
+                // Handle number results (like count())
+                if (count === 0 && result.numberValue !== undefined && !isNaN(result.numberValue)) {
+                    const div = document.createElement('div');
+                    div.className = 'xpath-result-item';
+                    div.textContent = result.numberValue;
+                    resultsDiv.appendChild(div);
+                    count = 1;
+                }
+
+                resultCountSpan.textContent = count;
+                resultsContainer.style.display = count > 0 ? 'block' : 'none';
+
+                if (count === 0) {
+                    showMessage('No results found for XPath query', 'error');
+                } else {
+                    showMessage(`Found ${count} result${count !== 1 ? 's' : ''}`, 'success');
+                }
+            } catch (error) {
+                showMessage('XPath Error: ' + error.message, 'error');
+            }
+        }
+
+        function setXPath(xpath) {
+            document.getElementById('xpathInput').value = xpath;
+            executeXPath();
+        }
+
+        function copyOutput() {
+            const output = document.getElementById('xmlOutput').textContent;
+            if (!output || output === 'Formatted XML will appear here...') {
+                showMessage('No output to copy', 'error');
+                return;
+            }
+
+            navigator.clipboard.writeText(output).then(() => {
+                showMessage('Copied to clipboard!', 'success');
+            }).catch(err => {
+                showMessage('Failed to copy: ' + err.message, 'error');
+            });
+        }
+
+        function clearAll() {
+            document.getElementById('xmlInput').value = '';
+            document.getElementById('xmlOutput').textContent = 'Formatted XML will appear here...';
+            document.getElementById('xpathInput').value = '';
+            document.getElementById('xpathResults').innerHTML = '';
+            document.getElementById('xpathResultsContainer').style.display = 'none';
+            document.getElementById('message').innerHTML = '';
+            parsedDoc = null;
+            updateStats();
+        }
+
+        function updateStats() {
+            const input = document.getElementById('xmlInput').value;
+            document.getElementById('charCount').textContent = input.length;
+            document.getElementById('lineCount').textContent = input.split('\n').length;
+
+            // Count elements and attributes
+            try {
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(input || '<root/>', 'text/xml');
+                const elements = xmlDoc.getElementsByTagName('*');
+                let attrCount = 0;
+
+                for (let i = 0; i < elements.length; i++) {
+                    attrCount += elements[i].attributes.length;
+                }
+
+                document.getElementById('elementCount').textContent = elements.length;
+                document.getElementById('attrCount').textContent = attrCount;
+            } catch (e) {
+                document.getElementById('elementCount').textContent = '0';
+                document.getElementById('attrCount').textContent = '0';
+            }
+        }
+
+        function showMessage(text, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.innerHTML = `<div class="${type}">${text}</div>`;
+            setTimeout(() => {
+                messageDiv.innerHTML = '';
+            }, 3000);
+        }
+
+        function loadSampleBookstore() {
+            const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<bookstore>
+    <book category="cooking">
+        <title lang="en">Everyday Italian</title>
+        <author>Giada De Laurentiis</author>
+        <year>2005</year>
+        <price>30.00</price>
+    </book>
+    <book category="children">
+        <title lang="en">Harry Potter</title>
+        <author>J K. Rowling</author>
+        <year>2005</year>
+        <price>29.99</price>
+    </book>
+    <book category="web">
+        <title lang="en">Learning XML</title>
+        <author>Erik T. Ray</author>
+        <year>2003</year>
+        <price>39.95</price>
+    </book>
+</bookstore>`;
+            document.getElementById('xmlInput').value = xml;
+            formatXML();
+        }
+
+        function loadSampleMenu() {
+            const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<menu>
+    <food>
+        <name>Belgian Waffles</name>
+        <price>$5.95</price>
+        <description>Two of our famous Belgian Waffles with plenty of real maple syrup</description>
+        <calories>650</calories>
+    </food>
+    <food>
+        <name>Strawberry Belgian Waffles</name>
+        <price>$7.95</price>
+        <description>Light Belgian waffles covered with strawberries and whipped cream</description>
+        <calories>900</calories>
+    </food>
+</menu>`;
+            document.getElementById('xmlInput').value = xml;
+            formatXML();
+        }
+
+        function loadSampleRSS() {
+            const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+    <channel>
+        <title>Example RSS Feed</title>
+        <link>http://example.com</link>
+        <description>This is an example RSS feed</description>
+        <item>
+            <title>First Item</title>
+            <link>http://example.com/item1</link>
+            <description>Description of the first item</description>
+            <pubDate>Mon, 01 Jan 2024 00:00:00 GMT</pubDate>
+        </item>
+    </channel>
+</rss>`;
+            document.getElementById('xmlInput').value = xml;
+            formatXML();
+        }
+
+        function loadSampleSOAP() {
+            const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+    <soap:Header>
+        <auth xmlns="http://example.com/auth">
+            <token>abc123xyz</token>
+        </auth>
+    </soap:Header>
+    <soap:Body>
+        <getUser xmlns="http://example.com/users">
+            <userId>12345</userId>
+        </getUser>
+    </soap:Body>
+</soap:Envelope>`;
+            document.getElementById('xmlInput').value = xml;
+            formatXML();
+        }
+
+        // Initialize stats
+        updateStats();
+    </script>
+</body>
+</html>
