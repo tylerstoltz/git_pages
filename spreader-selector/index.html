@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stoltzfus Spreader Selector Tool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background-color: #252526;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #3e3e42;
+        }
+
+        .header h1 {
+            color: #569cd6;
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #9cdcfe;
+            margin-bottom: 10px;
+        }
+
+        .back-link {
+            display: inline-block;
+            color: #4ec9b0;
+            text-decoration: none;
+            margin-top: 10px;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        .section {
+            background-color: #252526;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #3e3e42;
+        }
+
+        .section h2 {
+            color: #4ec9b0;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #9cdcfe;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .form-group select,
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            border: 1px solid #3e3e42;
+            border-radius: 4px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+        }
+
+        .form-group select:focus,
+        .form-group input:focus {
+            outline: none;
+            border-color: #569cd6;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .btn {
+            background-color: #569cd6;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+
+        .btn:hover {
+            background-color: #4a8bc2;
+        }
+
+        .btn:active {
+            background-color: #3d7aad;
+        }
+
+        .results {
+            display: none;
+        }
+
+        .results.active {
+            display: block;
+        }
+
+        .spreader-card {
+            background-color: #2d2d30;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 4px solid #569cd6;
+        }
+
+        .spreader-card.top-match {
+            border-left-color: #4ec9b0;
+            background-color: #1a3a1a;
+        }
+
+        .spreader-card h3 {
+            color: #4ec9b0;
+            font-size: 1.4em;
+            margin-bottom: 10px;
+        }
+
+        .match-score {
+            display: inline-block;
+            background-color: #4ec9b0;
+            color: #1e1e1e;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-weight: bold;
+            margin-left: 10px;
+            font-size: 0.9em;
+        }
+
+        .spreader-card .category {
+            color: #c586c0;
+            font-style: italic;
+            margin-bottom: 10px;
+        }
+
+        .specs {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .spec-item {
+            color: #d4d4d4;
+        }
+
+        .spec-label {
+            color: #9cdcfe;
+            font-weight: bold;
+        }
+
+        .features {
+            margin-top: 15px;
+        }
+
+        .features-title {
+            color: #dcdcaa;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .features ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .features li {
+            color: #ce9178;
+            padding: 4px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .features li:before {
+            content: "•";
+            color: #4ec9b0;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: #9cdcfe;
+        }
+
+        .reset-btn {
+            background-color: #3e3e42;
+            margin-left: 10px;
+        }
+
+        .reset-btn:hover {
+            background-color: #505054;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚜 Stoltzfus Spreader Selector</h1>
+            <p>Find the perfect spreader for your farm operation</p>
+            <p style="font-size: 0.9em; color: #858585;">Answer a few questions about your needs, and we'll recommend the best Stoltzfus spreader models for you.</p>
+            <a href="../" class="back-link">← Back to Tools</a>
+        </div>
+
+        <div class="section">
+            <h2>Your Requirements</h2>
+            <form id="spreaderForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="farmSize">Farm Size (acres)</label>
+                        <select id="farmSize">
+                            <option value="">Select...</option>
+                            <option value="small">Small (0-50 acres)</option>
+                            <option value="medium">Medium (50-200 acres)</option>
+                            <option value="large">Large (200-500 acres)</option>
+                            <option value="xlarge">Very Large (500+ acres)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="material">Primary Material to Spread</label>
+                        <select id="material">
+                            <option value="">Select...</option>
+                            <option value="lime">Lime (dry or wet)</option>
+                            <option value="fertilizer">Fertilizer</option>
+                            <option value="chicken-litter">Chicken Litter / Poultry Litter</option>
+                            <option value="compost">Compost</option>
+                            <option value="manure">Manure</option>
+                            <option value="gypsum">Gypsum</option>
+                            <option value="biochar">Biochar</option>
+                            <option value="seeds">Cover Crop Seeds</option>
+                            <option value="bulk">Bulk Materials</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="capacity">Capacity Needed</label>
+                        <select id="capacity">
+                            <option value="">Select...</option>
+                            <option value="small">Small (2-4 tons)</option>
+                            <option value="medium">Medium (4-8 tons)</option>
+                            <option value="large">Large (8-15 tons)</option>
+                            <option value="xlarge">Very Large (15-20 tons)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="driveType">Drive Type Preference</label>
+                        <select id="driveType">
+                            <option value="">No Preference</option>
+                            <option value="pto">PTO Driven</option>
+                            <option value="hydraulic">Hydraulic Drive</option>
+                            <option value="ground">Ground Driven</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="cropType">Farm Type / Special Requirements</label>
+                        <select id="cropType">
+                            <option value="">General Agriculture</option>
+                            <option value="row-crop">Row Crop (need adjustable wheel track)</option>
+                            <option value="orchard">Orchard / Vineyard (need narrow profile)</option>
+                            <option value="wet-conditions">Wet Conditions / Wet Lime</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="budget">Budget Range</label>
+                        <select id="budget">
+                            <option value="">No Preference</option>
+                            <option value="economy">Economy</option>
+                            <option value="mid">Mid-Range</option>
+                            <option value="premium">Premium / Custom</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="margin-top: 20px;">
+                    <button type="submit" class="btn">Find My Spreader</button>
+                    <button type="button" class="btn reset-btn" onclick="resetForm()">Reset</button>
+                </div>
+            </form>
+        </div>
+
+        <div id="results" class="section results">
+            <h2>Recommended Spreaders</h2>
+            <div id="resultsContainer"></div>
+        </div>
+    </div>
+
+    <script>
+        // Comprehensive spreader database
+        const spreaders = [
+            // Boom Drop Spreaders
+            {
+                name: "WC-5 Ton Boom Drop Spreader",
+                category: "Boom Drop Spreader",
+                capacity: 5,
+                capacityCuFt: 155,
+                materials: ["lime", "fertilizer", "chicken-litter", "compost", "gypsum"],
+                driveType: "pto",
+                features: [
+                    "Self-contained PTO hydraulic system",
+                    "155 cu. ft. capacity",
+                    "Ideal for spreading in wet conditions",
+                    "Heavy-duty construction",
+                    "Wide spread pattern"
+                ],
+                farmSize: ["small", "medium"],
+                specialUse: ["wet-conditions"],
+                budgetClass: "mid"
+            },
+            {
+                name: "WC-8 Ton Boom Drop Spreader",
+                category: "Boom Drop Spreader",
+                capacity: 8,
+                capacityCuFt: 242,
+                materials: ["lime", "fertilizer", "chicken-litter", "compost", "gypsum"],
+                driveType: "pto",
+                features: [
+                    "Self-contained PTO hydraulic system",
+                    "242 cu. ft. capacity",
+                    "Ideal for spreading in wet conditions",
+                    "Heavy-duty construction",
+                    "Wide spread pattern",
+                    "Larger capacity for bigger operations"
+                ],
+                farmSize: ["medium", "large"],
+                specialUse: ["wet-conditions"],
+                budgetClass: "mid"
+            },
+            // Ground Drive Spreaders (Redhawk Series)
+            {
+                name: "Redhawk CU 40 Ground Drive Spreader",
+                category: "Ground Drive Spreader",
+                capacity: 4,
+                capacityCuFt: 85,
+                materials: ["lime", "fertilizer", "chicken-litter", "compost", "gypsum", "marl"],
+                driveType: "ground",
+                features: [
+                    "Ground-driven operation",
+                    "85 cu. ft. capacity",
+                    "Low maintenance",
+                    "No PTO required",
+                    "Economical operation"
+                ],
+                farmSize: ["small", "medium"],
+                specialUse: [],
+                budgetClass: "economy"
+            },
+            {
+                name: "Redhawk CU 50 Ground Drive Spreader",
+                category: "Ground Drive Spreader",
+                capacity: 5,
+                capacityCuFt: 106,
+                materials: ["lime", "fertilizer", "chicken-litter", "compost", "gypsum", "marl"],
+                driveType: "ground",
+                features: [
+                    "Ground-driven operation",
+                    "106 cu. ft. capacity",
+                    "Low maintenance",
+                    "No PTO required",
+                    "Reliable and economical"
+                ],
+                farmSize: ["small", "medium"],
+                specialUse: [],
+                budgetClass: "economy"
+            },
+            {
+                name: "Redhawk CU 50F Ground Drive Spreader",
+                category: "Ground Drive Spreader",
+                capacity: 5,
+                capacityCuFt: 106,
+                materials: ["lime", "fertilizer", "chicken-litter", "compost", "gypsum", "marl"],
+                driveType: "ground",
+                features: [
+                    "Ground-driven operation",
+                    "106 cu. ft. capacity",
+                    "Flotation tires for reduced soil compaction",
+                    "Low maintenance",
+                    "No PTO required"
+                ],
+                farmSize: ["small", "medium"],
+                specialUse: [],
+                budgetClass: "economy"
+            },
+            {
+                name: "Redhawk CU 80 Ground Drive Spreader",
+                category: "Ground Drive Spreader",
+                capacity: 8,
+                capacityCuFt: 170,
+                materials: ["lime", "fertilizer", "chicken-litter", "compost", "gypsum", "marl"],
+                driveType: "ground",
+                features: [
+                    "Ground-driven operation",
+                    "170 cu. ft. capacity",
+                    "Heavy-duty construction",
+                    "No PTO required",
+                    "Suitable for larger operations"
+                ],
+                farmSize: ["medium", "large"],
+                specialUse: [],
+                budgetClass: "economy"
+            },
+            {
+                name: "Redhawk CU 100 Ground Drive Spreader",
+                category: "Ground Drive Spreader",
+                capacity: 10,
+                capacityCuFt: 212,
+                materials: ["lime", "fertilizer", "chicken-litter", "compost", "gypsum", "marl"],
+                driveType: "ground",
+                features: [
+                    "Ground-driven operation",
+                    "212 cu. ft. capacity",
+                    "Heavy-duty construction",
+                    "No PTO required",
+                    "Maximum ground drive capacity"
+                ],
+                farmSize: ["medium", "large"],
+                specialUse: [],
+                budgetClass: "economy"
+            },
+            // Wet Lime Spreaders
+            {
+                name: "20 Wet Lime Spreader",
+                category: "Wet Lime Spreader",
+                capacity: 2,
+                capacityCuFt: 53,
+                materials: ["lime", "fertilizer", "gypsum"],
+                driveType: "hydraulic",
+                features: [
+                    "53 cu. ft. capacity",
+                    "Ideal for wet lime applications",
+                    "Hydraulic drive",
+                    "Compact size"
+                ],
+                farmSize: ["small"],
+                specialUse: ["wet-conditions"],
+                budgetClass: "mid"
+            },
+            {
+                name: "40 Wet Lime Spreader",
+                category: "Wet Lime Spreader",
+                capacity: 4,
+                capacityCuFt: 106,
+                materials: ["lime", "fertilizer", "gypsum"],
+                driveType: "hydraulic",
+                features: [
+                    "106 cu. ft. capacity",
+                    "Ideal for wet lime applications",
+                    "Hydraulic drive",
+                    "Reliable performance"
+                ],
+                farmSize: ["small", "medium"],
+                specialUse: ["wet-conditions"],
+                budgetClass: "mid"
+            },
+            {
+                name: "50 Wet Lime Spreader",
+                category: "Wet Lime Spreader",
+                capacity: 5,
+                capacityCuFt: 133,
+                materials: ["lime", "fertilizer", "gypsum"],
+                driveType: "hydraulic",
+                features: [
+                    "133 cu. ft. capacity",
+                    "Ideal for wet lime applications",
+                    "Hydraulic drive",
+                    "Versatile capacity"
+                ],
+                farmSize: ["small", "medium"],
+                specialUse: ["wet-conditions"],
+                budgetClass: "mid"
+            },
+            {
+                name: "50F Wet Lime Spreader",
+                category: "Wet Lime Spreader",
+                capacity: 5,
+                capacityCuFt: 133,
+                materials: ["lime", "fertilizer", "gypsum"],
+                driveType: "hydraulic",
+                features: [
+                    "133 cu. ft. capacity",
+                    "Ideal for wet lime applications",
+                    "Flotation tires for reduced compaction",
+                    "Hydraulic drive"
+                ],
+                farmSize: ["small", "medium"],
+                specialUse: ["wet-conditions"],
+                budgetClass: "mid"
+            },
+            {
+                name: "80 Wet Lime Spreader",
+                category: "Wet Lime Spreader",
+                capacity: 8,
+                capacityCuFt: 212,
+                materials: ["lime", "fertilizer", "gypsum"],
+                driveType: "hydraulic",
+                features: [
+                    "212 cu. ft. capacity",
+                    "Ideal for wet lime applications",
+                    "Hydraulic drive",
+                    "Heavy-duty construction"
+                ],
+                farmSize: ["medium", "large"],
+                specialUse: ["wet-conditions"],
+                budgetClass: "mid"
+            },
+            {
+                name: "100 Wet Lime Spreader",
+                category: "Wet Lime Spreader",
+                capacity: 10,
+                capacityCuFt: 265,
+                materials: ["lime", "fertilizer", "gypsum"],
+                driveType: "hydraulic",
+                features: [
+                    "265 cu. ft. capacity",
+                    "Ideal for wet lime applications",
+                    "Hydraulic drive",
+                    "Large capacity operation"
+                ],
+                farmSize: ["medium", "large"],
+                specialUse: ["wet-conditions"],
+                budgetClass: "mid"
+            },
+            {
+                name: "150 Wet Lime Spreader",
+                category: "Wet Lime Spreader",
+                capacity: 15,
+                capacityCuFt: 300,
+                materials: ["lime", "fertilizer", "gypsum"],
+                driveType: "hydraulic",
+                features: [
+                    "300 cu. ft. capacity",
+                    "Ideal for wet lime applications",
+                    "Hydraulic drive",
+                    "Maximum wet lime capacity",
+                    "Commercial grade"
+                ],
+                farmSize: ["large", "xlarge"],
+                specialUse: ["wet-conditions"],
+                budgetClass: "premium"
+            },
+            // Bulk Material Spreaders
+            {
+                name: "5010 Bulk Material Spreader",
+                category: "Bulk Material Spreader",
+                capacity: 5,
+                capacityCuFt: 137,
+                materials: ["chicken-litter", "compost", "manure", "fertilizer", "biochar", "bulk"],
+                driveType: "pto",
+                features: [
+                    "137 cu. ft. capacity",
+                    "PTO driven",
+                    "Versatile bulk material handling",
+                    "Ideal for poultry litter and compost"
+                ],
+                farmSize: ["small", "medium"],
+                specialUse: [],
+                budgetClass: "mid"
+            },
+            {
+                name: "8016 Bulk Material Spreader",
+                category: "Bulk Material Spreader",
+                capacity: 8,
+                capacityCuFt: 230,
+                materials: ["chicken-litter", "compost", "manure", "fertilizer", "biochar", "bulk"],
+                driveType: "pto",
+                features: [
+                    "230 cu. ft. capacity",
+                    "PTO driven",
+                    "Versatile bulk material handling",
+                    "Heavy-duty construction"
+                ],
+                farmSize: ["medium", "large"],
+                specialUse: [],
+                budgetClass: "mid"
+            },
+            {
+                name: "1516 Bulk Material Spreader",
+                category: "Bulk Material Spreader",
+                capacity: 15,
+                capacityCuFt: 500,
+                materials: ["chicken-litter", "compost", "manure", "fertilizer", "biochar", "bulk"],
+                driveType: "pto",
+                features: [
+                    "500 cu. ft. capacity",
+                    "PTO driven",
+                    "Large capacity for commercial operations",
+                    "Versatile bulk material handling"
+                ],
+                farmSize: ["large", "xlarge"],
+                specialUse: [],
+                budgetClass: "premium"
+            },
+            {
+                name: "1520 Bulk Material Spreader",
+                category: "Bulk Material Spreader",
+                capacity: 15,
+                capacityCuFt: 520,
+                materials: ["chicken-litter", "compost", "manure", "fertilizer", "biochar", "bulk"],
+                driveType: "pto",
+                features: [
+                    "520 cu. ft. capacity",
+                    "PTO driven",
+                    "Extra large capacity",
+                    "Commercial grade operation"
+                ],
+                farmSize: ["large", "xlarge"],
+                specialUse: [],
+                budgetClass: "premium"
+            },
+            {
+                name: "2020 Bulk Material Spreader",
+                category: "Bulk Material Spreader",
+                capacity: 20,
+                capacityCuFt: 700,
+                materials: ["chicken-litter", "compost", "manure", "fertilizer", "biochar", "bulk"],
+                driveType: "pto",
+                features: [
+                    "700 cu. ft. capacity",
+                    "PTO driven",
+                    "Maximum capacity for large operations",
+                    "Heavy-duty commercial construction"
+                ],
+                farmSize: ["xlarge"],
+                specialUse: [],
+                budgetClass: "premium"
+            },
+            {
+                name: "2020XL Bulk Material Spreader",
+                category: "Bulk Material Spreader",
+                capacity: 20,
+                capacityCuFt: 700,
+                materials: ["chicken-litter", "compost", "manure", "fertilizer", "biochar", "bulk"],
+                driveType: "pto",
+                features: [
+                    "700 cu. ft. capacity",
+                    "PTO driven",
+                    "Extra-long design for improved flow",
+                    "Heavy-duty commercial construction",
+                    "Maximum capacity"
+                ],
+                farmSize: ["xlarge"],
+                specialUse: [],
+                budgetClass: "premium"
+            },
+            // Row Crop Spreaders
+            {
+                name: "RC8010 Row Crop Spreader",
+                category: "Row Crop Spreader",
+                capacity: 8,
+                capacityCuFt: 230,
+                materials: ["chicken-litter", "compost", "manure", "fertilizer", "biochar"],
+                driveType: "pto",
+                features: [
+                    "230 cu. ft. capacity",
+                    "Adjustable wheel track for row crop farming",
+                    "PTO driven",
+                    "Designed for precision agriculture"
+                ],
+                farmSize: ["medium", "large"],
+                specialUse: ["row-crop"],
+                budgetClass: "premium"
+            },
+            {
+                name: "RC8012 Row Crop Spreader",
+                category: "Row Crop Spreader",
+                capacity: 8,
+                capacityCuFt: 240,
+                materials: ["chicken-litter", "compost", "manure", "fertilizer", "biochar"],
+                driveType: "pto",
+                features: [
+                    "240 cu. ft. capacity",
+                    "Adjustable wheel track for row crop farming",
+                    "PTO driven",
+                    "Extended design for better flow"
+                ],
+                farmSize: ["medium", "large"],
+                specialUse: ["row-crop"],
+                budgetClass: "premium"
+            },
+            {
+                name: "RC1516 Row Crop Spreader",
+                category: "Row Crop Spreader",
+                capacity: 15,
+                capacityCuFt: 500,
+                materials: ["chicken-litter", "compost", "manure", "fertilizer", "biochar"],
+                driveType: "pto",
+                features: [
+                    "500 cu. ft. capacity",
+                    "Adjustable wheel track for row crop farming",
+                    "PTO driven",
+                    "Large capacity for commercial operations"
+                ],
+                farmSize: ["large", "xlarge"],
+                specialUse: ["row-crop"],
+                budgetClass: "premium"
+            },
+            {
+                name: "RC1520 Row Crop Spreader",
+                category: "Row Crop Spreader",
+                capacity: 15,
+                capacityCuFt: 520,
+                materials: ["chicken-litter", "compost", "manure", "fertilizer", "biochar"],
+                driveType: "pto",
+                features: [
+                    "520 cu. ft. capacity",
+                    "Adjustable wheel track for row crop farming",
+                    "PTO driven",
+                    "Maximum row crop capacity"
+                ],
+                farmSize: ["large", "xlarge"],
+                specialUse: ["row-crop"],
+                budgetClass: "premium"
+            },
+            // Orchard/Vineyard Spreaders
+            {
+                name: "20 Orchard/Vineyard Spreader",
+                category: "Orchard/Vineyard Spreader",
+                capacity: 2,
+                capacityCuFt: 53,
+                materials: ["compost", "fertilizer", "manure"],
+                driveType: "pto",
+                features: [
+                    "53 cu. ft. capacity",
+                    "Narrow profile for orchards and vineyards",
+                    "PTO driven",
+                    "Compact design fits between rows"
+                ],
+                farmSize: ["small", "medium"],
+                specialUse: ["orchard"],
+                budgetClass: "mid"
+            },
+            {
+                name: "40 Orchard/Vineyard Spreader",
+                category: "Orchard/Vineyard Spreader",
+                capacity: 4,
+                capacityCuFt: 106,
+                materials: ["compost", "fertilizer", "manure"],
+                driveType: "pto",
+                features: [
+                    "106 cu. ft. capacity",
+                    "Narrow profile for orchards and vineyards",
+                    "PTO driven",
+                    "Increased capacity while maintaining compact design"
+                ],
+                farmSize: ["small", "medium"],
+                specialUse: ["orchard"],
+                budgetClass: "mid"
+            }
+        ];
+
+        // Scoring algorithm
+        function scoreAndRankSpreaders(formData) {
+            const scores = spreaders.map(spreader => {
+                let score = 0;
+                let maxScore = 0;
+
+                // Farm size matching (weight: 20 points)
+                maxScore += 20;
+                if (formData.farmSize && spreader.farmSize.includes(formData.farmSize)) {
+                    score += 20;
+                } else if (formData.farmSize) {
+                    // Partial credit for adjacent sizes
+                    const sizeOrder = ["small", "medium", "large", "xlarge"];
+                    const userIndex = sizeOrder.indexOf(formData.farmSize);
+                    const spreaderSizes = spreader.farmSize.map(s => sizeOrder.indexOf(s));
+                    const minDiff = Math.min(...spreaderSizes.map(i => Math.abs(i - userIndex)));
+                    score += Math.max(0, 20 - (minDiff * 7));
+                }
+
+                // Material matching (weight: 25 points)
+                maxScore += 25;
+                if (formData.material && spreader.materials.includes(formData.material)) {
+                    score += 25;
+                }
+
+                // Capacity matching (weight: 20 points)
+                maxScore += 20;
+                if (formData.capacity) {
+                    const capacityRanges = {
+                        "small": [2, 4],
+                        "medium": [4, 8],
+                        "large": [8, 15],
+                        "xlarge": [15, 20]
+                    };
+                    const range = capacityRanges[formData.capacity];
+                    if (range && spreader.capacity >= range[0] && spreader.capacity <= range[1]) {
+                        score += 20;
+                    } else if (range) {
+                        // Partial credit based on how close
+                        const diff = Math.min(
+                            Math.abs(spreader.capacity - range[0]),
+                            Math.abs(spreader.capacity - range[1])
+                        );
+                        score += Math.max(0, 20 - (diff * 3));
+                    }
+                }
+
+                // Drive type matching (weight: 15 points)
+                maxScore += 15;
+                if (formData.driveType && spreader.driveType === formData.driveType) {
+                    score += 15;
+                } else if (!formData.driveType) {
+                    score += 7.5; // Neutral score if no preference
+                }
+
+                // Special use matching (weight: 15 points)
+                maxScore += 15;
+                if (formData.cropType && spreader.specialUse.includes(formData.cropType)) {
+                    score += 15;
+                } else if (!formData.cropType || formData.cropType === "") {
+                    score += 7.5; // Neutral score if no special requirement
+                }
+
+                // Budget matching (weight: 5 points)
+                maxScore += 5;
+                if (formData.budget && spreader.budgetClass === formData.budget) {
+                    score += 5;
+                } else if (!formData.budget) {
+                    score += 2.5; // Neutral score if no preference
+                }
+
+                return {
+                    spreader: spreader,
+                    score: score,
+                    percentage: Math.round((score / maxScore) * 100)
+                };
+            });
+
+            // Sort by score descending
+            scores.sort((a, b) => b.score - a.score);
+
+            // Filter to only show matches above 30%
+            return scores.filter(s => s.percentage >= 30);
+        }
+
+        // Display results
+        function displayResults(rankedSpreaders) {
+            const container = document.getElementById('resultsContainer');
+            const resultsSection = document.getElementById('results');
+
+            if (rankedSpreaders.length === 0) {
+                container.innerHTML = '<div class="no-results">No spreaders found matching your criteria. Please adjust your requirements and try again.</div>';
+                resultsSection.classList.add('active');
+                resultsSection.scrollIntoView({ behavior: 'smooth' });
+                return;
+            }
+
+            let html = '';
+            rankedSpreaders.forEach((item, index) => {
+                const s = item.spreader;
+                const isTopMatch = index === 0;
+                const cardClass = isTopMatch ? 'spreader-card top-match' : 'spreader-card';
+
+                html += `
+                    <div class="${cardClass}">
+                        <h3>
+                            ${s.name}
+                            <span class="match-score">${item.percentage}% Match</span>
+                            ${isTopMatch ? '<span class="match-score" style="background-color: #d4af37;">Best Match</span>' : ''}
+                        </h3>
+                        <div class="category">${s.category}</div>
+                        <div class="specs">
+                            <div class="spec-item"><span class="spec-label">Capacity:</span> ${s.capacity} tons (${s.capacityCuFt} cu. ft.)</div>
+                            <div class="spec-item"><span class="spec-label">Drive Type:</span> ${s.driveType.toUpperCase()}</div>
+                            <div class="spec-item"><span class="spec-label">Budget Class:</span> ${s.budgetClass.charAt(0).toUpperCase() + s.budgetClass.slice(1)}</div>
+                        </div>
+                        <div class="spec-item" style="margin-top: 10px;">
+                            <span class="spec-label">Materials:</span> ${s.materials.map(m => m.replace('-', ' ')).join(', ')}
+                        </div>
+                        <div class="features">
+                            <div class="features-title">Features:</div>
+                            <ul>
+                                ${s.features.map(f => `<li>${f}</li>`).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+            resultsSection.classList.add('active');
+            resultsSection.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Form submission
+        document.getElementById('spreaderForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const formData = {
+                farmSize: document.getElementById('farmSize').value,
+                material: document.getElementById('material').value,
+                capacity: document.getElementById('capacity').value,
+                driveType: document.getElementById('driveType').value,
+                cropType: document.getElementById('cropType').value,
+                budget: document.getElementById('budget').value
+            };
+
+            // Check if at least one field is filled
+            const hasSelection = Object.values(formData).some(val => val !== "");
+            if (!hasSelection) {
+                alert('Please select at least one requirement to find matching spreaders.');
+                return;
+            }
+
+            const rankedSpreaders = scoreAndRankSpreaders(formData);
+            displayResults(rankedSpreaders);
+        });
+
+        // Reset form
+        function resetForm() {
+            document.getElementById('spreaderForm').reset();
+            document.getElementById('results').classList.remove('active');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
