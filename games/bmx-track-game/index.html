@@ -238,7 +238,6 @@
             redraw();
         }
         window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
 
         // Game state
         let mode = 'draw'; // 'draw', 'play', 'pan'
@@ -688,7 +687,6 @@
             redraw();
             requestAnimationFrame(animate);
         }
-        animate();
 
         // Mouse handling
         let isDrawing = false;
@@ -907,8 +905,10 @@
         });
 
         // Initialize
+        resizeCanvas();
         updateButtonStates();
         updateStats();
+        animate();
     </script>
 </body>
 </html>
