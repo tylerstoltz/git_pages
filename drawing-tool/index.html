@@ -431,9 +431,6 @@
             redraw();
         }
 
-        resizeCanvas();
-        window.addEventListener('resize', resizeCanvas);
-
         // State
         let currentTool = 'select';
         let isDrawing = false;
@@ -1326,6 +1323,8 @@
         }
 
         // Initialize
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
         saveHistory();
         redraw();
     </script>
