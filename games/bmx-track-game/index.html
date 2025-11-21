@@ -349,7 +349,7 @@
 
             <div class="setting-group">
                 <label for="gravitySlider">Gravity</label>
-                <input type="range" id="gravitySlider" min="0.1" max="2" step="0.1" value="0.5">
+                <input type="range" id="gravitySlider" min="0.01" max="2" step="0.01" value="0.5">
                 <div class="setting-info">
                     <span>Lower = Floatier</span>
                     <span id="gravityValue">0.5</span>
@@ -369,10 +369,10 @@
 
             <div class="setting-group">
                 <label for="pumpSlider">Pump Bonus (Speed Reward)</label>
-                <input type="range" id="pumpSlider" min="0" max="1" step="0.05" value="0.3">
+                <input type="range" id="pumpSlider" min="0" max="3" step="0.1" value="0.8">
                 <div class="setting-info">
                     <span>No Reward</span>
-                    <span id="pumpValue">0.30</span>
+                    <span id="pumpValue">0.80</span>
                     <span>Big Reward</span>
                 </div>
             </div>
@@ -409,20 +409,20 @@
 
             <div class="setting-group">
                 <label for="suspensionSlider">Suspension Damping</label>
-                <input type="range" id="suspensionSlider" min="0" max="0.9" step="0.1" value="0.3">
+                <input type="range" id="suspensionSlider" min="0" max="1" step="0.05" value="0.8">
                 <div class="setting-info">
                     <span>Stiff</span>
-                    <span id="suspensionValue">0.3</span>
+                    <span id="suspensionValue">0.80</span>
                     <span>Soft</span>
                 </div>
             </div>
 
             <div class="setting-group">
                 <label for="bumpThresholdSlider">Bump Sensitivity</label>
-                <input type="range" id="bumpThresholdSlider" min="0.05" max="0.5" step="0.05" value="0.2">
+                <input type="range" id="bumpThresholdSlider" min="0.05" max="1.5" step="0.05" value="0.5">
                 <div class="setting-info">
                     <span>Sensitive</span>
-                    <span id="bumpThresholdValue">0.20</span>
+                    <span id="bumpThresholdValue">0.50</span>
                     <span>Tolerant</span>
                 </div>
             </div>
@@ -482,12 +482,12 @@
             GRAVITY: 0.5,
             GROUND_FRICTION: 0.99,
             AIR_RESISTANCE: 0.999,
-            PUMP_BONUS: 0.3,
+            PUMP_BONUS: 0.8,
             CRASH_THRESHOLD: 15,
             MIN_SPEED: 0.5,
             INITIAL_SPEED: 5,
-            SUSPENSION_DAMPING: 0.3, // Suspension damping (0-1, higher = more damping)
-            BUMP_THRESHOLD: 0.2 // Angle change threshold for bumps (radians)
+            SUSPENSION_DAMPING: 0.8, // Suspension damping (0-1, higher = more damping)
+            BUMP_THRESHOLD: 0.5 // Angle change threshold for bumps (radians)
         };
 
         // Default physics (for reset)
@@ -495,12 +495,12 @@
             GRAVITY: 0.5,
             GROUND_FRICTION: 0.99,
             AIR_RESISTANCE: 0.999,
-            PUMP_BONUS: 0.3,
+            PUMP_BONUS: 0.8,
             CRASH_THRESHOLD: 15,
             MIN_SPEED: 0.5,
             INITIAL_SPEED: 5,
-            SUSPENSION_DAMPING: 0.3,
-            BUMP_THRESHOLD: 0.2
+            SUSPENSION_DAMPING: 0.8,
+            BUMP_THRESHOLD: 0.5
         };
 
         // Convert screen coordinates to world coordinates
@@ -590,10 +590,8 @@
                 }
             }
 
-            // Draw rider
-            if (isPlaying || rider.totalDistance > 0) {
-                drawRider();
-            }
+            // Draw rider (always visible)
+            drawRider();
 
             // Restore context
             ctx.restore();
@@ -944,15 +942,16 @@
                         rider.airTime = 0;
                     }
 
-                    // Pumping through transitions
+                    // Pumping through transitions - continuous acceleration on downslopes
                     if (isDescending) {
-                        // Gain speed going down
-                        rider.vx += Math.abs(trackSlope) * 0.2;
+                        // Gain speed going down - scales with pump bonus
+                        const descentBonus = Math.abs(trackSlope) * (0.3 + physics.PUMP_BONUS * 0.2);
+                        rider.vx += descentBonus * deltaTime;
                     }
 
-                    // Convert vertical velocity to horizontal based on slope
-                    const slopeEffect = trackSlope * 0.5;
-                    rider.vx += slopeEffect;
+                    // Convert vertical velocity to horizontal based on slope - increased effect
+                    const slopeEffect = trackSlope * 0.8;
+                    rider.vx += slopeEffect * deltaTime;
 
                     // Reset vertical velocity on ground
                     rider.vy = 0;
@@ -1374,7 +1373,7 @@
         // Physics settings sliders
         document.getElementById('gravitySlider').addEventListener('input', (e) => {
             physics.GRAVITY = parseFloat(e.target.value);
-            document.getElementById('gravityValue').textContent = physics.GRAVITY.toFixed(1);
+            document.getElementById('gravityValue').textContent = physics.GRAVITY.toFixed(2);
         });
 
         document.getElementById('speedSlider').addEventListener('input', (e) => {
@@ -1384,7 +1383,7 @@
 
         document.getElementById('pumpSlider').addEventListener('input', (e) => {
             physics.PUMP_BONUS = parseFloat(e.target.value);
-            document.getElementById('pumpValue').textContent = physics.PUMP_BONUS.toFixed(2);
+            document.getElementById('pumpValue').textContent = physics.PUMP_BONUS.toFixed(1);
         });
 
         document.getElementById('crashSlider').addEventListener('input', (e) => {
@@ -1404,7 +1403,7 @@
 
         document.getElementById('suspensionSlider').addEventListener('input', (e) => {
             physics.SUSPENSION_DAMPING = parseFloat(e.target.value);
-            document.getElementById('suspensionValue').textContent = physics.SUSPENSION_DAMPING.toFixed(1);
+            document.getElementById('suspensionValue').textContent = physics.SUSPENSION_DAMPING.toFixed(2);
         });
 
         document.getElementById('bumpThresholdSlider').addEventListener('input', (e) => {
@@ -1417,13 +1416,13 @@
 
             // Update sliders
             document.getElementById('gravitySlider').value = physics.GRAVITY;
-            document.getElementById('gravityValue').textContent = physics.GRAVITY.toFixed(1);
+            document.getElementById('gravityValue').textContent = physics.GRAVITY.toFixed(2);
 
             document.getElementById('speedSlider').value = physics.INITIAL_SPEED;
             document.getElementById('speedValue2').textContent = physics.INITIAL_SPEED.toFixed(1);
 
             document.getElementById('pumpSlider').value = physics.PUMP_BONUS;
-            document.getElementById('pumpValue').textContent = physics.PUMP_BONUS.toFixed(2);
+            document.getElementById('pumpValue').textContent = physics.PUMP_BONUS.toFixed(1);
 
             document.getElementById('crashSlider').value = physics.CRASH_THRESHOLD;
             document.getElementById('crashValue').textContent = physics.CRASH_THRESHOLD.toFixed(0);
@@ -1435,7 +1434,7 @@
             document.getElementById('airResistanceValue').textContent = physics.AIR_RESISTANCE.toFixed(3);
 
             document.getElementById('suspensionSlider').value = physics.SUSPENSION_DAMPING;
-            document.getElementById('suspensionValue').textContent = physics.SUSPENSION_DAMPING.toFixed(1);
+            document.getElementById('suspensionValue').textContent = physics.SUSPENSION_DAMPING.toFixed(2);
 
             document.getElementById('bumpThresholdSlider').value = physics.BUMP_THRESHOLD;
             document.getElementById('bumpThresholdValue').textContent = physics.BUMP_THRESHOLD.toFixed(2);
