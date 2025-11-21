@@ -1033,14 +1033,12 @@
         }
 
         // Animation loop
-        let lastTime = Date.now();
-        function animate() {
-            const now = Date.now();
-            const deltaTime = Math.min((now - lastTime) / 16, 2); // Cap at 2x speed
-            lastTime = now;
+        // Use fixed time step for deterministic physics simulation
+        const PHYSICS_TIMESTEP = 1.0;
 
+        function animate() {
             if (isPlaying) {
-                updatePhysics(deltaTime);
+                updatePhysics(PHYSICS_TIMESTEP);
             }
 
             redraw();
