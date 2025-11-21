@@ -293,9 +293,9 @@
                         <label for="driveType">Drive Type Preference</label>
                         <select id="driveType">
                             <option value="">No Preference</option>
-                            <option value="pto">PTO Driven</option>
+                            <option value="pto">PTO Mechanical</option>
                             <option value="hydraulic">Hydraulic Drive</option>
-                            <option value="ground">Ground Driven</option>
+                            <option value="ground">Ground Drive</option>
                         </select>
                     </div>
                 </div>
@@ -309,16 +309,6 @@
                             <option value="orchard">Orchard / Vineyard (need narrow profile)</option>
                             <option value="wet-conditions">Wet Conditions / Wet Lime</option>
                             <option value="boom-spreader">Boom Spreader (specialty precision spreading)</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="budget">Budget Range</label>
-                        <select id="budget">
-                            <option value="">No Preference</option>
-                            <option value="economy">Economy</option>
-                            <option value="mid">Mid-Range</option>
-                            <option value="premium">Premium / Custom</option>
                         </select>
                     </div>
                 </div>
@@ -845,12 +835,33 @@
 
         // Scoring algorithm
         function scoreAndRankSpreaders(formData) {
-            // Filter out boom spreaders unless "boom-spreader" is explicitly selected
+            // Filter spreaders based on boom spreader and drive type selections
             const filteredSpreaders = spreaders.filter(spreader => {
                 // If this spreader is boom-spreader-only, only show it when boom-spreader is selected
                 if (spreader.boomSpreaderOnly) {
                     return formData.cropType === "boom-spreader";
                 }
+
+                // Filter by drive type preference
+                if (formData.driveType) {
+                    if (formData.driveType === "pto") {
+                        // PTO Mechanical = WLS series only
+                        if (!spreader.category.includes("Wet Lime Spreader")) {
+                            return false;
+                        }
+                    } else if (formData.driveType === "ground") {
+                        // Ground Drive = CU series only
+                        if (!spreader.category.includes("CU / Redhawk")) {
+                            return false;
+                        }
+                    } else if (formData.driveType === "hydraulic") {
+                        // Hydraulic Drive = Everything except CU series
+                        if (spreader.category.includes("CU / Redhawk")) {
+                            return false;
+                        }
+                    }
+                }
+
                 // Show all other spreaders normally
                 return true;
             });
@@ -946,14 +957,6 @@
                     score += 7.5; // Neutral score if no special requirement
                 }
 
-                // Budget matching (weight: 5 points)
-                maxScore += 5;
-                if (formData.budget && spreader.budgetClass === formData.budget) {
-                    score += 5;
-                } else if (!formData.budget) {
-                    score += 2.5; // Neutral score if no preference
-                }
-
                 return {
                     spreader: spreader,
                     score: score,
@@ -997,7 +1000,6 @@
                         <div class="specs">
                             <div class="spec-item"><span class="spec-label">Capacity:</span> ${s.capacity} tons (${s.capacityCuFt} cu. ft.)</div>
                             <div class="spec-item"><span class="spec-label">Drive Type:</span> ${s.driveType.toUpperCase()}</div>
-                            <div class="spec-item"><span class="spec-label">Budget Class:</span> ${s.budgetClass.charAt(0).toUpperCase() + s.budgetClass.slice(1)}</div>
                         </div>
                         <div class="spec-item" style="margin-top: 10px;">
                             <span class="spec-label">Materials:</span> ${s.materials.map(m => m.replace('-', ' ')).join(', ')}
@@ -1026,8 +1028,7 @@
                 material: document.getElementById('material').value,
                 capacity: document.getElementById('capacity').value,
                 driveType: document.getElementById('driveType').value,
-                cropType: document.getElementById('cropType').value,
-                budget: document.getElementById('budget').value
+                cropType: document.getElementById('cropType').value
             };
 
             // Check if at least one field is filled
