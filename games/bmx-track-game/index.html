@@ -296,7 +296,7 @@
         </div>
 
         <div class="instructions">
-            <strong>How to play:</strong> Draw a track with Freehand/Line/Spline tools. Click Play to watch the rider attempt it. Master pumping through smooth transitions for speed! • Line/Spline: Click points, Enter to finish • Undo or Ctrl+Z to remove segments • Physics settings to adjust difficulty
+            <strong>How to play:</strong> Draw a track with Freehand/Line/Spline tools. Click Play to watch the rider attempt it. Master pumping through smooth transitions for speed! • Line/Spline: Click points, double-click or Enter to finish • Undo or Ctrl+Z to remove segments • Physics settings to adjust difficulty
         </div>
 
         <div class="canvas-container">
@@ -304,7 +304,7 @@
             <div class="info" id="info">
                 <strong>🎮 Controls:</strong><br>
                 • Freehand: Drag to draw<br>
-                • Line/Spline: Click points, Enter to finish<br>
+                • Line/Spline: Click points, double-click or Enter to finish<br>
                 • Escape to cancel current line<br>
                 • Undo button or Ctrl+Z<br>
                 • Mouse wheel to zoom<br>
@@ -1000,6 +1000,27 @@
                 isPanning = true;
                 canvas.classList.add('panning');
                 e.preventDefault();
+            }
+        });
+
+        canvas.addEventListener('dblclick', (e) => {
+            if (mode === 'draw' && !isPlaying && (drawMode === 'line' || drawMode === 'spline')) {
+                const rect = canvas.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+                const world = screenToWorld(mouseX, mouseY);
+
+                // Add final point and finish the segment
+                tempPoints.push({ x: world.x, y: world.y });
+
+                if (tempPoints.length >= 2) {
+                    trackSegments.push({
+                        points: [...tempPoints],
+                        type: drawMode
+                    });
+                    tempPoints = [];
+                    redraw();
+                }
             }
         });
 
