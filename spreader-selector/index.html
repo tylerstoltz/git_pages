@@ -339,104 +339,9 @@
     <script>
         // Comprehensive spreader database
         const spreaders = [
-            // Boom Drop Spreaders
+            // WC / RCB Boom Spreaders - ONLY shown when "Boom Spreader" is selected
             {
-                name: "WC-5 Ton Boom Drop Spreader",
-                category: "Boom Drop Spreader",
-                capacity: 5,
-                capacityCuFt: 155,
-                materials: ["lime", "fertilizer", "chicken-litter", "compost", "gypsum"],
-                driveType: "pto",
-                features: [
-                    "Self-contained PTO hydraulic system",
-                    "155 cu. ft. capacity",
-                    "Ideal for spreading in wet conditions",
-                    "Heavy-duty construction",
-                    "Wide spread pattern"
-                ],
-                farmSize: ["small", "medium"],
-                specialUse: ["wet-conditions", "boom-spreader"],
-                budgetClass: "mid"
-            },
-            {
-                name: "WC-8 Ton Boom Drop Spreader",
-                category: "Boom Drop Spreader",
-                capacity: 8,
-                capacityCuFt: 242,
-                materials: ["lime", "fertilizer", "chicken-litter", "compost", "gypsum"],
-                driveType: "pto",
-                features: [
-                    "Self-contained PTO hydraulic system",
-                    "242 cu. ft. capacity",
-                    "Ideal for spreading in wet conditions",
-                    "Heavy-duty construction",
-                    "Wide spread pattern",
-                    "Larger capacity for bigger operations"
-                ],
-                farmSize: ["medium", "large"],
-                specialUse: ["wet-conditions", "boom-spreader"],
-                budgetClass: "mid"
-            },
-            // RCB Boom Drop Spreaders
-            {
-                name: "RCB-5 Ton Boom Drop Spreader",
-                category: "RCB Boom Drop Spreader",
-                capacity: 5,
-                capacityCuFt: 155,
-                materials: ["lime", "fertilizer", "chicken-litter", "compost", "gypsum", "biochar"],
-                driveType: "pto",
-                features: [
-                    "Precision boom drop technology",
-                    "155 cu. ft. capacity",
-                    "Enhanced spread pattern control",
-                    "Specialty product for targeted applications",
-                    "Ideal for precision agriculture"
-                ],
-                farmSize: ["small", "medium"],
-                specialUse: ["boom-spreader"],
-                budgetClass: "premium"
-            },
-            {
-                name: "RCB-8 Ton Boom Drop Spreader",
-                category: "RCB Boom Drop Spreader",
-                capacity: 8,
-                capacityCuFt: 242,
-                materials: ["lime", "fertilizer", "chicken-litter", "compost", "gypsum", "biochar"],
-                driveType: "pto",
-                features: [
-                    "Precision boom drop technology",
-                    "242 cu. ft. capacity",
-                    "Enhanced spread pattern control",
-                    "Specialty product for targeted applications",
-                    "Heavy-duty construction",
-                    "Commercial-grade precision"
-                ],
-                farmSize: ["medium", "large"],
-                specialUse: ["boom-spreader"],
-                budgetClass: "premium"
-            },
-            {
-                name: "RCB-12 Ton Boom Drop Spreader",
-                category: "RCB Boom Drop Spreader",
-                capacity: 12,
-                capacityCuFt: 350,
-                materials: ["lime", "fertilizer", "chicken-litter", "compost", "gypsum", "biochar"],
-                driveType: "pto",
-                features: [
-                    "Precision boom drop technology",
-                    "350 cu. ft. capacity",
-                    "Enhanced spread pattern control",
-                    "Large capacity for commercial operations",
-                    "Specialty product for targeted applications",
-                    "Maximum precision at scale"
-                ],
-                farmSize: ["large", "xlarge"],
-                specialUse: ["boom-spreader"],
-                budgetClass: "premium"
-            },
-            // WC-50 (W-Chain) Boom Spreaders
-            {
-                name: "WC-50 (W-Chain) Boom Spreader - 5 Ton",
+                name: "WC-5 Ton",
                 category: "W-Chain Boom Spreader",
                 capacity: 5,
                 capacityCuFt: 155,
@@ -444,103 +349,69 @@
                 driveType: "hydraulic",
                 features: [
                     "W-Chain boom technology",
-                    "155 cu. ft. capacity",
+                    "155 cu. ft. hopper volume",
                     "Specialty product for precision spreading",
                     "Hydraulic-driven boom system",
-                    "Excellent for variable rate applications",
-                    "Compact and maneuverable"
+                    "96 in. hopper length, 78 in. width",
+                    "11L x 15, 8 ply tires"
                 ],
                 farmSize: ["small", "medium"],
                 specialUse: ["boom-spreader"],
-                budgetClass: "premium"
+                budgetClass: "premium",
+                boomSpreaderOnly: true
             },
             {
-                name: "WC-50 (W-Chain) Boom Spreader - 8 Ton",
-                category: "W-Chain Boom Spreader",
+                name: "RCB-80 8 Ton",
+                category: "RCB Row Crop Boom Spreader",
                 capacity: 8,
                 capacityCuFt: 242,
-                materials: ["lime", "fertilizer", "chicken-litter", "compost", "gypsum", "bulk"],
-                driveType: "hydraulic",
+                materials: ["lime", "fertilizer", "chicken-litter", "compost", "gypsum", "biochar"],
+                driveType: "pto",
                 features: [
-                    "W-Chain boom technology",
-                    "242 cu. ft. capacity",
-                    "Specialty product for precision spreading",
-                    "Hydraulic-driven boom system",
-                    "Excellent for variable rate applications",
+                    "Row crop boom spreader technology",
+                    "242 cu. ft. hopper volume",
+                    "Precision spreading for row crops",
+                    "120 in. hopper length, 93 in. width",
+                    "19L x 16.1, 10 ply tires",
                     "Heavy-duty construction"
                 ],
                 farmSize: ["medium", "large"],
-                specialUse: ["boom-spreader"],
-                budgetClass: "premium"
+                specialUse: ["boom-spreader", "row-crop"],
+                budgetClass: "premium",
+                boomSpreaderOnly: true
             },
+            // CU / Redhawk Series - Ground Drive Spreaders
             {
-                name: "WC-50 (W-Chain) Boom Spreader - 12 Ton",
-                category: "W-Chain Boom Spreader",
-                capacity: 12,
-                capacityCuFt: 350,
-                materials: ["lime", "fertilizer", "chicken-litter", "compost", "gypsum", "bulk"],
-                driveType: "hydraulic",
-                features: [
-                    "W-Chain boom technology",
-                    "350 cu. ft. capacity",
-                    "Specialty product for precision spreading",
-                    "Hydraulic-driven boom system",
-                    "Excellent for variable rate applications",
-                    "Large capacity for commercial operations",
-                    "Maximum efficiency at scale"
-                ],
-                farmSize: ["large", "xlarge"],
-                specialUse: ["boom-spreader"],
-                budgetClass: "premium"
-            },
-            // Ground Drive Spreaders (Redhawk Series)
-            {
-                name: "Redhawk CU 40 Ground Drive Spreader",
-                category: "Ground Drive Spreader",
+                name: "CU 40",
+                category: "CU / Redhawk Ground Drive Spreader",
                 capacity: 4,
                 capacityCuFt: 85,
-                materials: ["lime", "fertilizer", "chicken-litter", "compost", "gypsum", "marl"],
+                materials: ["lime", "fertilizer", "chicken-litter", "compost", "gypsum"],
                 driveType: "ground",
                 features: [
                     "Ground-driven operation",
-                    "85 cu. ft. capacity",
+                    "85 cu. ft. hopper volume",
+                    "10 ft. hopper length, 60 in. width",
+                    "11L x 15, 8 ply tires",
                     "Low maintenance",
-                    "No PTO required",
-                    "Economical operation"
+                    "No PTO required"
                 ],
                 farmSize: ["small", "medium"],
-                specialUse: [],
+                specialUse: ["orchard"],
                 budgetClass: "economy"
             },
             {
-                name: "Redhawk CU 50 Ground Drive Spreader",
-                category: "Ground Drive Spreader",
+                name: "CU 50",
+                category: "CU / Redhawk Ground Drive Spreader",
                 capacity: 5,
-                capacityCuFt: 106,
-                materials: ["lime", "fertilizer", "chicken-litter", "compost", "gypsum", "marl"],
+                capacityCuFt: 108,
+                materials: ["lime", "fertilizer", "chicken-litter", "compost", "gypsum"],
                 driveType: "ground",
                 features: [
                     "Ground-driven operation",
-                    "106 cu. ft. capacity",
-                    "Low maintenance",
-                    "No PTO required",
-                    "Reliable and economical"
-                ],
-                farmSize: ["small", "medium"],
-                specialUse: [],
-                budgetClass: "economy"
-            },
-            {
-                name: "Redhawk CU 50F Ground Drive Spreader",
-                category: "Ground Drive Spreader",
-                capacity: 5,
-                capacityCuFt: 106,
-                materials: ["lime", "fertilizer", "chicken-litter", "compost", "gypsum", "marl"],
-                driveType: "ground",
-                features: [
-                    "Ground-driven operation",
-                    "106 cu. ft. capacity",
-                    "Flotation tires for reduced soil compaction",
+                    "108 cu. ft. hopper volume",
+                    "8 ft. hopper length, 74 in. width",
+                    "11L x 15, 8 ply tires",
                     "Low maintenance",
                     "No PTO required"
                 ],
@@ -549,87 +420,114 @@
                 budgetClass: "economy"
             },
             {
-                name: "Redhawk CU 80 Ground Drive Spreader",
-                category: "Ground Drive Spreader",
-                capacity: 8,
-                capacityCuFt: 170,
-                materials: ["lime", "fertilizer", "chicken-litter", "compost", "gypsum", "marl"],
+                name: "CU 50F",
+                category: "CU / Redhawk Ground Drive Spreader",
+                capacity: 5,
+                capacityCuFt: 177,
+                materials: ["lime", "fertilizer", "chicken-litter", "compost", "gypsum"],
                 driveType: "ground",
                 features: [
                     "Ground-driven operation",
-                    "170 cu. ft. capacity",
+                    "177 cu. ft. hopper volume",
+                    "10 ft. hopper length, 78 in. width",
+                    "11L x 15, 8 ply tires",
+                    "Flotation design",
+                    "No PTO required"
+                ],
+                farmSize: ["small", "medium"],
+                specialUse: [],
+                budgetClass: "economy"
+            },
+            {
+                name: "CU 80",
+                category: "CU / Redhawk Ground Drive Spreader",
+                capacity: 8,
+                capacityCuFt: 177,
+                materials: ["lime", "fertilizer", "chicken-litter", "compost", "gypsum"],
+                driveType: "ground",
+                features: [
+                    "Ground-driven operation",
+                    "177 cu. ft. hopper volume",
+                    "10 ft. - 2 in. hopper length, 78 in. width",
+                    "19L x 16.1, 10 ply tires",
                     "Heavy-duty construction",
-                    "No PTO required",
-                    "Suitable for larger operations"
+                    "No PTO required"
                 ],
                 farmSize: ["medium", "large"],
                 specialUse: [],
                 budgetClass: "economy"
             },
             {
-                name: "Redhawk CU 100 Ground Drive Spreader",
-                category: "Ground Drive Spreader",
+                name: "CU 100",
+                category: "CU / Redhawk Ground Drive Spreader",
                 capacity: 10,
                 capacityCuFt: 212,
-                materials: ["lime", "fertilizer", "chicken-litter", "compost", "gypsum", "marl"],
+                materials: ["lime", "fertilizer", "chicken-litter", "compost", "gypsum"],
                 driveType: "ground",
                 features: [
                     "Ground-driven operation",
-                    "212 cu. ft. capacity",
+                    "212 cu. ft. hopper volume",
+                    "12 ft. hopper length, 78 in. width",
+                    "19L x 16.1, 10 ply tires",
                     "Heavy-duty construction",
-                    "No PTO required",
-                    "Maximum ground drive capacity"
+                    "No PTO required"
                 ],
                 farmSize: ["medium", "large"],
                 specialUse: [],
                 budgetClass: "economy"
             },
-            // Wet Lime Spreaders
+            // WLS (Wet Lime Spreader) Series
             {
-                name: "20 Wet Lime Spreader",
+                name: "WLS 20",
                 category: "Wet Lime Spreader",
                 capacity: 2,
                 capacityCuFt: 53,
                 materials: ["lime", "fertilizer", "gypsum"],
                 driveType: "hydraulic",
                 features: [
-                    "53 cu. ft. capacity",
+                    "53 cu. ft. hopper volume",
                     "Ideal for wet lime applications",
-                    "Hydraulic drive",
+                    "78 in. hopper length, 60 in. width",
+                    "11L x 15, 8 ply tires",
+                    "Single axle",
                     "Compact size"
                 ],
                 farmSize: ["small"],
-                specialUse: ["wet-conditions"],
+                specialUse: ["wet-conditions", "orchard"],
                 budgetClass: "mid"
             },
             {
-                name: "40 Wet Lime Spreader",
+                name: "WLS 40",
                 category: "Wet Lime Spreader",
                 capacity: 4,
-                capacityCuFt: 106,
+                capacityCuFt: 84,
                 materials: ["lime", "fertilizer", "gypsum"],
                 driveType: "hydraulic",
                 features: [
-                    "106 cu. ft. capacity",
+                    "84 cu. ft. hopper volume",
                     "Ideal for wet lime applications",
-                    "Hydraulic drive",
+                    "120 in. hopper length, 60 in. width",
+                    "11L x 15, 8 ply tires",
+                    "Dual axles",
                     "Reliable performance"
                 ],
                 farmSize: ["small", "medium"],
-                specialUse: ["wet-conditions"],
+                specialUse: ["wet-conditions", "orchard"],
                 budgetClass: "mid"
             },
             {
-                name: "50 Wet Lime Spreader",
+                name: "WLS 50",
                 category: "Wet Lime Spreader",
                 capacity: 5,
-                capacityCuFt: 133,
+                capacityCuFt: 103,
                 materials: ["lime", "fertilizer", "gypsum"],
                 driveType: "hydraulic",
                 features: [
-                    "133 cu. ft. capacity",
+                    "103 cu. ft. hopper volume",
                     "Ideal for wet lime applications",
-                    "Hydraulic drive",
+                    "96 in. hopper length, 74 in. width",
+                    "11L x 15, 8 ply tires",
+                    "Dual axles",
                     "Versatile capacity"
                 ],
                 farmSize: ["small", "medium"],
@@ -637,33 +535,37 @@
                 budgetClass: "mid"
             },
             {
-                name: "50F Wet Lime Spreader",
+                name: "WLS 50F",
                 category: "Wet Lime Spreader",
                 capacity: 5,
-                capacityCuFt: 133,
+                capacityCuFt: 177,
                 materials: ["lime", "fertilizer", "gypsum"],
                 driveType: "hydraulic",
                 features: [
-                    "133 cu. ft. capacity",
+                    "177 cu. ft. hopper volume",
                     "Ideal for wet lime applications",
-                    "Flotation tires for reduced compaction",
-                    "Hydraulic drive"
+                    "120 in. hopper length, 78 in. width",
+                    "11L x 15, 8 ply tires",
+                    "Dual axles",
+                    "Flotation design"
                 ],
                 farmSize: ["small", "medium"],
                 specialUse: ["wet-conditions"],
                 budgetClass: "mid"
             },
             {
-                name: "80 Wet Lime Spreader",
+                name: "WLS 80",
                 category: "Wet Lime Spreader",
                 capacity: 8,
-                capacityCuFt: 212,
+                capacityCuFt: 177,
                 materials: ["lime", "fertilizer", "gypsum"],
                 driveType: "hydraulic",
                 features: [
-                    "212 cu. ft. capacity",
+                    "177 cu. ft. hopper volume",
                     "Ideal for wet lime applications",
-                    "Hydraulic drive",
+                    "120 in. hopper length, 78 in. width",
+                    "19L x 16.1, 10 ply tires",
+                    "Dual axles",
                     "Heavy-duty construction"
                 ],
                 farmSize: ["medium", "large"],
@@ -671,16 +573,18 @@
                 budgetClass: "mid"
             },
             {
-                name: "100 Wet Lime Spreader",
+                name: "WLS 100",
                 category: "Wet Lime Spreader",
                 capacity: 10,
-                capacityCuFt: 265,
+                capacityCuFt: 212,
                 materials: ["lime", "fertilizer", "gypsum"],
                 driveType: "hydraulic",
                 features: [
-                    "265 cu. ft. capacity",
+                    "212 cu. ft. hopper volume",
                     "Ideal for wet lime applications",
-                    "Hydraulic drive",
+                    "143 in. hopper length, 78 in. width",
+                    "21.5L x 16.1, 14 ply tires",
+                    "Dual axles",
                     "Large capacity operation"
                 ],
                 farmSize: ["medium", "large"],
@@ -688,34 +592,37 @@
                 budgetClass: "mid"
             },
             {
-                name: "150 Wet Lime Spreader",
+                name: "WLS 150",
                 category: "Wet Lime Spreader",
                 capacity: 15,
                 capacityCuFt: 300,
                 materials: ["lime", "fertilizer", "gypsum"],
                 driveType: "hydraulic",
                 features: [
-                    "300 cu. ft. capacity",
+                    "300 cu. ft. hopper volume",
                     "Ideal for wet lime applications",
-                    "Hydraulic drive",
-                    "Maximum wet lime capacity",
-                    "Commercial grade"
+                    "192 in. hopper length, 88 in. width",
+                    "21.5L x 16.1, 14 ply tires",
+                    "Dual axles",
+                    "Maximum wet lime capacity"
                 ],
                 farmSize: ["large", "xlarge"],
                 specialUse: ["wet-conditions"],
                 budgetClass: "premium"
             },
-            // Bulk Material Spreaders
+            // BMS (Bulk Material Spreader) Series
             {
-                name: "5010 Bulk Material Spreader",
+                name: "BMS 5010",
                 category: "Bulk Material Spreader",
                 capacity: 5,
                 capacityCuFt: 137,
                 materials: ["chicken-litter", "compost", "manure", "fertilizer", "biochar", "bulk"],
                 driveType: "pto",
                 features: [
-                    "137 cu. ft. capacity",
+                    "137 cu. ft. hopper volume",
                     "PTO driven",
+                    "10 ft. hopper length, 74 in. width",
+                    "11L x 15, 8 ply tires",
                     "Versatile bulk material handling",
                     "Ideal for poultry litter and compost"
                 ],
@@ -724,15 +631,17 @@
                 budgetClass: "mid"
             },
             {
-                name: "8016 Bulk Material Spreader",
+                name: "BMS 8016",
                 category: "Bulk Material Spreader",
-                capacity: 8,
-                capacityCuFt: 230,
+                capacity: 10,
+                capacityCuFt: 225,
                 materials: ["chicken-litter", "compost", "manure", "fertilizer", "biochar", "bulk"],
                 driveType: "pto",
                 features: [
-                    "230 cu. ft. capacity",
+                    "225 cu. ft. hopper volume",
                     "PTO driven",
+                    "16 ft. hopper length, 74 in. width",
+                    "19L x 16.1, 10 ply tires",
                     "Versatile bulk material handling",
                     "Heavy-duty construction"
                 ],
@@ -741,15 +650,17 @@
                 budgetClass: "mid"
             },
             {
-                name: "1516 Bulk Material Spreader",
+                name: "BMS 1516",
                 category: "Bulk Material Spreader",
                 capacity: 15,
-                capacityCuFt: 500,
+                capacityCuFt: 225,
                 materials: ["chicken-litter", "compost", "manure", "fertilizer", "biochar", "bulk"],
                 driveType: "pto",
                 features: [
-                    "500 cu. ft. capacity",
+                    "225 cu. ft. hopper volume",
                     "PTO driven",
+                    "16 ft. hopper length, 74 in. width",
+                    "21.5L x 16.1, 14 ply tires",
                     "Large capacity for commercial operations",
                     "Versatile bulk material handling"
                 ],
@@ -758,15 +669,17 @@
                 budgetClass: "premium"
             },
             {
-                name: "1520 Bulk Material Spreader",
+                name: "BMS 1520",
                 category: "Bulk Material Spreader",
                 capacity: 15,
-                capacityCuFt: 520,
+                capacityCuFt: 400,
                 materials: ["chicken-litter", "compost", "manure", "fertilizer", "biochar", "bulk"],
                 driveType: "pto",
                 features: [
-                    "520 cu. ft. capacity",
+                    "400 cu. ft. hopper volume",
                     "PTO driven",
+                    "20 ft. hopper length, 84 in. width",
+                    "21.5L x 16.1, 14 ply tires",
                     "Extra large capacity",
                     "Commercial grade operation"
                 ],
@@ -775,15 +688,17 @@
                 budgetClass: "premium"
             },
             {
-                name: "2020 Bulk Material Spreader",
+                name: "BMS 2020",
                 category: "Bulk Material Spreader",
                 capacity: 20,
-                capacityCuFt: 700,
+                capacityCuFt: 400,
                 materials: ["chicken-litter", "compost", "manure", "fertilizer", "biochar", "bulk"],
                 driveType: "pto",
                 features: [
-                    "700 cu. ft. capacity",
+                    "400 cu. ft. hopper volume",
                     "PTO driven",
+                    "20 ft. hopper length, 84 in. width",
+                    "600/50-22.5 tires",
                     "Maximum capacity for large operations",
                     "Heavy-duty commercial construction"
                 ],
@@ -792,34 +707,37 @@
                 budgetClass: "premium"
             },
             {
-                name: "2020XL Bulk Material Spreader",
+                name: "BMS 2020XL",
                 category: "Bulk Material Spreader",
                 capacity: 20,
                 capacityCuFt: 700,
                 materials: ["chicken-litter", "compost", "manure", "fertilizer", "biochar", "bulk"],
                 driveType: "pto",
                 features: [
-                    "700 cu. ft. capacity",
+                    "700 cu. ft. hopper volume",
                     "PTO driven",
+                    "20 ft. hopper length, 102 in. width",
+                    "600/50-22.5 tires",
                     "Extra-long design for improved flow",
-                    "Heavy-duty commercial construction",
                     "Maximum capacity"
                 ],
                 farmSize: ["xlarge"],
                 specialUse: [],
                 budgetClass: "premium"
             },
-            // Row Crop Spreaders
+            // RC (Row Crop) Series
             {
-                name: "RC8010 Row Crop Spreader",
+                name: "RC8010",
                 category: "Row Crop Spreader",
                 capacity: 8,
-                capacityCuFt: 230,
+                capacityCuFt: 177,
                 materials: ["chicken-litter", "compost", "manure", "fertilizer", "biochar"],
                 driveType: "pto",
                 features: [
-                    "230 cu. ft. capacity",
-                    "Adjustable wheel track for row crop farming",
+                    "177 cu. ft. hopper volume (53 deg. side slope)",
+                    "Adjustable wheel track (72-120 in.)",
+                    "10 ft. hopper length, 78 in. width",
+                    "380/90R46 row crop tires (15 in. wide)",
                     "PTO driven",
                     "Designed for precision agriculture"
                 ],
@@ -828,15 +746,17 @@
                 budgetClass: "premium"
             },
             {
-                name: "RC8012 Row Crop Spreader",
+                name: "RC8012",
                 category: "Row Crop Spreader",
                 capacity: 8,
-                capacityCuFt: 240,
+                capacityCuFt: 331,
                 materials: ["chicken-litter", "compost", "manure", "fertilizer", "biochar"],
                 driveType: "pto",
                 features: [
-                    "240 cu. ft. capacity",
-                    "Adjustable wheel track for row crop farming",
+                    "331 cu. ft. hopper volume (45 deg. side slope)",
+                    "Adjustable wheel track (72-120 in.)",
+                    "12 ft. hopper length, 102 in. width",
+                    "380/90R46 row crop tires (15 in. wide)",
                     "PTO driven",
                     "Extended design for better flow"
                 ],
@@ -845,15 +765,17 @@
                 budgetClass: "premium"
             },
             {
-                name: "RC1516 Row Crop Spreader",
+                name: "RC1516",
                 category: "Row Crop Spreader",
                 capacity: 15,
-                capacityCuFt: 500,
+                capacityCuFt: 300,
                 materials: ["chicken-litter", "compost", "manure", "fertilizer", "biochar"],
                 driveType: "pto",
                 features: [
-                    "500 cu. ft. capacity",
-                    "Adjustable wheel track for row crop farming",
+                    "300 cu. ft. hopper volume (53 deg. side slope)",
+                    "Adjustable wheel track (90-152 in.)",
+                    "16 ft. hopper length, 88 in. width",
+                    "380/90R46 or 710/70R38 flotation tires (28 in. wide)",
                     "PTO driven",
                     "Large capacity for commercial operations"
                 ],
@@ -862,15 +784,17 @@
                 budgetClass: "premium"
             },
             {
-                name: "RC1520 Row Crop Spreader",
+                name: "RC1520",
                 category: "Row Crop Spreader",
                 capacity: 15,
-                capacityCuFt: 520,
+                capacityCuFt: 510,
                 materials: ["chicken-litter", "compost", "manure", "fertilizer", "biochar"],
                 driveType: "pto",
                 features: [
-                    "520 cu. ft. capacity",
-                    "Adjustable wheel track for row crop farming",
+                    "510 cu. ft. hopper volume (45 deg. side slope)",
+                    "Adjustable wheel track (90-152 in.)",
+                    "20 ft. hopper length, 102 in. width",
+                    "380/90R46 or 710/70R38 flotation tires (28 in. wide)",
                     "PTO driven",
                     "Maximum row crop capacity"
                 ],
@@ -878,18 +802,20 @@
                 specialUse: ["row-crop"],
                 budgetClass: "premium"
             },
-            // Orchard/Vineyard Spreaders
+            // NPB (Narrow Profile Bander) - Orchard/Vineyard Spreaders
             {
-                name: "20 Orchard/Vineyard Spreader",
-                category: "Orchard/Vineyard Spreader",
+                name: "NPB 20",
+                category: "NPB Narrow Profile Bander (Orchard/Vineyard)",
                 capacity: 2,
                 capacityCuFt: 53,
-                materials: ["compost", "fertilizer", "manure"],
+                materials: ["compost", "fertilizer", "manure", "lime"],
                 driveType: "pto",
                 features: [
-                    "53 cu. ft. capacity",
+                    "53 cu. ft. hopper volume",
                     "Narrow profile for orchards and vineyards",
-                    "PTO driven",
+                    "78 in. hopper length, 60 in. width",
+                    "11L x 15, 8 ply tires",
+                    "Single axle",
                     "Compact design fits between rows"
                 ],
                 farmSize: ["small", "medium"],
@@ -897,16 +823,18 @@
                 budgetClass: "mid"
             },
             {
-                name: "40 Orchard/Vineyard Spreader",
-                category: "Orchard/Vineyard Spreader",
+                name: "NPB 40",
+                category: "NPB Narrow Profile Bander (Orchard/Vineyard)",
                 capacity: 4,
-                capacityCuFt: 106,
-                materials: ["compost", "fertilizer", "manure"],
+                capacityCuFt: 84,
+                materials: ["compost", "fertilizer", "manure", "lime"],
                 driveType: "pto",
                 features: [
-                    "106 cu. ft. capacity",
+                    "84 cu. ft. hopper volume",
                     "Narrow profile for orchards and vineyards",
-                    "PTO driven",
+                    "120 in. hopper length, 60 in. width",
+                    "11L x 15, 8 ply tires",
+                    "Dual axles",
                     "Increased capacity while maintaining compact design"
                 ],
                 farmSize: ["small", "medium"],
@@ -917,7 +845,17 @@
 
         // Scoring algorithm
         function scoreAndRankSpreaders(formData) {
-            const scores = spreaders.map(spreader => {
+            // Filter out boom spreaders unless "boom-spreader" is explicitly selected
+            const filteredSpreaders = spreaders.filter(spreader => {
+                // If this spreader is boom-spreader-only, only show it when boom-spreader is selected
+                if (spreader.boomSpreaderOnly) {
+                    return formData.cropType === "boom-spreader";
+                }
+                // Show all other spreaders normally
+                return true;
+            });
+
+            const scores = filteredSpreaders.map(spreader => {
                 let score = 0;
                 let maxScore = 0;
 
