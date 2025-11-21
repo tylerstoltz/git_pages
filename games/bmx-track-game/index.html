@@ -170,6 +170,109 @@
             text-align: center;
             font-size: 0.9rem;
         }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-header h2 {
+            color: #667eea;
+            margin: 0;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #666;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-btn:hover {
+            color: #333;
+            transform: none;
+        }
+
+        .setting-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .setting-group label {
+            display: block;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .setting-group input[type="range"] {
+            width: 100%;
+            margin-bottom: 0.5rem;
+        }
+
+        .setting-group input[type="number"] {
+            width: 100%;
+            padding: 0.5rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        .setting-info {
+            display: flex;
+            justify-content: space-between;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 0.25rem;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            padding: 0.25rem;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .button-group button {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.85rem;
+        }
     </style>
 </head>
 <body>
@@ -178,31 +281,40 @@
             <a href="../" class="back-link">← Back to Games</a>
             <div class="title">🏍️ BMX Track Game</div>
             <div class="controls">
-                <button id="drawBtn" class="active">✏️ Draw Track</button>
+                <div class="button-group">
+                    <button id="freehandBtn" class="active">✏️ Freehand</button>
+                    <button id="lineBtn">📏 Line</button>
+                    <button id="splineBtn">〰️ Spline</button>
+                </div>
+                <button id="undoBtn">↶ Undo</button>
                 <button id="playBtn">▶️ Play</button>
                 <button id="resetBtn">🔄 Reset Rider</button>
                 <button id="clearBtn">🗑️ Clear Track</button>
+                <button id="settingsBtn">⚙️ Physics</button>
                 <button id="panBtn">✋ Pan</button>
             </div>
         </div>
 
         <div class="instructions">
-            <strong>How to play:</strong> Draw a track with jumps and transitions. Click Play to watch the rider attempt it. The rider gains speed by "pumping" through smooth valleys and transitions. Perfect landings = speed boost. Cases and overshoots = slowdown!
+            <strong>How to play:</strong> Draw a track with Freehand/Line/Spline tools. Click Play to watch the rider attempt it. Master pumping through smooth transitions for speed! • Line/Spline: Click points, Enter to finish • Undo or Ctrl+Z to remove segments • Physics settings to adjust difficulty
         </div>
 
         <div class="canvas-container">
             <canvas id="canvas"></canvas>
             <div class="info" id="info">
                 <strong>🎮 Controls:</strong><br>
-                • Left-click and drag to draw track<br>
+                • Freehand: Drag to draw<br>
+                • Line/Spline: Click points, Enter to finish<br>
+                • Escape to cancel current line<br>
+                • Undo button or Ctrl+Z<br>
                 • Mouse wheel to zoom<br>
-                • Middle-click or Pan mode to move view<br>
+                • Middle-click or Pan to move<br>
                 • Space to play/pause<br>
                 <br>
                 <strong>🏍️ Physics:</strong><br>
-                • Smooth transitions = acceleration<br>
-                • Steep drops = gravity boost<br>
-                • Bad landings = crash/slowdown
+                • Pump through transitions for speed<br>
+                • Smooth landings = boost<br>
+                • Bad landings = crash
             </div>
 
             <div class="stats" id="stats">
@@ -226,6 +338,78 @@
         </div>
     </div>
 
+    <!-- Physics Settings Modal -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>⚙️ Physics Settings</h2>
+                <button class="close-btn" id="closeModal">&times;</button>
+            </div>
+
+            <div class="setting-group">
+                <label for="gravitySlider">Gravity</label>
+                <input type="range" id="gravitySlider" min="0.1" max="2" step="0.1" value="0.5">
+                <div class="setting-info">
+                    <span>Lower = Floatier</span>
+                    <span id="gravityValue">0.5</span>
+                    <span>Higher = Heavier</span>
+                </div>
+            </div>
+
+            <div class="setting-group">
+                <label for="speedSlider">Initial Speed</label>
+                <input type="range" id="speedSlider" min="1" max="20" step="0.5" value="5">
+                <div class="setting-info">
+                    <span>Slower</span>
+                    <span id="speedValue2">5.0</span>
+                    <span>Faster</span>
+                </div>
+            </div>
+
+            <div class="setting-group">
+                <label for="pumpSlider">Pump Bonus (Speed Reward)</label>
+                <input type="range" id="pumpSlider" min="0" max="1" step="0.05" value="0.3">
+                <div class="setting-info">
+                    <span>No Reward</span>
+                    <span id="pumpValue">0.30</span>
+                    <span>Big Reward</span>
+                </div>
+            </div>
+
+            <div class="setting-group">
+                <label for="crashSlider">Crash Threshold</label>
+                <input type="range" id="crashSlider" min="5" max="30" step="1" value="15">
+                <div class="setting-info">
+                    <span>Fragile</span>
+                    <span id="crashValue">15</span>
+                    <span>Tough</span>
+                </div>
+            </div>
+
+            <div class="setting-group">
+                <label for="frictionSlider">Ground Friction</label>
+                <input type="range" id="frictionSlider" min="0.9" max="1" step="0.01" value="0.99">
+                <div class="setting-info">
+                    <span>More Friction</span>
+                    <span id="frictionValue">0.99</span>
+                    <span>Less Friction</span>
+                </div>
+            </div>
+
+            <div class="setting-group">
+                <label for="airResistanceSlider">Air Resistance</label>
+                <input type="range" id="airResistanceSlider" min="0.95" max="1" step="0.001" value="0.999">
+                <div class="setting-info">
+                    <span>More Drag</span>
+                    <span id="airResistanceValue">0.999</span>
+                    <span>Less Drag</span>
+                </div>
+            </div>
+
+            <button id="resetSettingsBtn" style="width: 100%; margin-top: 1rem;">Reset to Defaults</button>
+        </div>
+    </div>
+
     <script>
         // Canvas setup
         const canvas = document.getElementById('canvas');
@@ -241,9 +425,11 @@
 
         // Game state
         let mode = 'draw'; // 'draw', 'play', 'pan'
+        let drawMode = 'freehand'; // 'freehand', 'line', 'spline'
         let isPlaying = false;
-        let trackPoints = []; // Array of {x, y} points for the track
+        let trackSegments = []; // Array of segments, each segment is {points: [], type: 'freehand'|'line'|'spline'}
         let currentStroke = []; // Current drawing stroke
+        let tempPoints = []; // Temporary points for line/spline mode
 
         // Transform (camera/view)
         let transform = {
@@ -267,13 +453,27 @@
             crashed: false
         };
 
-        // Physics constants
-        const GRAVITY = 0.5;
-        const GROUND_FRICTION = 0.99;
-        const AIR_RESISTANCE = 0.999;
-        const PUMP_BONUS = 0.3; // Speed bonus for good pumping
-        const CRASH_THRESHOLD = 15; // Speed threshold for crashes
-        const MIN_SPEED = 0.5;
+        // Physics constants (now adjustable)
+        let physics = {
+            GRAVITY: 0.5,
+            GROUND_FRICTION: 0.99,
+            AIR_RESISTANCE: 0.999,
+            PUMP_BONUS: 0.3,
+            CRASH_THRESHOLD: 15,
+            MIN_SPEED: 0.5,
+            INITIAL_SPEED: 5
+        };
+
+        // Default physics (for reset)
+        const DEFAULT_PHYSICS = {
+            GRAVITY: 0.5,
+            GROUND_FRICTION: 0.99,
+            AIR_RESISTANCE: 0.999,
+            PUMP_BONUS: 0.3,
+            CRASH_THRESHOLD: 15,
+            MIN_SPEED: 0.5,
+            INITIAL_SPEED: 5
+        };
 
         // Convert screen coordinates to world coordinates
         function screenToWorld(screenX, screenY) {
@@ -314,8 +514,8 @@
             // Draw track
             drawTrack();
 
-            // Draw current stroke
-            if (currentStroke.length > 0) {
+            // Draw current stroke (freehand mode)
+            if (currentStroke.length > 0 && drawMode === 'freehand') {
                 ctx.strokeStyle = '#667eea';
                 ctx.lineWidth = 4 / transform.scale;
                 ctx.lineCap = 'round';
@@ -328,6 +528,38 @@
                 }
                 ctx.stroke();
                 ctx.setLineDash([]);
+            }
+
+            // Draw temp points and preview for line/spline mode
+            if (tempPoints.length > 0 && (drawMode === 'line' || drawMode === 'spline')) {
+                // Draw points
+                ctx.fillStyle = '#667eea';
+                tempPoints.forEach(point => {
+                    ctx.beginPath();
+                    ctx.arc(point.x, point.y, 4 / transform.scale, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+
+                // Draw preview line/spline
+                if (tempPoints.length >= 2) {
+                    ctx.strokeStyle = '#667eea';
+                    ctx.lineWidth = 4 / transform.scale;
+                    ctx.lineCap = 'round';
+                    ctx.lineJoin = 'round';
+                    ctx.setLineDash([5 / transform.scale, 5 / transform.scale]);
+                    ctx.beginPath();
+
+                    if (drawMode === 'spline') {
+                        drawSpline(tempPoints);
+                    } else {
+                        ctx.moveTo(tempPoints[0].x, tempPoints[0].y);
+                        for (let i = 1; i < tempPoints.length; i++) {
+                            ctx.lineTo(tempPoints[i].x, tempPoints[i].y);
+                        }
+                    }
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                }
             }
 
             // Draw rider
@@ -383,32 +615,76 @@
         }
 
         function drawTrack() {
-            if (trackPoints.length < 2) return;
+            if (trackSegments.length === 0) return;
 
-            // Draw track as thick brown line
-            ctx.strokeStyle = '#8B4513';
-            ctx.lineWidth = 6 / transform.scale;
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-
-            ctx.beginPath();
-            ctx.moveTo(trackPoints[0].x, trackPoints[0].y);
-            for (let i = 1; i < trackPoints.length; i++) {
-                ctx.lineTo(trackPoints[i].x, trackPoints[i].y);
-            }
-            ctx.stroke();
-
-            // Draw track outline
+            // Draw track outline first
             ctx.strokeStyle = '#654321';
             ctx.lineWidth = 8 / transform.scale;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
             ctx.globalAlpha = 0.5;
-            ctx.beginPath();
-            ctx.moveTo(trackPoints[0].x, trackPoints[0].y);
-            for (let i = 1; i < trackPoints.length; i++) {
-                ctx.lineTo(trackPoints[i].x, trackPoints[i].y);
-            }
-            ctx.stroke();
+
+            trackSegments.forEach(segment => {
+                if (segment.points.length < 2) return;
+
+                ctx.beginPath();
+                if (segment.type === 'spline') {
+                    drawSpline(segment.points);
+                } else {
+                    ctx.moveTo(segment.points[0].x, segment.points[0].y);
+                    for (let i = 1; i < segment.points.length; i++) {
+                        ctx.lineTo(segment.points[i].x, segment.points[i].y);
+                    }
+                }
+                ctx.stroke();
+            });
+
             ctx.globalAlpha = 1.0;
+
+            // Draw track main line
+            ctx.strokeStyle = '#8B4513';
+            ctx.lineWidth = 6 / transform.scale;
+
+            trackSegments.forEach(segment => {
+                if (segment.points.length < 2) return;
+
+                ctx.beginPath();
+                if (segment.type === 'spline') {
+                    drawSpline(segment.points);
+                } else {
+                    ctx.moveTo(segment.points[0].x, segment.points[0].y);
+                    for (let i = 1; i < segment.points.length; i++) {
+                        ctx.lineTo(segment.points[i].x, segment.points[i].y);
+                    }
+                }
+                ctx.stroke();
+            });
+        }
+
+        function drawSpline(points) {
+            if (points.length < 2) return;
+
+            ctx.moveTo(points[0].x, points[0].y);
+
+            if (points.length === 2) {
+                ctx.lineTo(points[1].x, points[1].y);
+                return;
+            }
+
+            // Catmull-Rom spline
+            for (let i = 0; i < points.length - 1; i++) {
+                const p0 = points[Math.max(i - 1, 0)];
+                const p1 = points[i];
+                const p2 = points[i + 1];
+                const p3 = points[Math.min(i + 2, points.length - 1)];
+
+                const cp1x = p1.x + (p2.x - p0.x) / 6;
+                const cp1y = p1.y + (p2.y - p0.y) / 6;
+                const cp2x = p2.x - (p3.x - p1.x) / 6;
+                const cp2y = p2.y - (p3.y - p1.y) / 6;
+
+                ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2.x, p2.y);
+            }
         }
 
         function drawRider() {
@@ -470,23 +746,27 @@
             let closestDist = tolerance;
             let segmentIndex = -1;
 
-            for (let i = 0; i < trackPoints.length - 1; i++) {
-                const p1 = trackPoints[i];
-                const p2 = trackPoints[i + 1];
+            // Check all track segments
+            trackSegments.forEach(segment => {
+                const points = segment.points;
+                for (let i = 0; i < points.length - 1; i++) {
+                    const p1 = points[i];
+                    const p2 = points[i + 1];
 
-                // Only check segments where x is within range
-                if (x >= Math.min(p1.x, p2.x) - tolerance && x <= Math.max(p1.x, p2.x) + tolerance) {
-                    // Find closest point on segment
-                    const point = closestPointOnSegment(x, p1, p2);
-                    const dist = Math.abs(x - point.x);
+                    // Only check segments where x is within range
+                    if (x >= Math.min(p1.x, p2.x) - tolerance && x <= Math.max(p1.x, p2.x) + tolerance) {
+                        // Find closest point on segment
+                        const point = closestPointOnSegment(x, p1, p2);
+                        const dist = Math.abs(x - point.x);
 
-                    if (dist < closestDist) {
-                        closestDist = dist;
-                        closestPoint = point;
-                        segmentIndex = i;
+                        if (dist < closestDist) {
+                            closestDist = dist;
+                            closestPoint = point;
+                            segmentIndex = i;
+                        }
                     }
                 }
-            }
+            });
 
             return closestPoint ? { point: closestPoint, segmentIndex } : null;
         }
@@ -522,7 +802,7 @@
             const prevVY = rider.vy;
 
             // Apply gravity
-            rider.vy += GRAVITY * deltaTime;
+            rider.vy += physics.GRAVITY * deltaTime;
 
             // Apply velocity
             rider.x += rider.vx * deltaTime;
@@ -554,7 +834,7 @@
                     const impactSpeed = Math.abs(rider.vy);
 
                     // Check for crash (too fast vertical impact)
-                    if (impactSpeed > CRASH_THRESHOLD && !rider.isOnGround) {
+                    if (impactSpeed > physics.CRASH_THRESHOLD && !rider.isOnGround) {
                         rider.crashed = true;
                         rider.vx = 0;
                         rider.vy = 0;
@@ -575,7 +855,7 @@
 
                         if (angleDiff < 0.5) {
                             // Smooth landing = speed boost
-                            rider.vx += PUMP_BONUS * (1 - angleDiff / 0.5);
+                            rider.vx += physics.PUMP_BONUS * (1 - angleDiff / 0.5);
                         } else if (angleDiff > 1.5) {
                             // Bad landing = slowdown
                             rider.vx *= 0.7;
@@ -598,7 +878,7 @@
                     rider.vy = 0;
 
                     // Apply friction
-                    rider.vx *= GROUND_FRICTION;
+                    rider.vx *= physics.GROUND_FRICTION;
 
                     // Follow track slope for velocity
                     rider.vy = rider.vx * trackSlope;
@@ -610,7 +890,7 @@
                     rider.airTime += deltaTime * 0.016; // Approximate seconds
 
                     // Air resistance
-                    rider.vx *= AIR_RESISTANCE;
+                    rider.vx *= physics.AIR_RESISTANCE;
 
                     // Update rotation based on velocity
                     rider.rotation = Math.atan2(rider.vy, rider.vx);
@@ -619,12 +899,12 @@
                 // No track nearby - in air
                 rider.isOnGround = false;
                 rider.airTime += deltaTime * 0.016;
-                rider.vx *= AIR_RESISTANCE;
+                rider.vx *= physics.AIR_RESISTANCE;
                 rider.rotation = Math.atan2(rider.vy, rider.vx);
             }
 
             // Stop if too slow
-            if (Math.abs(rider.vx) < MIN_SPEED && rider.isOnGround) {
+            if (Math.abs(rider.vx) < physics.MIN_SPEED && rider.isOnGround) {
                 rider.crashed = true;
                 rider.vx = 0;
                 rider.vy = 0;
@@ -708,8 +988,14 @@
             lastWorldY = world.y;
 
             if (mode === 'draw' && !isPlaying) {
-                isDrawing = true;
-                currentStroke = [{ x: world.x, y: world.y }];
+                if (drawMode === 'freehand') {
+                    isDrawing = true;
+                    currentStroke = [{ x: world.x, y: world.y }];
+                } else if (drawMode === 'line' || drawMode === 'spline') {
+                    // Add point to temp points
+                    tempPoints.push({ x: world.x, y: world.y });
+                    redraw();
+                }
             } else if (mode === 'pan' || e.button === 1) {
                 isPanning = true;
                 canvas.classList.add('panning');
@@ -722,7 +1008,7 @@
             const mouseX = e.clientX - rect.left;
             const mouseY = e.clientY - rect.top;
 
-            if (isDrawing) {
+            if (isDrawing && drawMode === 'freehand') {
                 const world = screenToWorld(mouseX, mouseY);
 
                 // Add point if moved enough
@@ -748,10 +1034,13 @@
         });
 
         canvas.addEventListener('mouseup', (e) => {
-            if (isDrawing) {
-                // Add current stroke to track
+            if (isDrawing && drawMode === 'freehand') {
+                // Add current stroke to track segments
                 if (currentStroke.length > 1) {
-                    trackPoints = trackPoints.concat(currentStroke);
+                    trackSegments.push({
+                        points: [...currentStroke],
+                        type: 'freehand'
+                    });
                 }
                 currentStroke = [];
                 isDrawing = false;
@@ -765,9 +1054,12 @@
         });
 
         canvas.addEventListener('mouseleave', () => {
-            if (isDrawing) {
+            if (isDrawing && drawMode === 'freehand') {
                 if (currentStroke.length > 1) {
-                    trackPoints = trackPoints.concat(currentStroke);
+                    trackSegments.push({
+                        points: [...currentStroke],
+                        type: 'freehand'
+                    });
                 }
                 currentStroke = [];
                 isDrawing = false;
@@ -813,21 +1105,57 @@
             }
         }, { passive: false });
 
-        // Button controls
-        document.getElementById('drawBtn').addEventListener('click', () => {
+        // Button controls - Drawing modes
+        document.getElementById('freehandBtn').addEventListener('click', () => {
             mode = 'draw';
+            drawMode = 'freehand';
+            tempPoints = [];
+            updateButtonStates();
+            canvas.style.cursor = 'crosshair';
+        });
+
+        document.getElementById('lineBtn').addEventListener('click', () => {
+            mode = 'draw';
+            drawMode = 'line';
+            tempPoints = [];
+            updateButtonStates();
+            canvas.style.cursor = 'crosshair';
+        });
+
+        document.getElementById('splineBtn').addEventListener('click', () => {
+            mode = 'draw';
+            drawMode = 'spline';
+            tempPoints = [];
             updateButtonStates();
             canvas.style.cursor = 'crosshair';
         });
 
         document.getElementById('panBtn').addEventListener('click', () => {
             mode = 'pan';
+            tempPoints = [];
             updateButtonStates();
             canvas.style.cursor = 'grab';
         });
 
+        // Undo button
+        document.getElementById('undoBtn').addEventListener('click', () => {
+            if (trackSegments.length > 0) {
+                trackSegments.pop();
+                redraw();
+            }
+        });
+
         document.getElementById('playBtn').addEventListener('click', () => {
-            if (trackPoints.length < 2) {
+            // Check if track has any segments with points
+            let hasTrack = false;
+            for (const segment of trackSegments) {
+                if (segment.points.length >= 2) {
+                    hasTrack = true;
+                    break;
+                }
+            }
+
+            if (!hasTrack) {
                 alert('Draw a track first!');
                 return;
             }
@@ -855,12 +1183,29 @@
 
         document.getElementById('clearBtn').addEventListener('click', () => {
             if (confirm('Clear the entire track?')) {
-                trackPoints = [];
+                trackSegments = [];
                 currentStroke = [];
+                tempPoints = [];
                 resetRider();
                 isPlaying = false;
                 document.getElementById('playBtn').textContent = '▶️ Play';
                 redraw();
+            }
+        });
+
+        // Settings button
+        document.getElementById('settingsBtn').addEventListener('click', () => {
+            document.getElementById('settingsModal').classList.add('active');
+        });
+
+        document.getElementById('closeModal').addEventListener('click', () => {
+            document.getElementById('settingsModal').classList.remove('active');
+        });
+
+        // Click outside modal to close
+        document.getElementById('settingsModal').addEventListener('click', (e) => {
+            if (e.target.id === 'settingsModal') {
+                document.getElementById('settingsModal').classList.remove('active');
             }
         });
 
@@ -869,15 +1214,15 @@
             let startX = 0;
             let startY = -100;
 
-            if (trackPoints.length > 0) {
-                startX = trackPoints[0].x;
-                startY = trackPoints[0].y - 50;
+            if (trackSegments.length > 0 && trackSegments[0].points.length > 0) {
+                startX = trackSegments[0].points[0].x;
+                startY = trackSegments[0].points[0].y - 50;
             }
 
             rider = {
                 x: startX,
                 y: startY,
-                vx: 5,
+                vx: physics.INITIAL_SPEED,
                 vy: 0,
                 rotation: 0,
                 isOnGround: false,
@@ -892,15 +1237,91 @@
         }
 
         function updateButtonStates() {
-            document.getElementById('drawBtn').classList.toggle('active', mode === 'draw');
+            // Drawing mode buttons
+            document.getElementById('freehandBtn').classList.toggle('active', drawMode === 'freehand');
+            document.getElementById('lineBtn').classList.toggle('active', drawMode === 'line');
+            document.getElementById('splineBtn').classList.toggle('active', drawMode === 'spline');
+
+            // Pan button
             document.getElementById('panBtn').classList.toggle('active', mode === 'pan');
         }
+
+        // Physics settings sliders
+        document.getElementById('gravitySlider').addEventListener('input', (e) => {
+            physics.GRAVITY = parseFloat(e.target.value);
+            document.getElementById('gravityValue').textContent = physics.GRAVITY.toFixed(1);
+        });
+
+        document.getElementById('speedSlider').addEventListener('input', (e) => {
+            physics.INITIAL_SPEED = parseFloat(e.target.value);
+            document.getElementById('speedValue2').textContent = physics.INITIAL_SPEED.toFixed(1);
+        });
+
+        document.getElementById('pumpSlider').addEventListener('input', (e) => {
+            physics.PUMP_BONUS = parseFloat(e.target.value);
+            document.getElementById('pumpValue').textContent = physics.PUMP_BONUS.toFixed(2);
+        });
+
+        document.getElementById('crashSlider').addEventListener('input', (e) => {
+            physics.CRASH_THRESHOLD = parseFloat(e.target.value);
+            document.getElementById('crashValue').textContent = physics.CRASH_THRESHOLD.toFixed(0);
+        });
+
+        document.getElementById('frictionSlider').addEventListener('input', (e) => {
+            physics.GROUND_FRICTION = parseFloat(e.target.value);
+            document.getElementById('frictionValue').textContent = physics.GROUND_FRICTION.toFixed(2);
+        });
+
+        document.getElementById('airResistanceSlider').addEventListener('input', (e) => {
+            physics.AIR_RESISTANCE = parseFloat(e.target.value);
+            document.getElementById('airResistanceValue').textContent = physics.AIR_RESISTANCE.toFixed(3);
+        });
+
+        document.getElementById('resetSettingsBtn').addEventListener('click', () => {
+            physics = { ...DEFAULT_PHYSICS };
+
+            // Update sliders
+            document.getElementById('gravitySlider').value = physics.GRAVITY;
+            document.getElementById('gravityValue').textContent = physics.GRAVITY.toFixed(1);
+
+            document.getElementById('speedSlider').value = physics.INITIAL_SPEED;
+            document.getElementById('speedValue2').textContent = physics.INITIAL_SPEED.toFixed(1);
+
+            document.getElementById('pumpSlider').value = physics.PUMP_BONUS;
+            document.getElementById('pumpValue').textContent = physics.PUMP_BONUS.toFixed(2);
+
+            document.getElementById('crashSlider').value = physics.CRASH_THRESHOLD;
+            document.getElementById('crashValue').textContent = physics.CRASH_THRESHOLD.toFixed(0);
+
+            document.getElementById('frictionSlider').value = physics.GROUND_FRICTION;
+            document.getElementById('frictionValue').textContent = physics.GROUND_FRICTION.toFixed(2);
+
+            document.getElementById('airResistanceSlider').value = physics.AIR_RESISTANCE;
+            document.getElementById('airResistanceValue').textContent = physics.AIR_RESISTANCE.toFixed(3);
+        });
 
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
             if (e.code === 'Space') {
                 e.preventDefault();
                 document.getElementById('playBtn').click();
+            } else if (e.code === 'Enter' && tempPoints.length >= 2 && (drawMode === 'line' || drawMode === 'spline')) {
+                // Finish line/spline on Enter
+                trackSegments.push({
+                    points: [...tempPoints],
+                    type: drawMode
+                });
+                tempPoints = [];
+                redraw();
+            } else if (e.code === 'Escape' && tempPoints.length > 0) {
+                // Cancel current line/spline on Escape
+                tempPoints = [];
+                redraw();
+            } else if (e.code === 'KeyZ' && e.ctrlKey && trackSegments.length > 0) {
+                // Ctrl+Z for undo
+                e.preventDefault();
+                trackSegments.pop();
+                redraw();
             }
         });
 
