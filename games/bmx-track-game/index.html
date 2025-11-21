@@ -285,6 +285,7 @@
                     <button id="freehandBtn" class="active">✏️ Freehand</button>
                     <button id="lineBtn">📏 Line</button>
                     <button id="splineBtn">〰️ Spline</button>
+                    <button id="eraserBtn">🧹 Eraser</button>
                 </div>
                 <button id="undoBtn">↶ Undo</button>
                 <button id="playBtn">▶️ Play</button>
@@ -406,6 +407,26 @@
                 </div>
             </div>
 
+            <div class="setting-group">
+                <label for="suspensionSlider">Suspension Damping</label>
+                <input type="range" id="suspensionSlider" min="0" max="0.9" step="0.1" value="0.3">
+                <div class="setting-info">
+                    <span>Stiff</span>
+                    <span id="suspensionValue">0.3</span>
+                    <span>Soft</span>
+                </div>
+            </div>
+
+            <div class="setting-group">
+                <label for="bumpThresholdSlider">Bump Sensitivity</label>
+                <input type="range" id="bumpThresholdSlider" min="0.05" max="0.5" step="0.05" value="0.2">
+                <div class="setting-info">
+                    <span>Sensitive</span>
+                    <span id="bumpThresholdValue">0.20</span>
+                    <span>Tolerant</span>
+                </div>
+            </div>
+
             <button id="resetSettingsBtn" style="width: 100%; margin-top: 1rem;">Reset to Defaults</button>
         </div>
     </div>
@@ -424,12 +445,13 @@
         window.addEventListener('resize', resizeCanvas);
 
         // Game state
-        let mode = 'draw'; // 'draw', 'play', 'pan'
-        let drawMode = 'freehand'; // 'freehand', 'line', 'spline'
+        let mode = 'draw'; // 'draw', 'play', 'pan', 'erase'
+        let drawMode = 'freehand'; // 'freehand', 'line', 'spline', 'eraser'
         let isPlaying = false;
         let trackSegments = []; // Array of segments, each segment is {points: [], type: 'freehand'|'line'|'spline'}
         let currentStroke = []; // Current drawing stroke
         let tempPoints = []; // Temporary points for line/spline mode
+        let isErasing = false; // Track if currently erasing
 
         // Transform (camera/view)
         let transform = {
@@ -450,7 +472,9 @@
             totalDistance: 0,
             airTime: 0,
             lastGroundY: -100,
-            crashed: false
+            crashed: false,
+            size: 15, // Fixed size in world coordinates
+            lastTrackAngle: 0 // For suspension
         };
 
         // Physics constants (now adjustable)
@@ -461,7 +485,9 @@
             PUMP_BONUS: 0.3,
             CRASH_THRESHOLD: 15,
             MIN_SPEED: 0.5,
-            INITIAL_SPEED: 5
+            INITIAL_SPEED: 5,
+            SUSPENSION_DAMPING: 0.3, // Suspension damping (0-1, higher = more damping)
+            BUMP_THRESHOLD: 0.2 // Angle change threshold for bumps (radians)
         };
 
         // Default physics (for reset)
@@ -472,7 +498,9 @@
             PUMP_BONUS: 0.3,
             CRASH_THRESHOLD: 15,
             MIN_SPEED: 0.5,
-            INITIAL_SPEED: 5
+            INITIAL_SPEED: 5,
+            SUSPENSION_DAMPING: 0.3,
+            BUMP_THRESHOLD: 0.2
         };
 
         // Convert screen coordinates to world coordinates
@@ -688,7 +716,7 @@
         }
 
         function drawRider() {
-            const size = 15 / transform.scale;
+            const size = rider.size; // Use fixed size in world coordinates
 
             // Draw bike
             ctx.save();
@@ -707,7 +735,7 @@
 
             // Bike frame
             ctx.strokeStyle = bikeColor;
-            ctx.lineWidth = 3 / transform.scale;
+            ctx.lineWidth = 3; // Fixed width in world coordinates
             ctx.beginPath();
             // Front triangle
             ctx.moveTo(-size, 0);
@@ -726,7 +754,7 @@
 
             // Rider (simple stick figure)
             ctx.strokeStyle = bikeColor;
-            ctx.lineWidth = 2 / transform.scale;
+            ctx.lineWidth = 2; // Fixed width in world coordinates
             // Body
             ctx.beginPath();
             ctx.moveTo(0, -size);
@@ -738,6 +766,49 @@
             ctx.stroke();
 
             ctx.restore();
+        }
+
+        // Erase track segments near a world coordinate
+        function eraseTrackAt(worldX, worldY, eraseRadius = 20) {
+            let segmentsToRemove = [];
+
+            trackSegments.forEach((segment, segIdx) => {
+                let pointsToKeep = [];
+                let hasGap = false;
+                let gapStart = 0;
+
+                segment.points.forEach((point, ptIdx) => {
+                    const dist = Math.sqrt(
+                        (point.x - worldX) ** 2 + (point.y - worldY) ** 2
+                    );
+
+                    if (dist > eraseRadius) {
+                        if (hasGap && pointsToKeep.length - gapStart > 1) {
+                            // We have a gap - need to split the segment
+                            hasGap = false;
+                        }
+                        pointsToKeep.push(point);
+                    } else {
+                        if (pointsToKeep.length > 0 && !hasGap) {
+                            hasGap = true;
+                            gapStart = pointsToKeep.length;
+                        }
+                    }
+                });
+
+                // If we have very few points left, mark segment for removal
+                if (pointsToKeep.length < 2) {
+                    segmentsToRemove.push(segIdx);
+                } else if (pointsToKeep.length !== segment.points.length) {
+                    // Update segment with remaining points
+                    segment.points = pointsToKeep;
+                }
+            });
+
+            // Remove segments with too few points (in reverse order to maintain indices)
+            for (let i = segmentsToRemove.length - 1; i >= 0; i--) {
+                trackSegments.splice(segmentsToRemove[i], 1);
+            }
         }
 
         // Track collision detection
@@ -828,13 +899,22 @@
                     const p1 = trackCheck.point.p1;
                     const p2 = trackCheck.point.p2;
                     const trackAngle = getTrackAngle(p1, p2);
+
+                    // Suspension: dampen small angle changes (bumps)
+                    const angleChange = Math.abs(trackAngle - rider.lastTrackAngle);
+                    if (angleChange < physics.BUMP_THRESHOLD && rider.isOnGround) {
+                        // Apply suspension damping to smooth out small bumps
+                        rider.vy *= (1 - physics.SUSPENSION_DAMPING);
+                    }
+
                     rider.rotation = trackAngle;
+                    rider.lastTrackAngle = trackAngle;
 
                     // Calculate landing impact
                     const impactSpeed = Math.abs(rider.vy);
 
                     // Check for crash (too fast vertical impact)
-                    if (impactSpeed > physics.CRASH_THRESHOLD && !rider.isOnGround) {
+                    if (impactSpeed > physics.CRASH_THRESHOLD && rider.airTime > 0.1) {
                         rider.crashed = true;
                         rider.vx = 0;
                         rider.vy = 0;
@@ -995,6 +1075,10 @@
                     // Add point to temp points
                     tempPoints.push({ x: world.x, y: world.y });
                     redraw();
+                } else if (drawMode === 'eraser') {
+                    isErasing = true;
+                    eraseTrackAt(world.x, world.y);
+                    redraw();
                 }
             } else if (mode === 'pan' || e.button === 1) {
                 isPanning = true;
@@ -1043,6 +1127,10 @@
                     currentStroke.push({ x: world.x, y: world.y });
                     redraw();
                 }
+            } else if (isErasing && drawMode === 'eraser') {
+                const world = screenToWorld(mouseX, mouseY);
+                eraseTrackAt(world.x, world.y);
+                redraw();
             } else if (isPanning) {
                 const dx = mouseX - lastMouseX;
                 const dy = mouseY - lastMouseY;
@@ -1068,6 +1156,10 @@
                 redraw();
             }
 
+            if (isErasing) {
+                isErasing = false;
+            }
+
             if (isPanning) {
                 isPanning = false;
                 canvas.classList.remove('panning');
@@ -1085,6 +1177,7 @@
                 currentStroke = [];
                 isDrawing = false;
             }
+            isErasing = false;
             isPanning = false;
             canvas.classList.remove('panning');
         });
@@ -1149,6 +1242,14 @@
             tempPoints = [];
             updateButtonStates();
             canvas.style.cursor = 'crosshair';
+        });
+
+        document.getElementById('eraserBtn').addEventListener('click', () => {
+            mode = 'draw';
+            drawMode = 'eraser';
+            tempPoints = [];
+            updateButtonStates();
+            canvas.style.cursor = 'not-allowed';
         });
 
         document.getElementById('panBtn').addEventListener('click', () => {
@@ -1251,7 +1352,9 @@
                 totalDistance: 0,
                 airTime: 0,
                 lastGroundY: startY,
-                crashed: false
+                crashed: false,
+                size: 15,
+                lastTrackAngle: 0
             };
 
             updateStats();
@@ -1262,6 +1365,7 @@
             document.getElementById('freehandBtn').classList.toggle('active', drawMode === 'freehand');
             document.getElementById('lineBtn').classList.toggle('active', drawMode === 'line');
             document.getElementById('splineBtn').classList.toggle('active', drawMode === 'spline');
+            document.getElementById('eraserBtn').classList.toggle('active', drawMode === 'eraser');
 
             // Pan button
             document.getElementById('panBtn').classList.toggle('active', mode === 'pan');
@@ -1298,6 +1402,16 @@
             document.getElementById('airResistanceValue').textContent = physics.AIR_RESISTANCE.toFixed(3);
         });
 
+        document.getElementById('suspensionSlider').addEventListener('input', (e) => {
+            physics.SUSPENSION_DAMPING = parseFloat(e.target.value);
+            document.getElementById('suspensionValue').textContent = physics.SUSPENSION_DAMPING.toFixed(1);
+        });
+
+        document.getElementById('bumpThresholdSlider').addEventListener('input', (e) => {
+            physics.BUMP_THRESHOLD = parseFloat(e.target.value);
+            document.getElementById('bumpThresholdValue').textContent = physics.BUMP_THRESHOLD.toFixed(2);
+        });
+
         document.getElementById('resetSettingsBtn').addEventListener('click', () => {
             physics = { ...DEFAULT_PHYSICS };
 
@@ -1319,6 +1433,12 @@
 
             document.getElementById('airResistanceSlider').value = physics.AIR_RESISTANCE;
             document.getElementById('airResistanceValue').textContent = physics.AIR_RESISTANCE.toFixed(3);
+
+            document.getElementById('suspensionSlider').value = physics.SUSPENSION_DAMPING;
+            document.getElementById('suspensionValue').textContent = physics.SUSPENSION_DAMPING.toFixed(1);
+
+            document.getElementById('bumpThresholdSlider').value = physics.BUMP_THRESHOLD;
+            document.getElementById('bumpThresholdValue').textContent = physics.BUMP_THRESHOLD.toFixed(2);
         });
 
         // Keyboard shortcuts
