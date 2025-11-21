@@ -342,6 +342,18 @@
             </div>
 
             <div class="toolbar-section">
+                <h3>Line Options</h3>
+                <div class="control-group">
+                    <label>Line Type</label>
+                    <select id="lineType">
+                        <option value="straight">Straight</option>
+                        <option value="zigzag">Zigzag (Multi-point)</option>
+                        <option value="spline">Spline (Curved)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="toolbar-section">
                 <h3>Arrow Options</h3>
                 <div class="control-group">
                     <label>Arrow Type</label>
@@ -451,7 +463,7 @@
         // Temporary drawing state
         let tempElement = null;
         let tempPoints = [];
-        let arrowPoints = [];
+        let multiPointData = [];
 
         // Style state
         let strokeColor = '#000000';
@@ -459,6 +471,7 @@
         let fillEnabled = false;
         let fillColor = '#ffffff';
         let fontSize = 16;
+        let lineType = 'straight';
         let arrowType = 'straight';
         let arrowLabel = false;
         let arrowLabelText = '';
@@ -493,6 +506,10 @@
 
         document.getElementById('fontSize').addEventListener('input', (e) => {
             fontSize = parseInt(e.target.value);
+        });
+
+        document.getElementById('lineType').addEventListener('change', (e) => {
+            lineType = e.target.value;
         });
 
         document.getElementById('arrowType').addEventListener('change', (e) => {
@@ -546,10 +563,7 @@
                     break;
 
                 case 'line':
-                    ctx.beginPath();
-                    ctx.moveTo(element.x1, element.y1);
-                    ctx.lineTo(element.x2, element.y2);
-                    ctx.stroke();
+                    drawLine(element);
                     break;
 
                 case 'arrow':
@@ -594,6 +608,44 @@
             }
 
             ctx.restore();
+        }
+
+        function drawLine(element) {
+            const points = element.points || [
+                { x: element.x1, y: element.y1 },
+                { x: element.x2, y: element.y2 }
+            ];
+
+            ctx.beginPath();
+
+            if (element.lineType === 'straight' || !element.lineType) {
+                ctx.moveTo(points[0].x, points[0].y);
+                ctx.lineTo(points[points.length - 1].x, points[points.length - 1].y);
+            } else if (element.lineType === 'zigzag') {
+                points.forEach((point, i) => {
+                    if (i === 0) {
+                        ctx.moveTo(point.x, point.y);
+                    } else {
+                        ctx.lineTo(point.x, point.y);
+                    }
+                });
+            } else if (element.lineType === 'spline') {
+                drawSpline(points);
+            }
+
+            ctx.stroke();
+
+            // Draw control points for multi-point lines (when selected)
+            if (element === selectedElement && points.length > 2) {
+                ctx.fillStyle = '#667eea';
+                points.forEach((point, i) => {
+                    if (i > 0 && i < points.length - 1) {
+                        ctx.beginPath();
+                        ctx.arc(point.x, point.y, 4, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                });
+            }
         }
 
         function drawArrow(element) {
@@ -873,12 +925,38 @@
                     });
                     redraw();
                 }
+            } else if (currentTool === 'line' && (lineType === 'zigzag' || lineType === 'spline')) {
+                if (!isDrawing) {
+                    isDrawing = true;
+                    multiPointData = [{ x: world.x, y: world.y }];
+                    tempElement = {
+                        type: 'line',
+                        points: multiPointData,
+                        strokeColor: strokeColor,
+                        strokeWidth: strokeWidth,
+                        lineType: lineType
+                    };
+                } else {
+                    multiPointData.push({ x: world.x, y: world.y });
+                    tempElement.points = [...multiPointData];
+                }
+                redraw();
             } else if (currentTool === 'arrow' && (arrowType === 'zigzag' || arrowType === 'spline')) {
                 if (!isDrawing) {
                     isDrawing = true;
-                    arrowPoints = [{ x: world.x, y: world.y }];
+                    multiPointData = [{ x: world.x, y: world.y }];
+                    tempElement = {
+                        type: 'arrow',
+                        points: multiPointData,
+                        strokeColor: strokeColor,
+                        strokeWidth: strokeWidth,
+                        arrowType: arrowType,
+                        label: arrowLabel ? arrowLabelText : null,
+                        fontSize: fontSize
+                    };
                 } else {
-                    arrowPoints.push({ x: world.x, y: world.y });
+                    multiPointData.push({ x: world.x, y: world.y });
+                    tempElement.points = [...multiPointData];
                 }
                 redraw();
             } else {
@@ -893,6 +971,7 @@
                     strokeWidth: strokeWidth,
                     fillEnabled: fillEnabled,
                     fillColor: fillColor,
+                    lineType: lineType,
                     arrowType: arrowType,
                     label: arrowLabel ? arrowLabelText : null,
                     fontSize: fontSize
@@ -927,19 +1006,23 @@
             } else if (currentTool === 'pen' && tempElement) {
                 tempElement.points.push({ x: world.x, y: world.y });
                 redraw();
-            } else if (currentTool === 'arrow' && (arrowType === 'zigzag' || arrowType === 'spline')) {
+            } else if ((currentTool === 'line' && (lineType === 'zigzag' || lineType === 'spline')) ||
+                       (currentTool === 'arrow' && (arrowType === 'zigzag' || arrowType === 'spline'))) {
                 // Show preview line to current point
-                redraw();
-                ctx.save();
-                ctx.translate(transform.translateX, transform.translateY);
-                ctx.scale(transform.scale, transform.scale);
-                ctx.strokeStyle = '#999';
-                ctx.setLineDash([5, 5]);
-                ctx.beginPath();
-                ctx.moveTo(arrowPoints[arrowPoints.length - 1].x, arrowPoints[arrowPoints.length - 1].y);
-                ctx.lineTo(world.x, world.y);
-                ctx.stroke();
-                ctx.restore();
+                if (multiPointData.length > 0) {
+                    redraw();
+                    ctx.save();
+                    ctx.translate(transform.translateX, transform.translateY);
+                    ctx.scale(transform.scale, transform.scale);
+                    ctx.strokeStyle = '#999';
+                    ctx.setLineDash([5, 5]);
+                    ctx.beginPath();
+                    ctx.moveTo(multiPointData[multiPointData.length - 1].x, multiPointData[multiPointData.length - 1].y);
+                    ctx.lineTo(world.x, world.y);
+                    ctx.stroke();
+                    ctx.restore();
+                }
+
             } else if (tempElement) {
                 tempElement.x2 = world.x;
                 tempElement.y2 = world.y;
@@ -960,8 +1043,9 @@
                 canvas.style.cursor = 'grab';
             }
 
-            if (currentTool === 'arrow' && (arrowType === 'zigzag' || arrowType === 'spline')) {
-                // Don't finish on mouseup for multi-point arrows
+            if ((currentTool === 'line' && (lineType === 'zigzag' || lineType === 'spline')) ||
+                (currentTool === 'arrow' && (arrowType === 'zigzag' || arrowType === 'spline'))) {
+                // Don't finish on mouseup for multi-point lines/arrows
                 return;
             }
 
@@ -971,31 +1055,26 @@
                 tempElement = null;
             }
 
-            if (currentTool !== 'arrow' || arrowType === 'straight') {
+            if ((currentTool !== 'line' || lineType === 'straight') &&
+                (currentTool !== 'arrow' || arrowType === 'straight')) {
                 isDrawing = false;
             }
             redraw();
         });
 
-        // Double-click to finish multi-point arrow
+        // Double-click to finish multi-point line or arrow
         canvas.addEventListener('dblclick', (e) => {
-            if (currentTool === 'arrow' && (arrowType === 'zigzag' || arrowType === 'spline') && isDrawing) {
+            if (((currentTool === 'line' && (lineType === 'zigzag' || lineType === 'spline')) ||
+                 (currentTool === 'arrow' && (arrowType === 'zigzag' || arrowType === 'spline'))) && isDrawing) {
                 e.preventDefault();
 
-                if (arrowPoints.length >= 2) {
+                if (tempElement && multiPointData.length >= 2) {
                     saveHistory();
-                    elements.push({
-                        type: 'arrow',
-                        points: arrowPoints,
-                        strokeColor: strokeColor,
-                        strokeWidth: strokeWidth,
-                        arrowType: arrowType,
-                        label: arrowLabel ? arrowLabelText : null,
-                        fontSize: fontSize
-                    });
+                    elements.push(tempElement);
                 }
 
-                arrowPoints = [];
+                multiPointData = [];
+                tempElement = null;
                 isDrawing = false;
                 redraw();
             }
@@ -1257,8 +1336,18 @@
                     break;
 
                 case 'line':
-                    svg += `<line x1="${element.x1}" y1="${element.y1}" x2="${element.x2}" y2="${element.y2}" `;
-                    svg += `stroke="${stroke}" stroke-width="${strokeWidth}"/>`;
+                    const linePoints = element.points || [
+                        { x: element.x1, y: element.y1 },
+                        { x: element.x2, y: element.y2 }
+                    ];
+
+                    if (element.lineType === 'straight' || !element.lineType) {
+                        svg += `<line x1="${linePoints[0].x}" y1="${linePoints[0].y}" x2="${linePoints[linePoints.length - 1].x}" y2="${linePoints[linePoints.length - 1].y}" `;
+                        svg += `stroke="${stroke}" stroke-width="${strokeWidth}"/>`;
+                    } else {
+                        svg += `<polyline points="${linePoints.map(p => `${p.x},${p.y}`).join(' ')}" `;
+                        svg += `stroke="${stroke}" stroke-width="${strokeWidth}" fill="none"/>`;
+                    }
                     break;
 
                 case 'arrow':
