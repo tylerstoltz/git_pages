@@ -1,0 +1,1333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drawing Tool - Claude Code Tools</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .back-link {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+            display: inline-block;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        .app-container {
+            flex: 1;
+            display: flex;
+            background: #f5f5f5;
+            overflow: hidden;
+        }
+
+        .toolbar {
+            background: #fff;
+            width: 260px;
+            padding: 1rem;
+            overflow-y: auto;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .toolbar-section {
+            background: #f8f9fa;
+            padding: 0.75rem;
+            border-radius: 8px;
+        }
+
+        .toolbar-section h3 {
+            font-size: 0.85rem;
+            color: #555;
+            margin-bottom: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .tool-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+        }
+
+        .tool-btn {
+            background: #fff;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            padding: 0.75rem;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+            transition: all 0.2s;
+            font-size: 0.75rem;
+            color: #555;
+        }
+
+        .tool-btn:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .tool-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .tool-btn svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        .control-group {
+            margin-bottom: 0.75rem;
+        }
+
+        .control-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .control-group label {
+            display: block;
+            font-size: 0.8rem;
+            color: #555;
+            margin-bottom: 0.35rem;
+            font-weight: 500;
+        }
+
+        .control-group input[type="color"] {
+            width: 100%;
+            height: 36px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .control-group input[type="range"] {
+            width: 100%;
+        }
+
+        .control-group input[type="number"] {
+            width: 100%;
+            padding: 0.5rem;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+
+        .control-group select {
+            width: 100%;
+            padding: 0.5rem;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            background: white;
+        }
+
+        .range-value {
+            font-size: 0.75rem;
+            color: #666;
+            text-align: right;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 0.6rem 1rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #555;
+        }
+
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
+
+        .btn-danger {
+            background: #f44336;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #d32f2f;
+        }
+
+        .canvas-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            background: #fff;
+        }
+
+        #canvas {
+            position: absolute;
+            cursor: crosshair;
+        }
+
+        .canvas-info {
+            position: absolute;
+            bottom: 1rem;
+            right: 1rem;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            color: #555;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            pointer-events: none;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            margin: 0;
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            .toolbar {
+                width: 100%;
+                max-height: 300px;
+            }
+
+            .app-container {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="../" class="back-link">← Back to Tools</a>
+        <h1>✏️ Drawing Tool</h1>
+        <p class="subtitle">Infinite canvas for drawing, diagramming, and sketching - like Excalidraw</p>
+    </div>
+
+    <div class="app-container">
+        <div class="toolbar">
+            <div class="toolbar-section">
+                <h3>Tools</h3>
+                <div class="tool-grid">
+                    <button class="tool-btn active" data-tool="select" title="Select (V)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/>
+                        </svg>
+                        <span>Select</span>
+                    </button>
+                    <button class="tool-btn" data-tool="pen" title="Pen (P)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 19l7-7 3 3-7 7-3-3z"/>
+                            <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/>
+                            <path d="M2 2l7.586 7.586"/>
+                        </svg>
+                        <span>Pen</span>
+                    </button>
+                    <button class="tool-btn" data-tool="line" title="Line (L)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="5" y1="19" x2="19" y2="5"/>
+                        </svg>
+                        <span>Line</span>
+                    </button>
+                    <button class="tool-btn" data-tool="arrow" title="Arrow (A)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="5" y1="12" x2="19" y2="12"/>
+                            <polyline points="12 5 19 12 12 19"/>
+                        </svg>
+                        <span>Arrow</span>
+                    </button>
+                    <button class="tool-btn" data-tool="rectangle" title="Rectangle (R)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2"/>
+                        </svg>
+                        <span>Rectangle</span>
+                    </button>
+                    <button class="tool-btn" data-tool="circle" title="Circle (C)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                        </svg>
+                        <span>Circle</span>
+                    </button>
+                    <button class="tool-btn" data-tool="ellipse" title="Ellipse (E)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <ellipse cx="12" cy="12" rx="10" ry="6"/>
+                        </svg>
+                        <span>Ellipse</span>
+                    </button>
+                    <button class="tool-btn" data-tool="text" title="Text (T)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="4 7 4 4 20 4 20 7"/>
+                            <line x1="9" y1="20" x2="15" y2="20"/>
+                            <line x1="12" y1="4" x2="12" y2="20"/>
+                        </svg>
+                        <span>Text</span>
+                    </button>
+                    <button class="tool-btn" data-tool="pan" title="Pan (H)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M5 12h14M12 5l7 7-7 7"/>
+                        </svg>
+                        <span>Pan</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="toolbar-section">
+                <h3>Arrow Options</h3>
+                <div class="control-group">
+                    <label>Arrow Type</label>
+                    <select id="arrowType">
+                        <option value="straight">Straight</option>
+                        <option value="zigzag">Zigzag (Multi-point)</option>
+                        <option value="spline">Spline (Curved)</option>
+                    </select>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="arrowLabel">
+                    <label for="arrowLabel">Add Label</label>
+                </div>
+                <div class="control-group" id="arrowLabelTextGroup" style="display: none;">
+                    <label>Label Text</label>
+                    <input type="text" id="arrowLabelText" placeholder="Enter label text">
+                </div>
+            </div>
+
+            <div class="toolbar-section">
+                <h3>Stroke</h3>
+                <div class="control-group">
+                    <label>Color</label>
+                    <input type="color" id="strokeColor" value="#000000">
+                </div>
+                <div class="control-group">
+                    <label>Width</label>
+                    <input type="range" id="strokeWidth" min="1" max="20" value="2">
+                    <div class="range-value"><span id="strokeWidthValue">2</span>px</div>
+                </div>
+            </div>
+
+            <div class="toolbar-section">
+                <h3>Fill</h3>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="fillEnabled">
+                    <label for="fillEnabled">Enable Fill</label>
+                </div>
+                <div class="control-group">
+                    <label>Fill Color</label>
+                    <input type="color" id="fillColor" value="#ffffff">
+                </div>
+            </div>
+
+            <div class="toolbar-section">
+                <h3>Text Options</h3>
+                <div class="control-group">
+                    <label>Font Size</label>
+                    <input type="number" id="fontSize" min="8" max="72" value="16">
+                </div>
+            </div>
+
+            <div class="toolbar-section">
+                <h3>Actions</h3>
+                <div class="btn-group">
+                    <button class="btn btn-secondary" id="undoBtn" title="Ctrl+Z">↶ Undo</button>
+                    <button class="btn btn-secondary" id="redoBtn" title="Ctrl+Y">↷ Redo</button>
+                </div>
+                <div class="btn-group" style="margin-top: 0.5rem;">
+                    <button class="btn btn-primary" id="savePngBtn">💾 Save PNG</button>
+                    <button class="btn btn-primary" id="saveSvgBtn">💾 Save SVG</button>
+                </div>
+                <button class="btn btn-danger" id="clearBtn" style="margin-top: 0.5rem; width: 100%;">🗑️ Clear Canvas</button>
+            </div>
+        </div>
+
+        <div class="canvas-container">
+            <canvas id="canvas"></canvas>
+            <div class="canvas-info">
+                <div>Zoom: <span id="zoomLevel">100%</span></div>
+                <div>Pan: <span id="panPosition">0, 0</span></div>
+                <div><small>Scroll to zoom, Middle-click to pan</small></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Canvas setup
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Set canvas size
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            redraw();
+        }
+
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // State
+        let currentTool = 'select';
+        let isDrawing = false;
+        let elements = [];
+        let history = [];
+        let historyIndex = -1;
+        let selectedElement = null;
+        let dragOffsetX = 0;
+        let dragOffsetY = 0;
+
+        // Transform state (zoom and pan)
+        let transform = {
+            scale: 1,
+            translateX: 0,
+            translateY: 0
+        };
+
+        // Temporary drawing state
+        let tempElement = null;
+        let tempPoints = [];
+        let arrowPoints = [];
+
+        // Style state
+        let strokeColor = '#000000';
+        let strokeWidth = 2;
+        let fillEnabled = false;
+        let fillColor = '#ffffff';
+        let fontSize = 16;
+        let arrowType = 'straight';
+        let arrowLabel = false;
+        let arrowLabelText = '';
+
+        // Tool selection
+        document.querySelectorAll('.tool-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentTool = btn.dataset.tool;
+                canvas.style.cursor = currentTool === 'pan' ? 'grab' : 'crosshair';
+            });
+        });
+
+        // Controls
+        document.getElementById('strokeColor').addEventListener('input', (e) => {
+            strokeColor = e.target.value;
+        });
+
+        document.getElementById('strokeWidth').addEventListener('input', (e) => {
+            strokeWidth = parseInt(e.target.value);
+            document.getElementById('strokeWidthValue').textContent = strokeWidth;
+        });
+
+        document.getElementById('fillEnabled').addEventListener('change', (e) => {
+            fillEnabled = e.target.checked;
+        });
+
+        document.getElementById('fillColor').addEventListener('input', (e) => {
+            fillColor = e.target.value;
+        });
+
+        document.getElementById('fontSize').addEventListener('input', (e) => {
+            fontSize = parseInt(e.target.value);
+        });
+
+        document.getElementById('arrowType').addEventListener('change', (e) => {
+            arrowType = e.target.value;
+        });
+
+        document.getElementById('arrowLabel').addEventListener('change', (e) => {
+            arrowLabel = e.target.checked;
+            document.getElementById('arrowLabelTextGroup').style.display = arrowLabel ? 'block' : 'none';
+        });
+
+        document.getElementById('arrowLabelText').addEventListener('input', (e) => {
+            arrowLabelText = e.target.value;
+        });
+
+        // Transform helpers
+        function screenToWorld(x, y) {
+            return {
+                x: (x - transform.translateX) / transform.scale,
+                y: (y - transform.translateY) / transform.scale
+            };
+        }
+
+        function worldToScreen(x, y) {
+            return {
+                x: x * transform.scale + transform.translateX,
+                y: y * transform.scale + transform.translateY
+            };
+        }
+
+        // Drawing functions
+        function drawElement(element) {
+            ctx.save();
+            ctx.strokeStyle = element.strokeColor;
+            ctx.lineWidth = element.strokeWidth;
+            ctx.fillStyle = element.fillColor;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            switch (element.type) {
+                case 'pen':
+                    ctx.beginPath();
+                    element.points.forEach((point, i) => {
+                        if (i === 0) {
+                            ctx.moveTo(point.x, point.y);
+                        } else {
+                            ctx.lineTo(point.x, point.y);
+                        }
+                    });
+                    ctx.stroke();
+                    break;
+
+                case 'line':
+                    ctx.beginPath();
+                    ctx.moveTo(element.x1, element.y1);
+                    ctx.lineTo(element.x2, element.y2);
+                    ctx.stroke();
+                    break;
+
+                case 'arrow':
+                    drawArrow(element);
+                    break;
+
+                case 'rectangle':
+                    if (element.fillEnabled) {
+                        ctx.fillRect(element.x, element.y, element.width, element.height);
+                    }
+                    ctx.strokeRect(element.x, element.y, element.width, element.height);
+                    break;
+
+                case 'circle':
+                    ctx.beginPath();
+                    const radius = Math.sqrt(Math.pow(element.x2 - element.x1, 2) + Math.pow(element.y2 - element.y1, 2));
+                    ctx.arc(element.x1, element.y1, radius, 0, Math.PI * 2);
+                    if (element.fillEnabled) {
+                        ctx.fill();
+                    }
+                    ctx.stroke();
+                    break;
+
+                case 'ellipse':
+                    ctx.beginPath();
+                    const rx = Math.abs(element.x2 - element.x1) / 2;
+                    const ry = Math.abs(element.y2 - element.y1) / 2;
+                    const cx = (element.x1 + element.x2) / 2;
+                    const cy = (element.y1 + element.y2) / 2;
+                    ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+                    if (element.fillEnabled) {
+                        ctx.fill();
+                    }
+                    ctx.stroke();
+                    break;
+
+                case 'text':
+                    ctx.font = `${element.fontSize}px sans-serif`;
+                    ctx.fillStyle = element.strokeColor;
+                    ctx.fillText(element.text, element.x, element.y);
+                    break;
+            }
+
+            ctx.restore();
+        }
+
+        function drawArrow(element) {
+            const points = element.points || [
+                { x: element.x1, y: element.y1 },
+                { x: element.x2, y: element.y2 }
+            ];
+
+            ctx.beginPath();
+
+            if (element.arrowType === 'straight') {
+                ctx.moveTo(points[0].x, points[0].y);
+                ctx.lineTo(points[points.length - 1].x, points[points.length - 1].y);
+            } else if (element.arrowType === 'zigzag') {
+                points.forEach((point, i) => {
+                    if (i === 0) {
+                        ctx.moveTo(point.x, point.y);
+                    } else {
+                        ctx.lineTo(point.x, point.y);
+                    }
+                });
+            } else if (element.arrowType === 'spline') {
+                drawSpline(points);
+            }
+
+            ctx.stroke();
+
+            // Draw arrowhead
+            const lastPoint = points[points.length - 1];
+            const secondLastPoint = points[points.length - 2] || points[points.length - 1];
+            drawArrowhead(secondLastPoint.x, secondLastPoint.y, lastPoint.x, lastPoint.y);
+
+            // Draw control points for multi-point arrows (when selected)
+            if (element === selectedElement && points.length > 2) {
+                ctx.fillStyle = '#667eea';
+                points.forEach((point, i) => {
+                    if (i > 0 && i < points.length - 1) {
+                        ctx.beginPath();
+                        ctx.arc(point.x, point.y, 4, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                });
+            }
+
+            // Draw label
+            if (element.label) {
+                const midIdx = Math.floor(points.length / 2);
+                const midPoint = points[midIdx];
+                ctx.save();
+                ctx.font = `${element.fontSize || 14}px sans-serif`;
+                ctx.fillStyle = element.strokeColor;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(element.label, midPoint.x, midPoint.y - 10);
+                ctx.restore();
+            }
+        }
+
+        function drawSpline(points) {
+            if (points.length < 2) return;
+
+            ctx.moveTo(points[0].x, points[0].y);
+
+            if (points.length === 2) {
+                ctx.lineTo(points[1].x, points[1].y);
+                return;
+            }
+
+            // Catmull-Rom spline
+            for (let i = 0; i < points.length - 1; i++) {
+                const p0 = points[Math.max(i - 1, 0)];
+                const p1 = points[i];
+                const p2 = points[i + 1];
+                const p3 = points[Math.min(i + 2, points.length - 1)];
+
+                const cp1x = p1.x + (p2.x - p0.x) / 6;
+                const cp1y = p1.y + (p2.y - p0.y) / 6;
+                const cp2x = p2.x - (p3.x - p1.x) / 6;
+                const cp2y = p2.y - (p3.y - p1.y) / 6;
+
+                ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2.x, p2.y);
+            }
+        }
+
+        function drawArrowhead(fromX, fromY, toX, toY) {
+            const headLength = 15;
+            const angle = Math.atan2(toY - fromY, toX - fromX);
+
+            ctx.beginPath();
+            ctx.moveTo(toX, toY);
+            ctx.lineTo(
+                toX - headLength * Math.cos(angle - Math.PI / 6),
+                toY - headLength * Math.sin(angle - Math.PI / 6)
+            );
+            ctx.moveTo(toX, toY);
+            ctx.lineTo(
+                toX - headLength * Math.cos(angle + Math.PI / 6),
+                toY - headLength * Math.sin(angle + Math.PI / 6)
+            );
+            ctx.stroke();
+        }
+
+        function redraw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            ctx.save();
+            ctx.translate(transform.translateX, transform.translateY);
+            ctx.scale(transform.scale, transform.scale);
+
+            // Draw grid
+            drawGrid();
+
+            // Draw all elements
+            elements.forEach(element => {
+                drawElement(element);
+            });
+
+            // Draw temporary element
+            if (tempElement) {
+                drawElement(tempElement);
+            }
+
+            // Draw selection
+            if (selectedElement && currentTool === 'select') {
+                drawSelection(selectedElement);
+            }
+
+            ctx.restore();
+        }
+
+        function drawGrid() {
+            const gridSize = 20;
+            ctx.strokeStyle = '#e0e0e0';
+            ctx.lineWidth = 1 / transform.scale;
+
+            const startX = Math.floor(-transform.translateX / transform.scale / gridSize) * gridSize;
+            const startY = Math.floor(-transform.translateY / transform.scale / gridSize) * gridSize;
+            const endX = startX + canvas.width / transform.scale + gridSize;
+            const endY = startY + canvas.height / transform.scale + gridSize;
+
+            for (let x = startX; x < endX; x += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(x, startY);
+                ctx.lineTo(x, endY);
+                ctx.stroke();
+            }
+
+            for (let y = startY; y < endY; y += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(startX, y);
+                ctx.lineTo(endX, y);
+                ctx.stroke();
+            }
+        }
+
+        function drawSelection(element) {
+            ctx.strokeStyle = '#667eea';
+            ctx.lineWidth = 2 / transform.scale;
+            ctx.setLineDash([5 / transform.scale, 5 / transform.scale]);
+
+            const bounds = getElementBounds(element);
+            if (bounds) {
+                ctx.strokeRect(bounds.x - 5, bounds.y - 5, bounds.width + 10, bounds.height + 10);
+            }
+
+            ctx.setLineDash([]);
+        }
+
+        function getElementBounds(element) {
+            switch (element.type) {
+                case 'pen':
+                    if (element.points.length === 0) return null;
+                    let minX = element.points[0].x, maxX = element.points[0].x;
+                    let minY = element.points[0].y, maxY = element.points[0].y;
+                    element.points.forEach(p => {
+                        minX = Math.min(minX, p.x);
+                        maxX = Math.max(maxX, p.x);
+                        minY = Math.min(minY, p.y);
+                        maxY = Math.max(maxY, p.y);
+                    });
+                    return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+
+                case 'line':
+                case 'arrow':
+                    const points = element.points || [
+                        { x: element.x1, y: element.y1 },
+                        { x: element.x2, y: element.y2 }
+                    ];
+                    let lMinX = points[0].x, lMaxX = points[0].x;
+                    let lMinY = points[0].y, lMaxY = points[0].y;
+                    points.forEach(p => {
+                        lMinX = Math.min(lMinX, p.x);
+                        lMaxX = Math.max(lMaxX, p.x);
+                        lMinY = Math.min(lMinY, p.y);
+                        lMaxY = Math.max(lMaxY, p.y);
+                    });
+                    return { x: lMinX, y: lMinY, width: lMaxX - lMinX, height: lMaxY - lMinY };
+
+                case 'rectangle':
+                    return { x: element.x, y: element.y, width: element.width, height: element.height };
+
+                case 'circle':
+                    const radius = Math.sqrt(Math.pow(element.x2 - element.x1, 2) + Math.pow(element.y2 - element.y1, 2));
+                    return { x: element.x1 - radius, y: element.y1 - radius, width: radius * 2, height: radius * 2 };
+
+                case 'ellipse':
+                    const rx = Math.abs(element.x2 - element.x1) / 2;
+                    const ry = Math.abs(element.y2 - element.y1) / 2;
+                    const cx = (element.x1 + element.x2) / 2;
+                    const cy = (element.y1 + element.y2) / 2;
+                    return { x: cx - rx, y: cy - ry, width: rx * 2, height: ry * 2 };
+
+                case 'text':
+                    ctx.font = `${element.fontSize}px sans-serif`;
+                    const metrics = ctx.measureText(element.text);
+                    return { x: element.x, y: element.y - element.fontSize, width: metrics.width, height: element.fontSize };
+            }
+            return null;
+        }
+
+        function isPointInElement(x, y, element) {
+            const bounds = getElementBounds(element);
+            if (!bounds) return false;
+
+            const margin = 10;
+            return x >= bounds.x - margin && x <= bounds.x + bounds.width + margin &&
+                   y >= bounds.y - margin && y <= bounds.y + bounds.height + margin;
+        }
+
+        function findElementAtPoint(x, y) {
+            for (let i = elements.length - 1; i >= 0; i--) {
+                if (isPointInElement(x, y, elements[i])) {
+                    return elements[i];
+                }
+            }
+            return null;
+        }
+
+        function saveHistory() {
+            history = history.slice(0, historyIndex + 1);
+            history.push(JSON.parse(JSON.stringify(elements)));
+            historyIndex++;
+        }
+
+        // Mouse events
+        canvas.addEventListener('mousedown', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const screenX = e.clientX - rect.left;
+            const screenY = e.clientY - rect.top;
+            const world = screenToWorld(screenX, screenY);
+
+            if (currentTool === 'select') {
+                selectedElement = findElementAtPoint(world.x, world.y);
+                if (selectedElement) {
+                    const bounds = getElementBounds(selectedElement);
+                    dragOffsetX = world.x - bounds.x;
+                    dragOffsetY = world.y - bounds.y;
+                    isDrawing = true;
+                }
+                redraw();
+            } else if (currentTool === 'pan') {
+                isDrawing = true;
+                dragOffsetX = screenX - transform.translateX;
+                dragOffsetY = screenY - transform.translateY;
+                canvas.style.cursor = 'grabbing';
+            } else if (currentTool === 'text') {
+                const text = prompt('Enter text:');
+                if (text) {
+                    saveHistory();
+                    elements.push({
+                        type: 'text',
+                        x: world.x,
+                        y: world.y,
+                        text: text,
+                        strokeColor: strokeColor,
+                        fontSize: fontSize
+                    });
+                    redraw();
+                }
+            } else if (currentTool === 'arrow' && (arrowType === 'zigzag' || arrowType === 'spline')) {
+                if (!isDrawing) {
+                    isDrawing = true;
+                    arrowPoints = [{ x: world.x, y: world.y }];
+                } else {
+                    arrowPoints.push({ x: world.x, y: world.y });
+                }
+                redraw();
+            } else {
+                isDrawing = true;
+                tempElement = {
+                    type: currentTool,
+                    x1: world.x,
+                    y1: world.y,
+                    x2: world.x,
+                    y2: world.y,
+                    strokeColor: strokeColor,
+                    strokeWidth: strokeWidth,
+                    fillEnabled: fillEnabled,
+                    fillColor: fillColor,
+                    arrowType: arrowType,
+                    label: arrowLabel ? arrowLabelText : null,
+                    fontSize: fontSize
+                };
+
+                if (currentTool === 'pen') {
+                    tempElement.points = [{ x: world.x, y: world.y }];
+                }
+            }
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const screenX = e.clientX - rect.left;
+            const screenY = e.clientY - rect.top;
+            const world = screenToWorld(screenX, screenY);
+
+            if (!isDrawing) return;
+
+            if (currentTool === 'select' && selectedElement) {
+                const bounds = getElementBounds(selectedElement);
+                const dx = world.x - dragOffsetX - bounds.x;
+                const dy = world.y - dragOffsetY - bounds.y;
+
+                moveElement(selectedElement, dx, dy);
+                redraw();
+            } else if (currentTool === 'pan') {
+                transform.translateX = screenX - dragOffsetX;
+                transform.translateY = screenY - dragOffsetY;
+                updateTransformInfo();
+                redraw();
+            } else if (currentTool === 'pen' && tempElement) {
+                tempElement.points.push({ x: world.x, y: world.y });
+                redraw();
+            } else if (currentTool === 'arrow' && (arrowType === 'zigzag' || arrowType === 'spline')) {
+                // Show preview line to current point
+                redraw();
+                ctx.save();
+                ctx.translate(transform.translateX, transform.translateY);
+                ctx.scale(transform.scale, transform.scale);
+                ctx.strokeStyle = '#999';
+                ctx.setLineDash([5, 5]);
+                ctx.beginPath();
+                ctx.moveTo(arrowPoints[arrowPoints.length - 1].x, arrowPoints[arrowPoints.length - 1].y);
+                ctx.lineTo(world.x, world.y);
+                ctx.stroke();
+                ctx.restore();
+            } else if (tempElement) {
+                tempElement.x2 = world.x;
+                tempElement.y2 = world.y;
+
+                if (currentTool === 'rectangle') {
+                    tempElement.x = Math.min(tempElement.x1, tempElement.x2);
+                    tempElement.y = Math.min(tempElement.y1, tempElement.y2);
+                    tempElement.width = Math.abs(tempElement.x2 - tempElement.x1);
+                    tempElement.height = Math.abs(tempElement.y2 - tempElement.y1);
+                }
+
+                redraw();
+            }
+        });
+
+        canvas.addEventListener('mouseup', () => {
+            if (currentTool === 'pan') {
+                canvas.style.cursor = 'grab';
+            }
+
+            if (currentTool === 'arrow' && (arrowType === 'zigzag' || arrowType === 'spline')) {
+                // Don't finish on mouseup for multi-point arrows
+                return;
+            }
+
+            if (isDrawing && tempElement && currentTool !== 'select') {
+                saveHistory();
+                elements.push(tempElement);
+                tempElement = null;
+            }
+
+            if (currentTool !== 'arrow' || arrowType === 'straight') {
+                isDrawing = false;
+            }
+            redraw();
+        });
+
+        // Double-click to finish multi-point arrow
+        canvas.addEventListener('dblclick', (e) => {
+            if (currentTool === 'arrow' && (arrowType === 'zigzag' || arrowType === 'spline') && isDrawing) {
+                e.preventDefault();
+
+                if (arrowPoints.length >= 2) {
+                    saveHistory();
+                    elements.push({
+                        type: 'arrow',
+                        points: arrowPoints,
+                        strokeColor: strokeColor,
+                        strokeWidth: strokeWidth,
+                        arrowType: arrowType,
+                        label: arrowLabel ? arrowLabelText : null,
+                        fontSize: fontSize
+                    });
+                }
+
+                arrowPoints = [];
+                isDrawing = false;
+                redraw();
+            }
+        });
+
+        function moveElement(element, dx, dy) {
+            switch (element.type) {
+                case 'pen':
+                    element.points.forEach(p => {
+                        p.x += dx;
+                        p.y += dy;
+                    });
+                    break;
+                case 'line':
+                case 'circle':
+                case 'ellipse':
+                    element.x1 += dx;
+                    element.y1 += dy;
+                    element.x2 += dx;
+                    element.y2 += dy;
+                    break;
+                case 'arrow':
+                    if (element.points) {
+                        element.points.forEach(p => {
+                            p.x += dx;
+                            p.y += dy;
+                        });
+                    } else {
+                        element.x1 += dx;
+                        element.y1 += dy;
+                        element.x2 += dx;
+                        element.y2 += dy;
+                    }
+                    break;
+                case 'rectangle':
+                    element.x += dx;
+                    element.y += dy;
+                    break;
+                case 'text':
+                    element.x += dx;
+                    element.y += dy;
+                    break;
+            }
+        }
+
+        // Zoom with mouse wheel
+        canvas.addEventListener('wheel', (e) => {
+            e.preventDefault();
+
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            const worldBefore = screenToWorld(mouseX, mouseY);
+
+            const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
+            transform.scale *= zoomFactor;
+            transform.scale = Math.max(0.1, Math.min(5, transform.scale));
+
+            const worldAfter = screenToWorld(mouseX, mouseY);
+
+            transform.translateX += (worldAfter.x - worldBefore.x) * transform.scale;
+            transform.translateY += (worldAfter.y - worldBefore.y) * transform.scale;
+
+            updateTransformInfo();
+            redraw();
+        });
+
+        function updateTransformInfo() {
+            document.getElementById('zoomLevel').textContent = Math.round(transform.scale * 100) + '%';
+            document.getElementById('panPosition').textContent =
+                Math.round(transform.translateX) + ', ' + Math.round(transform.translateY);
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey || e.metaKey) {
+                if (e.key === 'z') {
+                    e.preventDefault();
+                    undo();
+                } else if (e.key === 'y') {
+                    e.preventDefault();
+                    redo();
+                }
+            } else {
+                switch (e.key.toLowerCase()) {
+                    case 'v':
+                        document.querySelector('[data-tool="select"]').click();
+                        break;
+                    case 'p':
+                        document.querySelector('[data-tool="pen"]').click();
+                        break;
+                    case 'l':
+                        document.querySelector('[data-tool="line"]').click();
+                        break;
+                    case 'a':
+                        document.querySelector('[data-tool="arrow"]').click();
+                        break;
+                    case 'r':
+                        document.querySelector('[data-tool="rectangle"]').click();
+                        break;
+                    case 'c':
+                        document.querySelector('[data-tool="circle"]').click();
+                        break;
+                    case 'e':
+                        document.querySelector('[data-tool="ellipse"]').click();
+                        break;
+                    case 't':
+                        document.querySelector('[data-tool="text"]').click();
+                        break;
+                    case 'h':
+                        document.querySelector('[data-tool="pan"]').click();
+                        break;
+                    case 'delete':
+                    case 'backspace':
+                        if (selectedElement) {
+                            e.preventDefault();
+                            deleteSelected();
+                        }
+                        break;
+                }
+            }
+        });
+
+        function deleteSelected() {
+            if (selectedElement) {
+                saveHistory();
+                const index = elements.indexOf(selectedElement);
+                if (index > -1) {
+                    elements.splice(index, 1);
+                }
+                selectedElement = null;
+                redraw();
+            }
+        }
+
+        function undo() {
+            if (historyIndex > 0) {
+                historyIndex--;
+                elements = JSON.parse(JSON.stringify(history[historyIndex]));
+                selectedElement = null;
+                redraw();
+            }
+        }
+
+        function redo() {
+            if (historyIndex < history.length - 1) {
+                historyIndex++;
+                elements = JSON.parse(JSON.stringify(history[historyIndex]));
+                selectedElement = null;
+                redraw();
+            }
+        }
+
+        // Button actions
+        document.getElementById('undoBtn').addEventListener('click', undo);
+        document.getElementById('redoBtn').addEventListener('click', redo);
+
+        document.getElementById('clearBtn').addEventListener('click', () => {
+            if (confirm('Clear the entire canvas? This cannot be undone.')) {
+                saveHistory();
+                elements = [];
+                selectedElement = null;
+                redraw();
+            }
+        });
+
+        document.getElementById('savePngBtn').addEventListener('click', () => {
+            // Create a temporary canvas for export
+            const exportCanvas = document.createElement('canvas');
+            const exportCtx = exportCanvas.getContext('2d');
+
+            // Calculate bounds
+            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+            elements.forEach(element => {
+                const bounds = getElementBounds(element);
+                if (bounds) {
+                    minX = Math.min(minX, bounds.x);
+                    minY = Math.min(minY, bounds.y);
+                    maxX = Math.max(maxX, bounds.x + bounds.width);
+                    maxY = Math.max(maxY, bounds.y + bounds.height);
+                }
+            });
+
+            const padding = 50;
+            minX -= padding;
+            minY -= padding;
+            maxX += padding;
+            maxY += padding;
+
+            exportCanvas.width = maxX - minX;
+            exportCanvas.height = maxY - minY;
+
+            // Fill with white background
+            exportCtx.fillStyle = '#ffffff';
+            exportCtx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+
+            // Draw elements
+            exportCtx.translate(-minX, -minY);
+            elements.forEach(element => {
+                ctx = exportCtx;
+                drawElement(element);
+            });
+            ctx = canvas.getContext('2d');
+
+            // Download
+            const link = document.createElement('a');
+            link.download = 'drawing-' + Date.now() + '.png';
+            link.href = exportCanvas.toDataURL();
+            link.click();
+        });
+
+        document.getElementById('saveSvgBtn').addEventListener('click', () => {
+            // Calculate bounds
+            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+            elements.forEach(element => {
+                const bounds = getElementBounds(element);
+                if (bounds) {
+                    minX = Math.min(minX, bounds.x);
+                    minY = Math.min(minY, bounds.y);
+                    maxX = Math.max(maxX, bounds.x + bounds.width);
+                    maxY = Math.max(maxY, bounds.y + bounds.height);
+                }
+            });
+
+            const padding = 50;
+            minX -= padding;
+            minY -= padding;
+            maxX += padding;
+            maxY += padding;
+
+            let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${maxX - minX}" height="${maxY - minY}" viewBox="${minX} ${minY} ${maxX - minX} ${maxY - minY}">`;
+            svg += '<rect width="100%" height="100%" fill="white"/>';
+
+            elements.forEach(element => {
+                svg += elementToSVG(element);
+            });
+
+            svg += '</svg>';
+
+            const blob = new Blob([svg], { type: 'image/svg+xml' });
+            const link = document.createElement('a');
+            link.download = 'drawing-' + Date.now() + '.svg';
+            link.href = URL.createObjectURL(blob);
+            link.click();
+        });
+
+        function elementToSVG(element) {
+            let svg = '';
+            const stroke = element.strokeColor;
+            const strokeWidth = element.strokeWidth;
+            const fill = element.fillEnabled ? element.fillColor : 'none';
+
+            switch (element.type) {
+                case 'pen':
+                    svg += `<polyline points="${element.points.map(p => `${p.x},${p.y}`).join(' ')}" `;
+                    svg += `stroke="${stroke}" stroke-width="${strokeWidth}" fill="none" `;
+                    svg += `stroke-linecap="round" stroke-linejoin="round"/>`;
+                    break;
+
+                case 'line':
+                    svg += `<line x1="${element.x1}" y1="${element.y1}" x2="${element.x2}" y2="${element.y2}" `;
+                    svg += `stroke="${stroke}" stroke-width="${strokeWidth}"/>`;
+                    break;
+
+                case 'arrow':
+                    const points = element.points || [
+                        { x: element.x1, y: element.y1 },
+                        { x: element.x2, y: element.y2 }
+                    ];
+
+                    if (element.arrowType === 'straight') {
+                        svg += `<line x1="${points[0].x}" y1="${points[0].y}" x2="${points[points.length - 1].x}" y2="${points[points.length - 1].y}" `;
+                        svg += `stroke="${stroke}" stroke-width="${strokeWidth}"/>`;
+                    } else {
+                        svg += `<polyline points="${points.map(p => `${p.x},${p.y}`).join(' ')}" `;
+                        svg += `stroke="${stroke}" stroke-width="${strokeWidth}" fill="none"/>`;
+                    }
+
+                    // Arrowhead
+                    const last = points[points.length - 1];
+                    const secondLast = points[points.length - 2] || last;
+                    const angle = Math.atan2(last.y - secondLast.y, last.x - secondLast.x);
+                    const headLength = 15;
+                    svg += `<polyline points="${last.x},${last.y} `;
+                    svg += `${last.x - headLength * Math.cos(angle - Math.PI / 6)},${last.y - headLength * Math.sin(angle - Math.PI / 6)} `;
+                    svg += `${last.x},${last.y} `;
+                    svg += `${last.x - headLength * Math.cos(angle + Math.PI / 6)},${last.y - headLength * Math.sin(angle + Math.PI / 6)}" `;
+                    svg += `stroke="${stroke}" stroke-width="${strokeWidth}" fill="none"/>`;
+
+                    if (element.label) {
+                        const midIdx = Math.floor(points.length / 2);
+                        const midPoint = points[midIdx];
+                        svg += `<text x="${midPoint.x}" y="${midPoint.y - 10}" text-anchor="middle" `;
+                        svg += `font-size="${element.fontSize || 14}" fill="${stroke}">${element.label}</text>`;
+                    }
+                    break;
+
+                case 'rectangle':
+                    svg += `<rect x="${element.x}" y="${element.y}" width="${element.width}" height="${element.height}" `;
+                    svg += `stroke="${stroke}" stroke-width="${strokeWidth}" fill="${fill}"/>`;
+                    break;
+
+                case 'circle':
+                    const radius = Math.sqrt(Math.pow(element.x2 - element.x1, 2) + Math.pow(element.y2 - element.y1, 2));
+                    svg += `<circle cx="${element.x1}" cy="${element.y1}" r="${radius}" `;
+                    svg += `stroke="${stroke}" stroke-width="${strokeWidth}" fill="${fill}"/>`;
+                    break;
+
+                case 'ellipse':
+                    const rx = Math.abs(element.x2 - element.x1) / 2;
+                    const ry = Math.abs(element.y2 - element.y1) / 2;
+                    const cx = (element.x1 + element.x2) / 2;
+                    const cy = (element.y1 + element.y2) / 2;
+                    svg += `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" `;
+                    svg += `stroke="${stroke}" stroke-width="${strokeWidth}" fill="${fill}"/>`;
+                    break;
+
+                case 'text':
+                    svg += `<text x="${element.x}" y="${element.y}" font-size="${element.fontSize}" fill="${stroke}">${element.text}</text>`;
+                    break;
+            }
+
+            return svg;
+        }
+
+        // Initialize
+        saveHistory();
+        redraw();
+    </script>
+</body>
+</html>
