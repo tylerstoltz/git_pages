@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BMX Track Game - Claude Code</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .header {
+            background: rgba(0, 0, 0, 0.3);
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .back-link {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            transition: background 0.3s;
+        }
+
+        .back-link:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .title {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .controls {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #667eea;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+        }
+
+        button:hover {
+            background: white;
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button.active {
+            background: #667eea;
+            color: white;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .canvas-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            background: #87CEEB;
+        }
+
+        canvas {
+            display: block;
+            cursor: crosshair;
+        }
+
+        canvas.panning {
+            cursor: grab;
+        }
+
+        canvas.panning:active {
+            cursor: grabbing;
+        }
+
+        .info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            max-width: 300px;
+        }
+
+        .stats {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            min-width: 200px;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.3rem;
+        }
+
+        .stat-label {
+            opacity: 0.8;
+        }
+
+        .stat-value {
+            font-weight: bold;
+        }
+
+        .speed-good {
+            color: #4ade80;
+        }
+
+        .speed-medium {
+            color: #fbbf24;
+        }
+
+        .speed-bad {
+            color: #f87171;
+        }
+
+        .instructions {
+            background: rgba(0, 0, 0, 0.3);
+            color: white;
+            padding: 0.5rem 2rem;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="../" class="back-link">← Back to Games</a>
+            <div class="title">🏍️ BMX Track Game</div>
+            <div class="controls">
+                <button id="drawBtn" class="active">✏️ Draw Track</button>
+                <button id="playBtn">▶️ Play</button>
+                <button id="resetBtn">🔄 Reset Rider</button>
+                <button id="clearBtn">🗑️ Clear Track</button>
+                <button id="panBtn">✋ Pan</button>
+            </div>
+        </div>
+
+        <div class="instructions">
+            <strong>How to play:</strong> Draw a track with jumps and transitions. Click Play to watch the rider attempt it. The rider gains speed by "pumping" through smooth valleys and transitions. Perfect landings = speed boost. Cases and overshoots = slowdown!
+        </div>
+
+        <div class="canvas-container">
+            <canvas id="canvas"></canvas>
+            <div class="info" id="info">
+                <strong>🎮 Controls:</strong><br>
+                • Left-click and drag to draw track<br>
+                • Mouse wheel to zoom<br>
+                • Middle-click or Pan mode to move view<br>
+                • Space to play/pause<br>
+                <br>
+                <strong>🏍️ Physics:</strong><br>
+                • Smooth transitions = acceleration<br>
+                • Steep drops = gravity boost<br>
+                • Bad landings = crash/slowdown
+            </div>
+
+            <div class="stats" id="stats">
+                <div class="stat-row">
+                    <span class="stat-label">Speed:</span>
+                    <span class="stat-value" id="speedValue">0.0 m/s</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Distance:</span>
+                    <span class="stat-value" id="distanceValue">0 m</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Air Time:</span>
+                    <span class="stat-value" id="airTimeValue">0.0 s</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Status:</span>
+                    <span class="stat-value" id="statusValue">Drawing</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Canvas setup
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Resize canvas to fill container
+        function resizeCanvas() {
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+            redraw();
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Game state
+        let mode = 'draw'; // 'draw', 'play', 'pan'
+        let isPlaying = false;
+        let trackPoints = []; // Array of {x, y} points for the track
+        let currentStroke = []; // Current drawing stroke
+
+        // Transform (camera/view)
+        let transform = {
+            scale: 1,
+            translateX: canvas.width / 2,
+            translateY: canvas.height / 2
+        };
+
+        // Rider physics
+        let rider = {
+            x: 0,
+            y: -100,
+            vx: 5, // horizontal velocity
+            vy: 0, // vertical velocity
+            rotation: 0, // rider angle
+            isOnGround: false,
+            groundContactPoint: null,
+            totalDistance: 0,
+            airTime: 0,
+            lastGroundY: -100,
+            crashed: false
+        };
+
+        // Physics constants
+        const GRAVITY = 0.5;
+        const GROUND_FRICTION = 0.99;
+        const AIR_RESISTANCE = 0.999;
+        const PUMP_BONUS = 0.3; // Speed bonus for good pumping
+        const CRASH_THRESHOLD = 15; // Speed threshold for crashes
+        const MIN_SPEED = 0.5;
+
+        // Convert screen coordinates to world coordinates
+        function screenToWorld(screenX, screenY) {
+            return {
+                x: (screenX - transform.translateX) / transform.scale,
+                y: (screenY - transform.translateY) / transform.scale
+            };
+        }
+
+        // Convert world coordinates to screen coordinates
+        function worldToScreen(worldX, worldY) {
+            return {
+                x: worldX * transform.scale + transform.translateX,
+                y: worldY * transform.scale + transform.translateY
+            };
+        }
+
+        // Drawing functions
+        function redraw() {
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Sky gradient
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, '#87CEEB');
+            gradient.addColorStop(1, '#E0F6FF');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Save context and apply transform
+            ctx.save();
+            ctx.translate(transform.translateX, transform.translateY);
+            ctx.scale(transform.scale, transform.scale);
+
+            // Draw grid
+            drawGrid();
+
+            // Draw track
+            drawTrack();
+
+            // Draw current stroke
+            if (currentStroke.length > 0) {
+                ctx.strokeStyle = '#667eea';
+                ctx.lineWidth = 4 / transform.scale;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.setLineDash([5 / transform.scale, 5 / transform.scale]);
+                ctx.beginPath();
+                ctx.moveTo(currentStroke[0].x, currentStroke[0].y);
+                for (let i = 1; i < currentStroke.length; i++) {
+                    ctx.lineTo(currentStroke[i].x, currentStroke[i].y);
+                }
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+
+            // Draw rider
+            if (isPlaying || rider.totalDistance > 0) {
+                drawRider();
+            }
+
+            // Restore context
+            ctx.restore();
+        }
+
+        function drawGrid() {
+            const gridSize = 50;
+            const lineWidth = 1 / transform.scale;
+
+            // Calculate visible bounds
+            const topLeft = screenToWorld(0, 0);
+            const bottomRight = screenToWorld(canvas.width, canvas.height);
+
+            // Draw vertical lines
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+            ctx.lineWidth = lineWidth;
+            const startX = Math.floor(topLeft.x / gridSize) * gridSize;
+            const endX = Math.ceil(bottomRight.x / gridSize) * gridSize;
+            for (let x = startX; x <= endX; x += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(x, topLeft.y);
+                ctx.lineTo(x, bottomRight.y);
+                ctx.stroke();
+            }
+
+            // Draw horizontal lines
+            const startY = Math.floor(topLeft.y / gridSize) * gridSize;
+            const endY = Math.ceil(bottomRight.y / gridSize) * gridSize;
+            for (let y = startY; y <= endY; y += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(topLeft.x, y);
+                ctx.lineTo(bottomRight.x, y);
+                ctx.stroke();
+            }
+
+            // Draw origin
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+            ctx.lineWidth = 2 / transform.scale;
+            ctx.beginPath();
+            ctx.moveTo(-20, 0);
+            ctx.lineTo(20, 0);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(0, -20);
+            ctx.lineTo(0, 20);
+            ctx.stroke();
+        }
+
+        function drawTrack() {
+            if (trackPoints.length < 2) return;
+
+            // Draw track as thick brown line
+            ctx.strokeStyle = '#8B4513';
+            ctx.lineWidth = 6 / transform.scale;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            ctx.beginPath();
+            ctx.moveTo(trackPoints[0].x, trackPoints[0].y);
+            for (let i = 1; i < trackPoints.length; i++) {
+                ctx.lineTo(trackPoints[i].x, trackPoints[i].y);
+            }
+            ctx.stroke();
+
+            // Draw track outline
+            ctx.strokeStyle = '#654321';
+            ctx.lineWidth = 8 / transform.scale;
+            ctx.globalAlpha = 0.5;
+            ctx.beginPath();
+            ctx.moveTo(trackPoints[0].x, trackPoints[0].y);
+            for (let i = 1; i < trackPoints.length; i++) {
+                ctx.lineTo(trackPoints[i].x, trackPoints[i].y);
+            }
+            ctx.stroke();
+            ctx.globalAlpha = 1.0;
+        }
+
+        function drawRider() {
+            const size = 15 / transform.scale;
+
+            // Draw bike
+            ctx.save();
+            ctx.translate(rider.x, rider.y);
+            ctx.rotate(rider.rotation);
+
+            // Determine color based on status
+            let bikeColor = '#000000';
+            if (rider.crashed) {
+                bikeColor = '#ef4444';
+            } else if (rider.isOnGround) {
+                bikeColor = '#3b82f6';
+            } else {
+                bikeColor = '#f59e0b';
+            }
+
+            // Bike frame
+            ctx.strokeStyle = bikeColor;
+            ctx.lineWidth = 3 / transform.scale;
+            ctx.beginPath();
+            // Front triangle
+            ctx.moveTo(-size, 0);
+            ctx.lineTo(0, -size);
+            ctx.lineTo(size, 0);
+            ctx.stroke();
+
+            // Wheels
+            ctx.fillStyle = bikeColor;
+            ctx.beginPath();
+            ctx.arc(-size * 0.7, 0, size * 0.4, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(size * 0.7, 0, size * 0.4, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Rider (simple stick figure)
+            ctx.strokeStyle = bikeColor;
+            ctx.lineWidth = 2 / transform.scale;
+            // Body
+            ctx.beginPath();
+            ctx.moveTo(0, -size);
+            ctx.lineTo(0, -size * 1.8);
+            ctx.stroke();
+            // Head
+            ctx.beginPath();
+            ctx.arc(0, -size * 2.2, size * 0.4, 0, Math.PI * 2);
+            ctx.stroke();
+
+            ctx.restore();
+        }
+
+        // Track collision detection
+        function findTrackSegmentAt(x, tolerance = 10) {
+            let closestPoint = null;
+            let closestDist = tolerance;
+            let segmentIndex = -1;
+
+            for (let i = 0; i < trackPoints.length - 1; i++) {
+                const p1 = trackPoints[i];
+                const p2 = trackPoints[i + 1];
+
+                // Only check segments where x is within range
+                if (x >= Math.min(p1.x, p2.x) - tolerance && x <= Math.max(p1.x, p2.x) + tolerance) {
+                    // Find closest point on segment
+                    const point = closestPointOnSegment(x, p1, p2);
+                    const dist = Math.abs(x - point.x);
+
+                    if (dist < closestDist) {
+                        closestDist = dist;
+                        closestPoint = point;
+                        segmentIndex = i;
+                    }
+                }
+            }
+
+            return closestPoint ? { point: closestPoint, segmentIndex } : null;
+        }
+
+        function closestPointOnSegment(x, p1, p2) {
+            // Find y on line segment at given x
+            if (Math.abs(p2.x - p1.x) < 0.01) {
+                // Vertical line
+                return { x: p1.x, y: (p1.y + p2.y) / 2 };
+            }
+
+            const t = (x - p1.x) / (p2.x - p1.x);
+            const clampedT = Math.max(0, Math.min(1, t));
+
+            return {
+                x: p1.x + clampedT * (p2.x - p1.x),
+                y: p1.y + clampedT * (p2.y - p1.y),
+                t: clampedT,
+                p1: p1,
+                p2: p2
+            };
+        }
+
+        function getTrackAngle(p1, p2) {
+            return Math.atan2(p2.y - p1.y, p2.x - p1.x);
+        }
+
+        // Physics update
+        function updatePhysics(deltaTime = 1) {
+            if (!isPlaying || rider.crashed) return;
+
+            const prevY = rider.y;
+            const prevVY = rider.vy;
+
+            // Apply gravity
+            rider.vy += GRAVITY * deltaTime;
+
+            // Apply velocity
+            rider.x += rider.vx * deltaTime;
+            rider.y += rider.vy * deltaTime;
+
+            // Update total distance
+            rider.totalDistance += Math.abs(rider.vx * deltaTime);
+
+            // Check for track collision
+            const trackCheck = findTrackSegmentAt(rider.x, 30);
+
+            if (trackCheck && trackCheck.point) {
+                const groundY = trackCheck.point.y;
+                const distToGround = rider.y - groundY;
+
+                // If rider is at or below track surface
+                if (distToGround >= -5) {
+                    rider.isOnGround = true;
+                    rider.y = groundY;
+                    rider.groundContactPoint = trackCheck.point;
+
+                    // Calculate track angle
+                    const p1 = trackCheck.point.p1;
+                    const p2 = trackCheck.point.p2;
+                    const trackAngle = getTrackAngle(p1, p2);
+                    rider.rotation = trackAngle;
+
+                    // Calculate landing impact
+                    const impactSpeed = Math.abs(rider.vy);
+
+                    // Check for crash (too fast vertical impact)
+                    if (impactSpeed > CRASH_THRESHOLD && !rider.isOnGround) {
+                        rider.crashed = true;
+                        rider.vx = 0;
+                        rider.vy = 0;
+                        updateStats();
+                        return;
+                    }
+
+                    // Pumping mechanics - reward smooth transitions
+                    const trackSlope = Math.sin(trackAngle);
+                    const isDescending = trackSlope > 0; // Going downhill
+                    const isAscending = trackSlope < 0; // Going uphill
+
+                    // If transitioning from air to ground
+                    if (rider.airTime > 0) {
+                        // Good landing: rider's trajectory aligns with track
+                        const velocityAngle = Math.atan2(rider.vy, rider.vx);
+                        const angleDiff = Math.abs(velocityAngle - trackAngle);
+
+                        if (angleDiff < 0.5) {
+                            // Smooth landing = speed boost
+                            rider.vx += PUMP_BONUS * (1 - angleDiff / 0.5);
+                        } else if (angleDiff > 1.5) {
+                            // Bad landing = slowdown
+                            rider.vx *= 0.7;
+                        }
+
+                        rider.airTime = 0;
+                    }
+
+                    // Pumping through transitions
+                    if (isDescending) {
+                        // Gain speed going down
+                        rider.vx += Math.abs(trackSlope) * 0.2;
+                    }
+
+                    // Convert vertical velocity to horizontal based on slope
+                    const slopeEffect = trackSlope * 0.5;
+                    rider.vx += slopeEffect;
+
+                    // Reset vertical velocity on ground
+                    rider.vy = 0;
+
+                    // Apply friction
+                    rider.vx *= GROUND_FRICTION;
+
+                    // Follow track slope for velocity
+                    rider.vy = rider.vx * trackSlope;
+
+                    rider.lastGroundY = rider.y;
+                } else {
+                    // In the air
+                    rider.isOnGround = false;
+                    rider.airTime += deltaTime * 0.016; // Approximate seconds
+
+                    // Air resistance
+                    rider.vx *= AIR_RESISTANCE;
+
+                    // Update rotation based on velocity
+                    rider.rotation = Math.atan2(rider.vy, rider.vx);
+                }
+            } else {
+                // No track nearby - in air
+                rider.isOnGround = false;
+                rider.airTime += deltaTime * 0.016;
+                rider.vx *= AIR_RESISTANCE;
+                rider.rotation = Math.atan2(rider.vy, rider.vx);
+            }
+
+            // Stop if too slow
+            if (Math.abs(rider.vx) < MIN_SPEED && rider.isOnGround) {
+                rider.crashed = true;
+                rider.vx = 0;
+                rider.vy = 0;
+            }
+
+            // Update camera to follow rider
+            if (isPlaying) {
+                const targetX = canvas.width / 3 - rider.x * transform.scale;
+                const targetY = canvas.height / 2 - rider.y * transform.scale;
+
+                // Smooth camera movement
+                transform.translateX += (targetX - transform.translateX) * 0.1;
+                transform.translateY += (targetY - transform.translateY) * 0.1;
+            }
+
+            updateStats();
+        }
+
+        function updateStats() {
+            const speed = Math.sqrt(rider.vx * rider.vx + rider.vy * rider.vy);
+            const speedElem = document.getElementById('speedValue');
+            speedElem.textContent = speed.toFixed(1) + ' m/s';
+
+            // Color code speed
+            if (speed > 10) {
+                speedElem.className = 'stat-value speed-good';
+            } else if (speed > 5) {
+                speedElem.className = 'stat-value speed-medium';
+            } else {
+                speedElem.className = 'stat-value speed-bad';
+            }
+
+            document.getElementById('distanceValue').textContent = Math.floor(rider.totalDistance) + ' m';
+            document.getElementById('airTimeValue').textContent = rider.airTime.toFixed(1) + ' s';
+
+            let status = 'Drawing';
+            if (isPlaying) {
+                if (rider.crashed) {
+                    status = '💥 Crashed!';
+                } else if (rider.isOnGround) {
+                    status = '🚴 Riding';
+                } else {
+                    status = '✈️ Airborne';
+                }
+            }
+            document.getElementById('statusValue').textContent = status;
+        }
+
+        // Animation loop
+        let lastTime = Date.now();
+        function animate() {
+            const now = Date.now();
+            const deltaTime = Math.min((now - lastTime) / 16, 2); // Cap at 2x speed
+            lastTime = now;
+
+            if (isPlaying) {
+                updatePhysics(deltaTime);
+            }
+
+            redraw();
+            requestAnimationFrame(animate);
+        }
+        animate();
+
+        // Mouse handling
+        let isDrawing = false;
+        let isPanning = false;
+        let lastMouseX = 0;
+        let lastMouseY = 0;
+        let lastWorldX = 0;
+        let lastWorldY = 0;
+
+        canvas.addEventListener('mousedown', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            lastMouseX = mouseX;
+            lastMouseY = mouseY;
+
+            const world = screenToWorld(mouseX, mouseY);
+            lastWorldX = world.x;
+            lastWorldY = world.y;
+
+            if (mode === 'draw' && !isPlaying) {
+                isDrawing = true;
+                currentStroke = [{ x: world.x, y: world.y }];
+            } else if (mode === 'pan' || e.button === 1) {
+                isPanning = true;
+                canvas.classList.add('panning');
+                e.preventDefault();
+            }
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            if (isDrawing) {
+                const world = screenToWorld(mouseX, mouseY);
+
+                // Add point if moved enough
+                const lastPoint = currentStroke[currentStroke.length - 1];
+                const dist = Math.sqrt(
+                    (world.x - lastPoint.x) ** 2 +
+                    (world.y - lastPoint.y) ** 2
+                );
+
+                if (dist > 3) {
+                    currentStroke.push({ x: world.x, y: world.y });
+                    redraw();
+                }
+            } else if (isPanning) {
+                const dx = mouseX - lastMouseX;
+                const dy = mouseY - lastMouseY;
+                transform.translateX += dx;
+                transform.translateY += dy;
+                lastMouseX = mouseX;
+                lastMouseY = mouseY;
+                redraw();
+            }
+        });
+
+        canvas.addEventListener('mouseup', (e) => {
+            if (isDrawing) {
+                // Add current stroke to track
+                if (currentStroke.length > 1) {
+                    trackPoints = trackPoints.concat(currentStroke);
+                }
+                currentStroke = [];
+                isDrawing = false;
+                redraw();
+            }
+
+            if (isPanning) {
+                isPanning = false;
+                canvas.classList.remove('panning');
+            }
+        });
+
+        canvas.addEventListener('mouseleave', () => {
+            if (isDrawing) {
+                if (currentStroke.length > 1) {
+                    trackPoints = trackPoints.concat(currentStroke);
+                }
+                currentStroke = [];
+                isDrawing = false;
+            }
+            isPanning = false;
+            canvas.classList.remove('panning');
+        });
+
+        // Prevent middle-click scroll
+        canvas.addEventListener('mousedown', (e) => {
+            if (e.button === 1) {
+                e.preventDefault();
+            }
+        });
+
+        // Zoom with mouse wheel
+        canvas.addEventListener('wheel', (e) => {
+            e.preventDefault();
+
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            // Get world position before zoom
+            const worldBefore = screenToWorld(mouseX, mouseY);
+
+            // Zoom
+            const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
+            const newScale = transform.scale * zoomFactor;
+
+            // Clamp scale
+            if (newScale >= 0.1 && newScale <= 5) {
+                transform.scale = newScale;
+
+                // Get world position after zoom
+                const worldAfter = screenToWorld(mouseX, mouseY);
+
+                // Adjust translation to keep mouse position stable
+                transform.translateX += (worldAfter.x - worldBefore.x) * transform.scale;
+                transform.translateY += (worldAfter.y - worldBefore.y) * transform.scale;
+
+                redraw();
+            }
+        }, { passive: false });
+
+        // Button controls
+        document.getElementById('drawBtn').addEventListener('click', () => {
+            mode = 'draw';
+            updateButtonStates();
+            canvas.style.cursor = 'crosshair';
+        });
+
+        document.getElementById('panBtn').addEventListener('click', () => {
+            mode = 'pan';
+            updateButtonStates();
+            canvas.style.cursor = 'grab';
+        });
+
+        document.getElementById('playBtn').addEventListener('click', () => {
+            if (trackPoints.length < 2) {
+                alert('Draw a track first!');
+                return;
+            }
+
+            isPlaying = !isPlaying;
+
+            if (isPlaying) {
+                document.getElementById('playBtn').textContent = '⏸️ Pause';
+
+                // Reset rider if crashed or first time
+                if (rider.crashed || rider.totalDistance === 0) {
+                    resetRider();
+                }
+            } else {
+                document.getElementById('playBtn').textContent = '▶️ Play';
+            }
+
+            updateButtonStates();
+        });
+
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            resetRider();
+            redraw();
+        });
+
+        document.getElementById('clearBtn').addEventListener('click', () => {
+            if (confirm('Clear the entire track?')) {
+                trackPoints = [];
+                currentStroke = [];
+                resetRider();
+                isPlaying = false;
+                document.getElementById('playBtn').textContent = '▶️ Play';
+                redraw();
+            }
+        });
+
+        function resetRider() {
+            // Find the leftmost track point to start from
+            let startX = 0;
+            let startY = -100;
+
+            if (trackPoints.length > 0) {
+                startX = trackPoints[0].x;
+                startY = trackPoints[0].y - 50;
+            }
+
+            rider = {
+                x: startX,
+                y: startY,
+                vx: 5,
+                vy: 0,
+                rotation: 0,
+                isOnGround: false,
+                groundContactPoint: null,
+                totalDistance: 0,
+                airTime: 0,
+                lastGroundY: startY,
+                crashed: false
+            };
+
+            updateStats();
+        }
+
+        function updateButtonStates() {
+            document.getElementById('drawBtn').classList.toggle('active', mode === 'draw');
+            document.getElementById('panBtn').classList.toggle('active', mode === 'pan');
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                document.getElementById('playBtn').click();
+            }
+        });
+
+        // Initialize
+        updateButtonStates();
+        updateStats();
+    </script>
+</body>
+</html>
