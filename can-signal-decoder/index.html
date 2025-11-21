@@ -339,22 +339,45 @@
 </head>
 <body>
     <div class="header">
-        <h1>🔍 CAN Signal Decoder</h1>
+        <h1>🔍 CAN Signal Encoder/Decoder</h1>
         <a href="../" class="back-link">← Back to Tools</a>
     </div>
 
     <div class="container">
         <!-- Input Section -->
         <div class="section">
-            <h2>CAN Message Input</h2>
+            <h2>Mode Selection</h2>
+            <div class="addressing-mode">
+                <div style="color: #9cdcfe; margin-bottom: 0.5rem; font-weight: 500;">Operation Mode</div>
+                <label>
+                    <input type="radio" name="operationMode" value="decode" checked>
+                    Decode Only (paste CAN message and decode)
+                </label>
+                <label>
+                    <input type="radio" name="operationMode" value="encode">
+                    Encode & Decode (enter values, encode to CAN, then decode)
+                </label>
+            </div>
 
-            <div class="input-group">
+            <h2 style="margin-top: 2rem;">CAN Message Input</h2>
+
+            <div class="input-group" id="canMessageInput">
                 <label>CAN Message</label>
                 <textarea id="canMessage" placeholder="Paste CAN message here, e.g.:
 vcan0  345   [8]  FF 00 00 00 00 00 00 00
 or just the payload:
 FF 00 00 00 00 00 00 00"></textarea>
                 <div class="help-text">Supports various CAN message formats. Hex bytes will be automatically extracted.</div>
+            </div>
+
+            <div class="input-group" id="canIdDlcInput" style="display: none;">
+                <label>CAN ID (hex)</label>
+                <input type="text" id="canIdInput" placeholder="e.g., 345" value="345">
+                <div class="help-text" style="margin-bottom: 1rem;">CAN identifier in hexadecimal</div>
+
+                <label>DLC (Data Length Code)</label>
+                <input type="number" id="dlcInput" min="1" max="8" value="8">
+                <div class="help-text">Number of bytes in the CAN message (1-8)</div>
             </div>
 
             <div class="message-info" id="messageInfo" style="display: none;">
@@ -402,14 +425,44 @@ FF 00 00 00 00 00 00 00"></textarea>
 
         <!-- Output Section -->
         <div class="section">
-            <h2>Decoded Signals</h2>
+            <div id="encodeSection" style="display: none;">
+                <h2>Encoded CAN Message</h2>
+                <div class="message-info">
+                    <div class="message-info-row">
+                        <span class="message-info-label">CAN ID:</span>
+                        <span class="message-info-value" id="encodedCanId">-</span>
+                    </div>
+                    <div class="message-info-row">
+                        <span class="message-info-label">DLC:</span>
+                        <span class="message-info-value" id="encodedDlc">-</span>
+                    </div>
+                    <div class="message-info-row">
+                        <span class="message-info-label">Full Message:</span>
+                        <span class="message-info-value" id="encodedFull">-</span>
+                    </div>
+                    <div class="message-info-row">
+                        <span class="message-info-label">Payload (Hex):</span>
+                        <span class="message-info-value" id="encodedPayloadHex">-</span>
+                    </div>
+                    <div class="message-info-row">
+                        <span class="message-info-label">Payload (Dec):</span>
+                        <span class="message-info-value" id="encodedPayloadDec">-</span>
+                    </div>
+                </div>
+                <div class="button-group">
+                    <button onclick="encodeSignals()">⬆️ Encode</button>
+                    <button class="secondary" onclick="copyEncodedMessage()">📋 Copy Message</button>
+                </div>
+            </div>
+
+            <h2 style="margin-top: 2rem;">Decoded Signals</h2>
             <div class="results" id="results">
                 <div style="color: #808080; text-align: center; padding: 2rem;">
                     Add a CAN message and signal definitions to see decoded values
                 </div>
             </div>
 
-            <div class="button-group">
+            <div class="button-group" id="decodeButtons">
                 <button onclick="decodeSignals()">🔄 Decode</button>
                 <button class="secondary" onclick="copyResults()">📋 Copy Results</button>
             </div>
@@ -425,7 +478,33 @@ FF 00 00 00 00 00 00 00"></textarea>
 
             // Auto-decode on input change
             document.getElementById('canMessage').addEventListener('input', debounce(autoDecodeIfValid, 500));
+
+            // Add operation mode change listener
+            document.querySelectorAll('input[name="operationMode"]').forEach((radio) => {
+                radio.addEventListener('change', updateOperationMode);
+            });
+
+            // Initialize mode
+            updateOperationMode();
         });
+
+        function updateOperationMode() {
+            const mode = document.querySelector('input[name="operationMode"]:checked').value;
+            const isEncodeMode = mode === 'encode';
+
+            // Show/hide relevant sections
+            document.getElementById('canMessageInput').style.display = isEncodeMode ? 'none' : 'block';
+            document.getElementById('canIdDlcInput').style.display = isEncodeMode ? 'block' : 'none';
+            document.getElementById('encodeSection').style.display = isEncodeMode ? 'block' : 'none';
+
+            // Show/hide encode value fields in signals
+            document.querySelectorAll('.encode-only').forEach((el) => {
+                el.style.display = isEncodeMode ? 'block' : 'none';
+            });
+
+            // Update decode button visibility
+            document.getElementById('decodeButtons').style.display = isEncodeMode ? 'none' : 'block';
+        }
 
         function addSignal() {
             const container = document.getElementById('signalsContainer');
@@ -442,6 +521,10 @@ FF 00 00 00 00 00 00 00"></textarea>
                         <div class="signal-field full-width">
                             <label>Signal Name</label>
                             <input type="text" class="signal-name" placeholder="e.g., Engine Speed">
+                        </div>
+                        <div class="signal-field full-width encode-only" style="display: none;">
+                            <label>Value to Encode</label>
+                            <input type="number" class="encode-value" step="any" placeholder="e.g., 1500">
                         </div>
                         ${addressingMode === 'byte' ? `
                         <div class="signal-field">
@@ -493,6 +576,9 @@ FF 00 00 00 00 00 00 00"></textarea>
             `;
 
             container.insertAdjacentHTML('beforeend', signalHtml);
+
+            // Update visibility based on current mode
+            updateOperationMode();
         }
 
         function removeSignal(signalId) {
@@ -794,6 +880,303 @@ FF 00 00 00 00 00 00 00"></textarea>
             }).catch(() => {
                 alert('Failed to copy results');
             });
+        }
+
+        function copyEncodedMessage() {
+            const fullMessage = document.getElementById('encodedFull').textContent;
+            if (fullMessage === '-') return;
+
+            navigator.clipboard.writeText(fullMessage).then(() => {
+                alert('Encoded message copied to clipboard!');
+            }).catch(() => {
+                alert('Failed to copy message');
+            });
+        }
+
+        function encodeByteBased(data, startByte, numBytes, value, endianness, dataType, numBits) {
+            if (startByte < 0 || startByte >= data.length) {
+                throw new Error(`Start byte ${startByte} is out of range`);
+            }
+
+            // Handle signed values
+            if (dataType === 'signed' && value < 0) {
+                const maxValue = Math.pow(2, numBits);
+                value = maxValue + value; // Convert to 2's complement
+            }
+
+            // Split value into bytes based on endianness
+            const endByte = Math.min(startByte + numBytes, data.length);
+
+            if (endianness === 'big') {
+                // Big endian: MSB first
+                for (let i = endByte - 1; i >= startByte; i--) {
+                    data[i] = value & 0xFF;
+                    value = value >> 8;
+                }
+            } else {
+                // Little endian: LSB first
+                for (let i = startByte; i < endByte; i++) {
+                    data[i] = value & 0xFF;
+                    value = value >> 8;
+                }
+            }
+        }
+
+        function encodeBitBased(data, startBit, numBits, value, endianness, dataType) {
+            if (startBit < 0 || startBit >= data.length * 8) {
+                throw new Error(`Start bit ${startBit} is out of range`);
+            }
+
+            // Handle signed values
+            if (dataType === 'signed' && value < 0) {
+                const maxValue = Math.pow(2, numBits);
+                value = maxValue + value; // Convert to 2's complement
+            }
+
+            if (endianness === 'big') {
+                // Big endian (Motorola) bit numbering
+                for (let i = numBits - 1; i >= 0; i--) {
+                    const bitPos = startBit + i;
+                    const byteIndex = Math.floor(bitPos / 8);
+                    const bitIndex = 7 - (bitPos % 8);
+
+                    if (byteIndex >= data.length) break;
+
+                    const bit = (value >> (numBits - 1 - i)) & 1;
+                    if (bit) {
+                        data[byteIndex] |= (1 << bitIndex);
+                    } else {
+                        data[byteIndex] &= ~(1 << bitIndex);
+                    }
+                }
+            } else {
+                // Little endian (Intel) bit numbering
+                const startByte = Math.floor(startBit / 8);
+                const startBitInByte = startBit % 8;
+
+                let bitCount = 0;
+                let byteIndex = startByte;
+                let bitIndex = startBitInByte;
+
+                while (bitCount < numBits && byteIndex < data.length) {
+                    const bit = (value >> bitCount) & 1;
+
+                    if (bit) {
+                        data[byteIndex] |= (1 << bitIndex);
+                    } else {
+                        data[byteIndex] &= ~(1 << bitIndex);
+                    }
+
+                    bitCount++;
+                    bitIndex++;
+
+                    if (bitIndex >= 8) {
+                        bitIndex = 0;
+                        byteIndex++;
+                    }
+                }
+            }
+        }
+
+        function encodeSignals() {
+            try {
+                const canId = document.getElementById('canIdInput').value.trim();
+                const dlc = parseInt(document.getElementById('dlcInput').value);
+
+                if (!canId || isNaN(dlc) || dlc < 1 || dlc > 8) {
+                    alert('Please enter a valid CAN ID and DLC (1-8)');
+                    return;
+                }
+
+                // Initialize data array with zeros
+                const data = new Array(dlc).fill(0);
+                const addressingMode = document.querySelector('input[name="addressingMode"]:checked').value;
+
+                // Get all signal cards and encode each signal
+                const signalCards = document.querySelectorAll('.signal-card');
+                const encodeErrors = [];
+
+                signalCards.forEach((card, index) => {
+                    try {
+                        const name = card.querySelector('.signal-name').value || `Signal ${index + 1}`;
+                        const encodeValueInput = card.querySelector('.encode-value').value;
+
+                        if (!encodeValueInput) {
+                            return; // Skip signals without encode values
+                        }
+
+                        const scaledValue = parseFloat(encodeValueInput);
+                        const scale = parseFloat(card.querySelector('.scale').value) || 1;
+                        const offset = parseFloat(card.querySelector('.offset').value) || 0;
+                        const endianness = card.querySelector('.endianness').value;
+                        const dataType = card.querySelector('.data-type').value;
+
+                        // Reverse the scaling: (value - offset) / scale = rawValue
+                        const rawValue = Math.round((scaledValue - offset) / scale);
+
+                        if (addressingMode === 'byte') {
+                            const startByte = parseInt(card.querySelector('.start-byte').value);
+                            const numBytes = parseInt(card.querySelector('.num-bytes').value);
+                            encodeByteBased(data, startByte, numBytes, rawValue, endianness, dataType, numBytes * 8);
+                        } else {
+                            const startBit = parseInt(card.querySelector('.start-bit').value);
+                            const numBits = parseInt(card.querySelector('.num-bits').value);
+                            encodeBitBased(data, startBit, numBits, rawValue, endianness, dataType);
+                        }
+                    } catch (error) {
+                        encodeErrors.push({
+                            name: card.querySelector('.signal-name').value || `Signal ${index + 1}`,
+                            error: error.message
+                        });
+                    }
+                });
+
+                // Display encoded message
+                const hexPayload = data.map(b => b.toString(16).toUpperCase().padStart(2, '0')).join(' ');
+                const decPayload = data.join(' ');
+                const fullMessage = `vcan0  ${canId}   [${dlc}]  ${hexPayload}`;
+
+                document.getElementById('encodedCanId').textContent = `0x${canId}`;
+                document.getElementById('encodedDlc').textContent = dlc;
+                document.getElementById('encodedFull').textContent = fullMessage;
+                document.getElementById('encodedPayloadHex').textContent = hexPayload;
+                document.getElementById('encodedPayloadDec').textContent = decPayload;
+
+                if (encodeErrors.length > 0) {
+                    let errorMsg = 'Encoding completed with errors:\n';
+                    encodeErrors.forEach(e => {
+                        errorMsg += `- ${e.name}: ${e.error}\n`;
+                    });
+                    alert(errorMsg);
+                }
+
+                // Automatically decode the encoded message to verify
+                setTimeout(() => {
+                    decodeEncodedMessage(data, dlc, canId);
+                }, 100);
+
+            } catch (error) {
+                alert('Error encoding signals: ' + error.message);
+            }
+        }
+
+        function decodeEncodedMessage(data, dlc, canId) {
+            // Create a parsed message object
+            const parsed = {
+                canId: canId,
+                dlc: dlc,
+                data: data
+            };
+
+            // Decode signals using the same logic as decodeSignals
+            const signalCards = document.querySelectorAll('.signal-card');
+            const results = [];
+            const addressingMode = document.querySelector('input[name="addressingMode"]:checked').value;
+
+            signalCards.forEach((card) => {
+                try {
+                    const name = card.querySelector('.signal-name').value || 'Unnamed Signal';
+                    const endianness = card.querySelector('.endianness').value;
+                    const dataType = card.querySelector('.data-type').value;
+                    const scale = parseFloat(card.querySelector('.scale').value) || 1;
+                    const offset = parseFloat(card.querySelector('.offset').value) || 0;
+                    const unit = card.querySelector('.unit').value || '';
+                    const encodeValue = card.querySelector('.encode-value').value;
+
+                    let rawValue;
+                    let extractionInfo;
+
+                    if (addressingMode === 'byte') {
+                        const startByte = parseInt(card.querySelector('.start-byte').value);
+                        const numBytes = parseInt(card.querySelector('.num-bytes').value);
+
+                        rawValue = extractByteBased(parsed.data, startByte, numBytes, endianness);
+                        extractionInfo = `Bytes ${startByte}-${startByte + numBytes - 1}, ${endianness} endian`;
+
+                        if (dataType === 'signed') {
+                            rawValue = applySignedConversion(rawValue, numBytes * 8);
+                        }
+                    } else {
+                        const startBit = parseInt(card.querySelector('.start-bit').value);
+                        const numBits = parseInt(card.querySelector('.num-bits').value);
+
+                        rawValue = extractBitBased(parsed.data, startBit, numBits, endianness);
+                        extractionInfo = `Bits ${startBit}-${startBit + numBits - 1}, ${endianness} endian`;
+
+                        if (dataType === 'signed') {
+                            rawValue = applySignedConversion(rawValue, numBits);
+                        }
+                    }
+
+                    const scaledValue = (rawValue * scale) + offset;
+
+                    results.push({
+                        name,
+                        rawValue,
+                        scaledValue,
+                        unit,
+                        extractionInfo,
+                        dataType,
+                        originalValue: encodeValue ? parseFloat(encodeValue) : null
+                    });
+                } catch (error) {
+                    results.push({
+                        name: card.querySelector('.signal-name').value || 'Unnamed Signal',
+                        error: error.message
+                    });
+                }
+            });
+
+            // Display results with verification
+            displayEncodedDecodeResults(results);
+        }
+
+        function displayEncodedDecodeResults(results) {
+            const container = document.getElementById('results');
+
+            if (results.length === 0) {
+                container.innerHTML = '<div style="color: #808080; text-align: center; padding: 2rem;">No signals defined</div>';
+                return;
+            }
+
+            let html = '';
+            results.forEach((result) => {
+                if (result.error) {
+                    html += `
+                        <div class="result-item" style="border-left-color: #f48771;">
+                            <div class="result-name">${result.name}</div>
+                            <div style="color: #f48771; margin-top: 0.5rem;">Error: ${result.error}</div>
+                        </div>
+                    `;
+                } else {
+                    const displayValue = result.unit
+                        ? `${result.scaledValue} ${result.unit}`
+                        : result.scaledValue;
+
+                    // Check if the decoded value matches the original encoded value
+                    let verificationStatus = '';
+                    if (result.originalValue !== null) {
+                        const matches = Math.abs(result.scaledValue - result.originalValue) < 0.001;
+                        verificationStatus = matches
+                            ? '<span style="color: #4ec9b0;">✓ Verified</span>'
+                            : `<span style="color: #f48771;">✗ Mismatch (expected ${result.originalValue})</span>`;
+                    }
+
+                    html += `
+                        <div class="result-item">
+                            <div class="result-name">${result.name} ${verificationStatus}</div>
+                            <div class="result-value">${displayValue}</div>
+                            <div class="result-details">
+                                Raw: ${result.rawValue} (${result.dataType}) |
+                                Scaled: ${result.scaledValue} |
+                                ${result.extractionInfo}
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+
+            container.innerHTML = html;
         }
 
         function autoDecodeIfValid() {
