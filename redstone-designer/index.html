@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minecraft Redstone Circuit Designer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: #2d2d30;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid #404040;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .back-link {
+            color: #569cd6;
+            text-decoration: none;
+            font-size: 1.2rem;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover {
+            color: #6ab0de;
+        }
+
+        h1 {
+            color: #d4d4d4;
+            font-size: 1.5rem;
+            font-weight: 500;
+        }
+
+        .container {
+            padding: 1rem;
+            max-width: 100%;
+            height: calc(100vh - 80px);
+            display: flex;
+            gap: 1rem;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: #252526;
+            border: 1px solid #404040;
+            border-radius: 4px;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        .section {
+            margin-bottom: 1.5rem;
+        }
+
+        .section-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #569cd6;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+        }
+
+        .component-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+        }
+
+        .component-btn {
+            background: #3c3c3c;
+            border: 2px solid #555;
+            border-radius: 4px;
+            padding: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #d4d4d4;
+            font-size: 0.75rem;
+            text-align: center;
+        }
+
+        .component-btn:hover {
+            background: #4a4a4a;
+            border-color: #569cd6;
+        }
+
+        .component-btn.selected {
+            background: #264f78;
+            border-color: #569cd6;
+        }
+
+        .component-icon {
+            font-size: 1.5rem;
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+
+        .main-content {
+            flex: 1;
+            background: #252526;
+            border: 1px solid #404040;
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .toolbar {
+            background: #2d2d30;
+            padding: 0.75rem;
+            border-bottom: 1px solid #404040;
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background: #3c3c3c;
+            border: 1px solid #555;
+            border-radius: 4px;
+            padding: 0.5rem 1rem;
+            color: #d4d4d4;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            background: #4a4a4a;
+            border-color: #569cd6;
+        }
+
+        .btn.active {
+            background: #264f78;
+            border-color: #569cd6;
+        }
+
+        #canvas {
+            display: block;
+            background: #1e1e1e;
+            cursor: crosshair;
+        }
+
+        .info {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            background: rgba(45, 45, 48, 0.95);
+            padding: 0.5rem 1rem;
+            font-size: 0.75rem;
+            color: #888;
+            border-top-left-radius: 4px;
+        }
+
+        .help-text {
+            font-size: 0.8rem;
+            color: #888;
+            line-height: 1.4;
+            margin-top: 0.5rem;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        input[type="checkbox"] {
+            cursor: pointer;
+        }
+
+        label {
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="../" class="back-link">←</a>
+        <h1>🔴 Minecraft Redstone Circuit Designer</h1>
+    </div>
+
+    <div class="container">
+        <div class="sidebar">
+            <div class="section">
+                <div class="section-title">Components</div>
+                <div class="component-grid">
+                    <button class="component-btn" data-component="wire">
+                        <span class="component-icon" style="color: #ff0000;">━</span>
+                        Wire
+                    </button>
+                    <button class="component-btn" data-component="switch">
+                        <span class="component-icon">🔘</span>
+                        Switch
+                    </button>
+                    <button class="component-btn" data-component="torch">
+                        <span class="component-icon" style="color: #ff8800;">🔥</span>
+                        Torch
+                    </button>
+                    <button class="component-btn" data-component="repeater">
+                        <span class="component-icon">▶</span>
+                        Repeater
+                    </button>
+                    <button class="component-btn" data-component="comparator">
+                        <span class="component-icon">⚖</span>
+                        Comparator
+                    </button>
+                    <button class="component-btn" data-component="lamp">
+                        <span class="component-icon" style="color: #ffff00;">💡</span>
+                        Lamp
+                    </button>
+                    <button class="component-btn" data-component="block">
+                        <span class="component-icon">⬛</span>
+                        Block
+                    </button>
+                    <button class="component-btn" data-component="button">
+                        <span class="component-icon">🔳</span>
+                        Button
+                    </button>
+                    <button class="component-btn" data-component="pressure">
+                        <span class="component-icon">⬜</span>
+                        Pressure
+                    </button>
+                    <button class="component-btn" data-component="piston">
+                        <span class="component-icon">▣</span>
+                        Piston
+                    </button>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Settings</div>
+                <div class="checkbox-container">
+                    <input type="checkbox" id="showGrid" checked>
+                    <label for="showGrid">Show Grid</label>
+                </div>
+                <div class="checkbox-container">
+                    <input type="checkbox" id="autoSimulate" checked>
+                    <label for="autoSimulate">Auto Simulate</label>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="help-text">
+                    <strong>Controls:</strong><br>
+                    • Click to place component<br>
+                    • Right-click to delete<br>
+                    • Click switch/button to toggle<br>
+                    • Scroll to zoom<br>
+                    • Middle-click + drag to pan
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="toolbar">
+                <button class="btn" id="clearBtn">Clear All</button>
+                <button class="btn" id="simulateBtn">Simulate</button>
+                <button class="btn" id="saveBtn">Save Circuit</button>
+                <button class="btn" id="loadBtn">Load Circuit</button>
+                <button class="btn" id="exportBtn">Export PNG</button>
+            </div>
+            <canvas id="canvas"></canvas>
+            <div class="info">Grid: <span id="gridSize">32</span>px | Components: <span id="componentCount">0</span></div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Set canvas size
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            const toolbar = container.querySelector('.toolbar');
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight - toolbar.offsetHeight;
+            draw();
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // State
+        let gridSize = 32;
+        let selectedComponent = null;
+        let components = [];
+        let showGrid = true;
+        let autoSimulate = true;
+        let offsetX = 0;
+        let offsetY = 0;
+        let scale = 1;
+        let isPanning = false;
+        let panStartX = 0;
+        let panStartY = 0;
+
+        // Component definitions
+        const componentTypes = {
+            wire: { name: 'Wire', color: '#8B0000', powerColor: '#FF0000', canPower: true },
+            switch: { name: 'Switch', color: '#666', powerColor: '#4CAF50', canPower: true, interactive: true },
+            torch: { name: 'Redstone Torch', color: '#FF8800', powerColor: '#FFAA00', canPower: true, inverted: true },
+            repeater: { name: 'Repeater', color: '#555', powerColor: '#FF0000', canPower: true, directional: true },
+            comparator: { name: 'Comparator', color: '#666', powerColor: '#FF0000', canPower: true, directional: true },
+            lamp: { name: 'Redstone Lamp', color: '#444', powerColor: '#FFFF00', canPower: false },
+            block: { name: 'Solid Block', color: '#888', powerColor: '#AAA', canPower: true },
+            button: { name: 'Button', color: '#777', powerColor: '#4CAF50', canPower: true, interactive: true },
+            pressure: { name: 'Pressure Plate', color: '#999', powerColor: '#4CAF50', canPower: true, interactive: true },
+            piston: { name: 'Piston', color: '#8B4513', powerColor: '#A0522D', canPower: false }
+        };
+
+        // Component selection
+        document.querySelectorAll('.component-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.component-btn').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                selectedComponent = btn.dataset.component;
+            });
+        });
+
+        // Settings
+        document.getElementById('showGrid').addEventListener('change', (e) => {
+            showGrid = e.target.checked;
+            draw();
+        });
+
+        document.getElementById('autoSimulate').addEventListener('change', (e) => {
+            autoSimulate = e.target.checked;
+            if (autoSimulate) simulate();
+        });
+
+        // Toolbar buttons
+        document.getElementById('clearBtn').addEventListener('click', () => {
+            if (confirm('Clear all components?')) {
+                components = [];
+                draw();
+                updateComponentCount();
+            }
+        });
+
+        document.getElementById('simulateBtn').addEventListener('click', simulate);
+
+        document.getElementById('saveBtn').addEventListener('click', () => {
+            const data = JSON.stringify(components);
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'redstone-circuit.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+
+        document.getElementById('loadBtn').addEventListener('click', () => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        components = JSON.parse(event.target.result);
+                        draw();
+                        updateComponentCount();
+                        if (autoSimulate) simulate();
+                    } catch (err) {
+                        alert('Error loading circuit: ' + err.message);
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        });
+
+        document.getElementById('exportBtn').addEventListener('click', () => {
+            const link = document.createElement('a');
+            link.download = 'redstone-circuit.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        });
+
+        // Canvas interaction
+        canvas.addEventListener('mousedown', (e) => {
+            if (e.button === 1) { // Middle button
+                isPanning = true;
+                panStartX = e.clientX - offsetX;
+                panStartY = e.clientY - offsetY;
+                canvas.style.cursor = 'grabbing';
+                e.preventDefault();
+            } else if (e.button === 0) { // Left button
+                const gridX = Math.floor((e.offsetX - offsetX) / (gridSize * scale));
+                const gridY = Math.floor((e.offsetY - offsetY) / (gridSize * scale));
+
+                // Check if clicking on existing component
+                const clickedComponent = components.find(c => c.x === gridX && c.y === gridY);
+
+                if (clickedComponent && componentTypes[clickedComponent.type].interactive) {
+                    clickedComponent.powered = !clickedComponent.powered;
+                    draw();
+                    if (autoSimulate) simulate();
+                } else if (selectedComponent) {
+                    placeComponent(gridX, gridY);
+                }
+            } else if (e.button === 2) { // Right button
+                const gridX = Math.floor((e.offsetX - offsetX) / (gridSize * scale));
+                const gridY = Math.floor((e.offsetY - offsetY) / (gridSize * scale));
+                deleteComponent(gridX, gridY);
+            }
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (isPanning) {
+                offsetX = e.clientX - panStartX;
+                offsetY = e.clientY - panStartY;
+                draw();
+            }
+        });
+
+        canvas.addEventListener('mouseup', (e) => {
+            if (e.button === 1) {
+                isPanning = false;
+                canvas.style.cursor = 'crosshair';
+            }
+        });
+
+        canvas.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+        });
+
+        canvas.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const delta = e.deltaY > 0 ? 0.9 : 1.1;
+            const newScale = Math.max(0.5, Math.min(3, scale * delta));
+
+            // Zoom towards mouse position
+            const mouseX = e.offsetX;
+            const mouseY = e.offsetY;
+            const worldX = (mouseX - offsetX) / scale;
+            const worldY = (mouseY - offsetY) / scale;
+
+            scale = newScale;
+            offsetX = mouseX - worldX * scale;
+            offsetY = mouseY - worldY * scale;
+
+            draw();
+        });
+
+        function placeComponent(x, y) {
+            // Check if component already exists at this position
+            const existing = components.find(c => c.x === x && c.y === y);
+            if (existing) {
+                // Rotate directional components
+                if (componentTypes[existing.type].directional) {
+                    existing.rotation = ((existing.rotation || 0) + 90) % 360;
+                    draw();
+                }
+                return;
+            }
+
+            const component = {
+                type: selectedComponent,
+                x: x,
+                y: y,
+                powered: selectedComponent === 'switch' || selectedComponent === 'torch',
+                rotation: 0
+            };
+
+            components.push(component);
+            draw();
+            updateComponentCount();
+            if (autoSimulate) simulate();
+        }
+
+        function deleteComponent(x, y) {
+            const index = components.findIndex(c => c.x === x && c.y === y);
+            if (index !== -1) {
+                components.splice(index, 1);
+                draw();
+                updateComponentCount();
+                if (autoSimulate) simulate();
+            }
+        }
+
+        function simulate() {
+            // Reset all non-interactive components
+            components.forEach(comp => {
+                if (!componentTypes[comp.type].interactive) {
+                    comp.powered = false;
+                }
+            });
+
+            // Multiple passes for power propagation
+            for (let pass = 0; pass < 20; pass++) {
+                let changed = false;
+
+                components.forEach(comp => {
+                    const type = componentTypes[comp.type];
+
+                    if (comp.type === 'torch') {
+                        // Redstone torch: powered unless receiving power
+                        const receivingPower = isReceivingPower(comp.x, comp.y);
+                        const newState = !receivingPower;
+                        if (comp.powered !== newState) {
+                            comp.powered = newState;
+                            changed = true;
+                        }
+                    } else if (!type.interactive) {
+                        // Other components: powered if receiving power
+                        const receivingPower = isReceivingPower(comp.x, comp.y);
+                        if (comp.powered !== receivingPower) {
+                            comp.powered = receivingPower;
+                            changed = true;
+                        }
+                    }
+                });
+
+                if (!changed) break;
+            }
+
+            draw();
+        }
+
+        function isReceivingPower(x, y) {
+            // Check adjacent cells for powered components
+            const adjacentPositions = [
+                { x: x - 1, y: y },
+                { x: x + 1, y: y },
+                { x: x, y: y - 1 },
+                { x: x, y: y + 1 }
+            ];
+
+            for (const pos of adjacentPositions) {
+                const component = components.find(c => c.x === pos.x && c.y === pos.y);
+                if (component && component.powered && componentTypes[component.type].canPower) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        function draw() {
+            ctx.fillStyle = '#1e1e1e';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.save();
+            ctx.translate(offsetX, offsetY);
+            ctx.scale(scale, scale);
+
+            // Draw grid
+            if (showGrid) {
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 1 / scale;
+
+                const startX = Math.floor(-offsetX / (gridSize * scale));
+                const startY = Math.floor(-offsetY / (gridSize * scale));
+                const endX = Math.ceil((canvas.width - offsetX) / (gridSize * scale));
+                const endY = Math.ceil((canvas.height - offsetY) / (gridSize * scale));
+
+                for (let x = startX; x <= endX; x++) {
+                    ctx.beginPath();
+                    ctx.moveTo(x * gridSize, startY * gridSize);
+                    ctx.lineTo(x * gridSize, endY * gridSize);
+                    ctx.stroke();
+                }
+
+                for (let y = startY; y <= endY; y++) {
+                    ctx.beginPath();
+                    ctx.moveTo(startX * gridSize, y * gridSize);
+                    ctx.lineTo(endX * gridSize, y * gridSize);
+                    ctx.stroke();
+                }
+            }
+
+            // Draw components
+            components.forEach(comp => {
+                const type = componentTypes[comp.type];
+                const color = comp.powered ? type.powerColor : type.color;
+
+                ctx.fillStyle = color;
+
+                const cellX = comp.x * gridSize;
+                const cellY = comp.y * gridSize;
+                const padding = 4;
+
+                // Draw based on component type
+                if (comp.type === 'wire') {
+                    ctx.fillRect(
+                        cellX + padding,
+                        cellY + gridSize / 2 - 2,
+                        gridSize - padding * 2,
+                        4
+                    );
+                } else {
+                    ctx.fillRect(
+                        cellX + padding,
+                        cellY + padding,
+                        gridSize - padding * 2,
+                        gridSize - padding * 2
+                    );
+                }
+
+                // Draw directional indicator
+                if (type.directional) {
+                    ctx.fillStyle = '#fff';
+                    ctx.beginPath();
+                    const centerX = cellX + gridSize / 2;
+                    const centerY = cellY + gridSize / 2;
+                    const size = 6;
+
+                    ctx.save();
+                    ctx.translate(centerX, centerY);
+                    ctx.rotate((comp.rotation || 0) * Math.PI / 180);
+                    ctx.moveTo(size, 0);
+                    ctx.lineTo(-size, -size);
+                    ctx.lineTo(-size, size);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.restore();
+                }
+
+                // Draw component label
+                ctx.fillStyle = '#fff';
+                ctx.font = `${10 / scale}px sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+
+                let label = '';
+                if (comp.type === 'switch') label = comp.powered ? 'ON' : 'OFF';
+                else if (comp.type === 'torch') label = 'T';
+                else if (comp.type === 'repeater') label = 'R';
+                else if (comp.type === 'comparator') label = 'C';
+                else if (comp.type === 'lamp') label = 'L';
+                else if (comp.type === 'button') label = 'B';
+                else if (comp.type === 'pressure') label = 'P';
+                else if (comp.type === 'piston') label = 'π';
+
+                if (label) {
+                    ctx.fillText(label, cellX + gridSize / 2, cellY + gridSize / 2);
+                }
+            });
+
+            ctx.restore();
+        }
+
+        function updateComponentCount() {
+            document.getElementById('componentCount').textContent = components.length;
+        }
+
+        // Initial draw
+        draw();
+    </script>
+</body>
+</html>
