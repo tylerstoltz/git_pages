@@ -199,43 +199,43 @@
             <div class="section">
                 <div class="section-title">Components</div>
                 <div class="component-grid">
-                    <button class="component-btn" data-component="wire">
+                    <button type="button" class="component-btn" data-component="wire">
                         <span class="component-icon" style="color: #ff0000;">━</span>
                         Wire
                     </button>
-                    <button class="component-btn" data-component="switch">
+                    <button type="button" class="component-btn" data-component="switch">
                         <span class="component-icon">🔘</span>
                         Switch
                     </button>
-                    <button class="component-btn" data-component="torch">
+                    <button type="button" class="component-btn" data-component="torch">
                         <span class="component-icon" style="color: #ff8800;">🔥</span>
                         Torch
                     </button>
-                    <button class="component-btn" data-component="repeater">
+                    <button type="button" class="component-btn" data-component="repeater">
                         <span class="component-icon">▶</span>
                         Repeater
                     </button>
-                    <button class="component-btn" data-component="comparator">
+                    <button type="button" class="component-btn" data-component="comparator">
                         <span class="component-icon">⚖</span>
                         Comparator
                     </button>
-                    <button class="component-btn" data-component="lamp">
+                    <button type="button" class="component-btn" data-component="lamp">
                         <span class="component-icon" style="color: #ffff00;">💡</span>
                         Lamp
                     </button>
-                    <button class="component-btn" data-component="block">
+                    <button type="button" class="component-btn" data-component="block">
                         <span class="component-icon">⬛</span>
                         Block
                     </button>
-                    <button class="component-btn" data-component="button">
+                    <button type="button" class="component-btn" data-component="button">
                         <span class="component-icon">🔳</span>
                         Button
                     </button>
-                    <button class="component-btn" data-component="pressure">
+                    <button type="button" class="component-btn" data-component="pressure">
                         <span class="component-icon">⬜</span>
                         Pressure
                     </button>
-                    <button class="component-btn" data-component="piston">
+                    <button type="button" class="component-btn" data-component="piston">
                         <span class="component-icon">▣</span>
                         Piston
                     </button>
@@ -268,11 +268,11 @@
 
         <div class="main-content">
             <div class="toolbar">
-                <button class="btn" id="clearBtn">Clear All</button>
-                <button class="btn" id="simulateBtn">Simulate</button>
-                <button class="btn" id="saveBtn">Save Circuit</button>
-                <button class="btn" id="loadBtn">Load Circuit</button>
-                <button class="btn" id="exportBtn">Export PNG</button>
+                <button type="button" class="btn" id="clearBtn">Clear All</button>
+                <button type="button" class="btn" id="simulateBtn">Simulate</button>
+                <button type="button" class="btn" id="saveBtn">Save Circuit</button>
+                <button type="button" class="btn" id="loadBtn">Load Circuit</button>
+                <button type="button" class="btn" id="exportBtn">Export PNG</button>
             </div>
             <canvas id="canvas"></canvas>
             <div class="info">Grid: <span id="gridSize">32</span>px | Components: <span id="componentCount">0</span></div>
@@ -323,10 +323,13 @@
 
         // Component selection
         document.querySelectorAll('.component-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 document.querySelectorAll('.component-btn').forEach(b => b.classList.remove('selected'));
                 btn.classList.add('selected');
                 selectedComponent = btn.dataset.component;
+                console.log('Selected component:', selectedComponent);
             });
         });
 
