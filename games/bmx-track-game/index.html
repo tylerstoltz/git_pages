@@ -273,6 +273,69 @@
             padding: 0.4rem 0.8rem;
             font-size: 0.85rem;
         }
+
+        .timeline-container {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 0.75rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            z-index: 100;
+        }
+
+        #timelineSlider {
+            flex: 1;
+            height: 6px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        #timelineSlider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        #timelineSlider::-webkit-slider-thumb:hover {
+            background: #764ba2;
+            transform: scale(1.2);
+        }
+
+        #timelineSlider::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+        }
+
+        #timelineSlider::-moz-range-thumb:hover {
+            background: #764ba2;
+            transform: scale(1.2);
+        }
+
+        .timeline-info {
+            color: white;
+            font-size: 0.85rem;
+            white-space: nowrap;
+            min-width: 120px;
+            text-align: right;
+        }
     </style>
 </head>
 <body>
@@ -334,6 +397,14 @@
                 <div class="stat-row">
                     <span class="stat-label">Status:</span>
                     <span class="stat-value" id="statusValue">Drawing</span>
+                </div>
+            </div>
+
+            <!-- Timeline Slider -->
+            <div class="timeline-container" id="timelineContainer" style="display: none;">
+                <input type="range" id="timelineSlider" min="0" max="100" value="0" step="1">
+                <div class="timeline-info">
+                    <span id="timelineFrame">Frame: 0 / 0</span>
                 </div>
             </div>
         </div>
@@ -452,6 +523,11 @@
         let currentStroke = []; // Current drawing stroke
         let tempPoints = []; // Temporary points for line/spline mode
         let isErasing = false; // Track if currently erasing
+
+        // Timeline/playback state
+        let timeline = []; // Recorded frames of rider state
+        let currentFrame = 0; // Current playback position
+        let isScrubbing = false; // Whether user is scrubbing the timeline
 
         // Transform (camera/view)
         let transform = {
@@ -863,9 +939,50 @@
             return Math.atan2(p2.y - p1.y, p2.x - p1.x);
         }
 
+        // Save current rider state to timeline
+        function recordFrame() {
+            timeline.push({
+                x: rider.x,
+                y: rider.y,
+                vx: rider.vx,
+                vy: rider.vy,
+                rotation: rider.rotation,
+                isOnGround: rider.isOnGround,
+                totalDistance: rider.totalDistance,
+                airTime: rider.airTime,
+                crashed: rider.crashed,
+                lastTrackAngle: rider.lastTrackAngle
+            });
+        }
+
+        // Restore rider state from a timeline frame
+        function restoreFrame(frameIndex) {
+            if (frameIndex < 0 || frameIndex >= timeline.length) return;
+
+            const frame = timeline[frameIndex];
+            rider.x = frame.x;
+            rider.y = frame.y;
+            rider.vx = frame.vx;
+            rider.vy = frame.vy;
+            rider.rotation = frame.rotation;
+            rider.isOnGround = frame.isOnGround;
+            rider.totalDistance = frame.totalDistance;
+            rider.airTime = frame.airTime;
+            rider.crashed = frame.crashed;
+            rider.lastTrackAngle = frame.lastTrackAngle;
+
+            currentFrame = frameIndex;
+            updateStats();
+        }
+
         // Physics update
         function updatePhysics(deltaTime = 1) {
-            if (!isPlaying || rider.crashed) return;
+            if (!isPlaying || rider.crashed) {
+                if (isPlaying && rider.crashed) {
+                    recordFrame(); // Record final crashed state
+                }
+                return;
+            }
 
             const prevY = rider.y;
             const prevVY = rider.vy;
@@ -990,7 +1107,7 @@
             }
 
             // Update camera to follow rider
-            if (isPlaying) {
+            if (isPlaying && !isScrubbing) {
                 const targetX = canvas.width / 3 - rider.x * transform.scale;
                 const targetY = canvas.height / 2 - rider.y * transform.scale;
 
@@ -1000,6 +1117,13 @@
             }
 
             updateStats();
+
+            // Record this frame to timeline (only when actively simulating, not scrubbing)
+            if (!isScrubbing) {
+                recordFrame();
+                currentFrame = timeline.length - 1;
+                updateTimelineUI();
+            }
         }
 
         function updateStats() {
@@ -1020,7 +1144,7 @@
             document.getElementById('airTimeValue').textContent = rider.airTime.toFixed(1) + ' s';
 
             let status = 'Drawing';
-            if (isPlaying) {
+            if (isPlaying || timeline.length > 0) {
                 if (rider.crashed) {
                     status = '💥 Crashed!';
                 } else if (rider.isOnGround) {
@@ -1032,12 +1156,28 @@
             document.getElementById('statusValue').textContent = status;
         }
 
+        // Update timeline slider UI
+        function updateTimelineUI() {
+            const slider = document.getElementById('timelineSlider');
+            const frameInfo = document.getElementById('timelineFrame');
+            const container = document.getElementById('timelineContainer');
+
+            if (timeline.length > 0) {
+                container.style.display = 'flex';
+                slider.max = timeline.length - 1;
+                slider.value = currentFrame;
+                frameInfo.textContent = `Frame: ${currentFrame} / ${timeline.length - 1}`;
+            } else {
+                container.style.display = 'none';
+            }
+        }
+
         // Animation loop
         // Use fixed time step for deterministic physics simulation
         const PHYSICS_TIMESTEP = 1.0;
 
         function animate() {
-            if (isPlaying) {
+            if (isPlaying && !isScrubbing) {
                 updatePhysics(PHYSICS_TIMESTEP);
             }
 
@@ -1287,6 +1427,10 @@
                 // Reset rider if crashed or first time
                 if (rider.crashed || rider.totalDistance === 0) {
                     resetRider();
+                    // Record initial state
+                    recordFrame();
+                    currentFrame = 0;
+                    updateTimelineUI();
                 }
             } else {
                 document.getElementById('playBtn').textContent = '▶️ Play';
@@ -1354,6 +1498,10 @@
                 lastTrackAngle: 0
             };
 
+            // Clear timeline
+            timeline = [];
+            currentFrame = 0;
+            updateTimelineUI();
             updateStats();
         }
 
@@ -1461,6 +1609,36 @@
                 trackSegments.pop();
                 redraw();
             }
+        });
+
+        // Timeline slider event handlers
+        const timelineSlider = document.getElementById('timelineSlider');
+
+        timelineSlider.addEventListener('input', (e) => {
+            if (timeline.length === 0) return;
+
+            isScrubbing = true;
+            const frameIndex = parseInt(e.target.value);
+            restoreFrame(frameIndex);
+            updateTimelineUI();
+            redraw();
+        });
+
+        timelineSlider.addEventListener('mousedown', () => {
+            isScrubbing = true;
+        });
+
+        timelineSlider.addEventListener('mouseup', () => {
+            isScrubbing = false;
+        });
+
+        // Also handle touch events for mobile
+        timelineSlider.addEventListener('touchstart', () => {
+            isScrubbing = true;
+        });
+
+        timelineSlider.addEventListener('touchend', () => {
+            isScrubbing = false;
         });
 
         // Initialize
