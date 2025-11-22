@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ISO 20022 XML/JSON Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        .btn:hover {
+            background: #5568d3;
+        }
+
+        .btn-secondary {
+            background: #4caf50;
+        }
+
+        .btn-secondary:hover {
+            background: #45a049;
+        }
+
+        .btn-danger {
+            background: #f44336;
+        }
+
+        .btn-danger:hover {
+            background: #d32f2f;
+        }
+
+        .section-title {
+            font-size: 1.3em;
+            color: #667eea;
+            margin: 20px 0 15px 0;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .form-section {
+            margin-bottom: 30px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #333;
+            font-size: 0.9em;
+        }
+
+        .form-group label .optional {
+            color: #999;
+            font-weight: normal;
+            font-size: 0.85em;
+        }
+
+        .form-group label .required {
+            color: #f44336;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 0.95em;
+            font-family: inherit;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .output-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .output-panel {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-title {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .output {
+            width: 100%;
+            min-height: 400px;
+            max-height: 600px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            background: #f5f5f5;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            overflow: auto;
+            line-height: 1.6;
+            white-space: pre;
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid;
+        }
+
+        .message.error {
+            background: #ffebee;
+            color: #c62828;
+            border-color: #c62828;
+        }
+
+        .message.success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border-color: #4caf50;
+        }
+
+        .message.info {
+            background: #e3f2fd;
+            color: #1565c0;
+            border-color: #2196f3;
+        }
+
+        .help-text {
+            font-size: 0.85em;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .transaction-container {
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            background: #fafafa;
+        }
+
+        .transaction-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .transaction-number {
+            font-weight: 600;
+            color: #667eea;
+            font-size: 1.1em;
+        }
+
+        .btn-small {
+            padding: 5px 15px;
+            font-size: 0.85em;
+        }
+
+        @media (max-width: 1024px) {
+            .output-container {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏦 ISO 20022 Message Generator</h1>
+            <p>Generate ISO 20022 payment messages in XML or JSON format</p>
+        </div>
+
+        <div class="main-content">
+            <div class="controls">
+                <button class="btn" onclick="generateXML()">Generate XML</button>
+                <button class="btn" onclick="generateJSON()">Generate JSON</button>
+                <button class="btn btn-secondary" onclick="loadSampleData()">Load Sample Data</button>
+                <button class="btn btn-danger" onclick="clearAll()">Clear All</button>
+            </div>
+
+            <div id="message"></div>
+
+            <!-- Message Type Selection -->
+            <div class="form-section">
+                <h2 class="section-title">Message Type</h2>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="messageType">Message Type <span class="required">*</span></label>
+                        <select id="messageType" onchange="updateMessageTypeInfo()">
+                            <option value="pain.001.001.03">pain.001.001.03 - Customer Credit Transfer Initiation</option>
+                            <option value="pacs.008.001.02">pacs.008.001.02 - FI to FI Customer Credit Transfer</option>
+                            <option value="camt.053.001.02">camt.053.001.02 - Bank to Customer Statement</option>
+                        </select>
+                        <div class="help-text" id="messageTypeHelp">Payment initiation message from customer to bank</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Group Header -->
+            <div class="form-section">
+                <h2 class="section-title">Group Header</h2>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="msgId">Message ID <span class="required">*</span></label>
+                        <input type="text" id="msgId" placeholder="MSG-20240101-001">
+                        <div class="help-text">Unique identifier for this message</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="creationDateTime">Creation Date/Time <span class="required">*</span></label>
+                        <input type="datetime-local" id="creationDateTime">
+                    </div>
+                    <div class="form-group">
+                        <label for="numberOfTxs">Number of Transactions <span class="required">*</span></label>
+                        <input type="number" id="numberOfTxs" value="1" min="1">
+                    </div>
+                    <div class="form-group">
+                        <label for="initiatingPartyName">Initiating Party Name <span class="required">*</span></label>
+                        <input type="text" id="initiatingPartyName" placeholder="ABC Corporation">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Information -->
+            <div class="form-section">
+                <h2 class="section-title">Payment Information</h2>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="pmtInfId">Payment Information ID <span class="required">*</span></label>
+                        <input type="text" id="pmtInfId" placeholder="PMT-20240101-001">
+                    </div>
+                    <div class="form-group">
+                        <label for="pmtMtd">Payment Method <span class="required">*</span></label>
+                        <select id="pmtMtd">
+                            <option value="TRF">TRF - Credit Transfer</option>
+                            <option value="TRA">TRA - TransferAdvice</option>
+                            <option value="CHK">CHK - Cheque</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="reqdExctnDt">Requested Execution Date <span class="required">*</span></label>
+                        <input type="date" id="reqdExctnDt">
+                    </div>
+                    <div class="form-group">
+                        <label for="debtorName">Debtor Name <span class="required">*</span></label>
+                        <input type="text" id="debtorName" placeholder="John Doe">
+                    </div>
+                    <div class="form-group">
+                        <label for="debtorIBAN">Debtor IBAN <span class="required">*</span></label>
+                        <input type="text" id="debtorIBAN" placeholder="GB29NWBK60161331926819">
+                    </div>
+                    <div class="form-group">
+                        <label for="debtorBIC">Debtor Agent BIC <span class="optional">(optional)</span></label>
+                        <input type="text" id="debtorBIC" placeholder="NWBKGB2L">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Credit Transfer Transaction Information -->
+            <div class="form-section">
+                <h2 class="section-title">Transaction Details</h2>
+                <div id="transactionsContainer">
+                    <!-- Transaction 1 (default) -->
+                    <div class="transaction-container" data-transaction="1">
+                        <div class="transaction-header">
+                            <span class="transaction-number">Transaction #1</span>
+                            <button class="btn btn-danger btn-small" onclick="removeTransaction(1)" style="display: none;">Remove</button>
+                        </div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>End-to-End ID <span class="required">*</span></label>
+                                <input type="text" class="endToEndId" placeholder="E2E-20240101-001">
+                            </div>
+                            <div class="form-group">
+                                <label>Amount <span class="required">*</span></label>
+                                <input type="number" class="amount" placeholder="100.00" step="0.01" min="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Currency <span class="required">*</span></label>
+                                <select class="currency">
+                                    <option value="EUR">EUR - Euro</option>
+                                    <option value="USD">USD - US Dollar</option>
+                                    <option value="GBP">GBP - British Pound</option>
+                                    <option value="CHF">CHF - Swiss Franc</option>
+                                    <option value="JPY">JPY - Japanese Yen</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Creditor Name <span class="required">*</span></label>
+                                <input type="text" class="creditorName" placeholder="Jane Smith">
+                            </div>
+                            <div class="form-group">
+                                <label>Creditor IBAN <span class="required">*</span></label>
+                                <input type="text" class="creditorIBAN" placeholder="DE89370400440532013000">
+                            </div>
+                            <div class="form-group">
+                                <label>Creditor BIC <span class="optional">(optional)</span></label>
+                                <input type="text" class="creditorBIC" placeholder="COBADEFFXXX">
+                            </div>
+                            <div class="form-group" style="grid-column: 1 / -1;">
+                                <label>Remittance Information <span class="optional">(optional)</span></label>
+                                <input type="text" class="remittanceInfo" placeholder="Invoice #12345">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn" onclick="addTransaction()">+ Add Transaction</button>
+            </div>
+
+            <!-- Output -->
+            <div class="output-container">
+                <div class="output-panel">
+                    <div class="panel-title">XML Output</div>
+                    <div class="output" id="xmlOutput">XML output will appear here...</div>
+                    <button class="btn btn-secondary" style="margin-top: 10px;" onclick="copyToClipboard('xmlOutput')">Copy XML</button>
+                    <button class="btn" style="margin-top: 10px;" onclick="downloadOutput('xml')">Download XML</button>
+                </div>
+                <div class="output-panel">
+                    <div class="panel-title">JSON Output</div>
+                    <div class="output" id="jsonOutput">JSON output will appear here...</div>
+                    <button class="btn btn-secondary" style="margin-top: 10px;" onclick="copyToClipboard('jsonOutput')">Copy JSON</button>
+                    <button class="btn" style="margin-top: 10px;" onclick="downloadOutput('json')">Download JSON</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let transactionCounter = 1;
+
+        // Initialize date fields with current date/time
+        function initializeDates() {
+            const now = new Date();
+            const dateTimeLocal = now.toISOString().slice(0, 16);
+            const dateLocal = now.toISOString().slice(0, 10);
+
+            document.getElementById('creationDateTime').value = dateTimeLocal;
+            document.getElementById('reqdExctnDt').value = dateLocal;
+        }
+
+        function updateMessageTypeInfo() {
+            const messageType = document.getElementById('messageType').value;
+            const helpText = document.getElementById('messageTypeHelp');
+
+            const descriptions = {
+                'pain.001.001.03': 'Payment initiation message from customer to bank (SEPA Credit Transfer)',
+                'pacs.008.001.02': 'Interbank payment message between financial institutions',
+                'camt.053.001.02': 'Bank statement message from bank to customer'
+            };
+
+            helpText.textContent = descriptions[messageType] || '';
+        }
+
+        function addTransaction() {
+            transactionCounter++;
+            const container = document.getElementById('transactionsContainer');
+
+            const transactionDiv = document.createElement('div');
+            transactionDiv.className = 'transaction-container';
+            transactionDiv.setAttribute('data-transaction', transactionCounter);
+
+            transactionDiv.innerHTML = `
+                <div class="transaction-header">
+                    <span class="transaction-number">Transaction #${transactionCounter}</span>
+                    <button class="btn btn-danger btn-small" onclick="removeTransaction(${transactionCounter})">Remove</button>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>End-to-End ID <span class="required">*</span></label>
+                        <input type="text" class="endToEndId" placeholder="E2E-20240101-00${transactionCounter}">
+                    </div>
+                    <div class="form-group">
+                        <label>Amount <span class="required">*</span></label>
+                        <input type="number" class="amount" placeholder="100.00" step="0.01" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Currency <span class="required">*</span></label>
+                        <select class="currency">
+                            <option value="EUR">EUR - Euro</option>
+                            <option value="USD">USD - US Dollar</option>
+                            <option value="GBP">GBP - British Pound</option>
+                            <option value="CHF">CHF - Swiss Franc</option>
+                            <option value="JPY">JPY - Japanese Yen</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Creditor Name <span class="required">*</span></label>
+                        <input type="text" class="creditorName" placeholder="Jane Smith">
+                    </div>
+                    <div class="form-group">
+                        <label>Creditor IBAN <span class="required">*</span></label>
+                        <input type="text" class="creditorIBAN" placeholder="DE89370400440532013000">
+                    </div>
+                    <div class="form-group">
+                        <label>Creditor BIC <span class="optional">(optional)</span></label>
+                        <input type="text" class="creditorBIC" placeholder="COBADEFFXXX">
+                    </div>
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label>Remittance Information <span class="optional">(optional)</span></label>
+                        <input type="text" class="remittanceInfo" placeholder="Invoice #12345">
+                    </div>
+                </div>
+            `;
+
+            container.appendChild(transactionDiv);
+            updateNumberOfTransactions();
+
+            // Show remove button on all transactions except the first
+            updateRemoveButtons();
+        }
+
+        function removeTransaction(transactionId) {
+            const transaction = document.querySelector(`[data-transaction="${transactionId}"]`);
+            if (transaction) {
+                transaction.remove();
+                updateNumberOfTransactions();
+                updateRemoveButtons();
+            }
+        }
+
+        function updateRemoveButtons() {
+            const transactions = document.querySelectorAll('.transaction-container');
+            transactions.forEach((transaction, index) => {
+                const removeBtn = transaction.querySelector('.btn-danger');
+                if (removeBtn) {
+                    removeBtn.style.display = transactions.length > 1 ? 'block' : 'none';
+                }
+            });
+        }
+
+        function updateNumberOfTransactions() {
+            const count = document.querySelectorAll('.transaction-container').length;
+            document.getElementById('numberOfTxs').value = count;
+        }
+
+        function collectFormData() {
+            const transactions = [];
+            document.querySelectorAll('.transaction-container').forEach(container => {
+                transactions.push({
+                    endToEndId: container.querySelector('.endToEndId').value,
+                    amount: container.querySelector('.amount').value,
+                    currency: container.querySelector('.currency').value,
+                    creditorName: container.querySelector('.creditorName').value,
+                    creditorIBAN: container.querySelector('.creditorIBAN').value,
+                    creditorBIC: container.querySelector('.creditorBIC').value,
+                    remittanceInfo: container.querySelector('.remittanceInfo').value
+                });
+            });
+
+            return {
+                messageType: document.getElementById('messageType').value,
+                msgId: document.getElementById('msgId').value,
+                creationDateTime: document.getElementById('creationDateTime').value,
+                numberOfTxs: document.getElementById('numberOfTxs').value,
+                initiatingPartyName: document.getElementById('initiatingPartyName').value,
+                pmtInfId: document.getElementById('pmtInfId').value,
+                pmtMtd: document.getElementById('pmtMtd').value,
+                reqdExctnDt: document.getElementById('reqdExctnDt').value,
+                debtorName: document.getElementById('debtorName').value,
+                debtorIBAN: document.getElementById('debtorIBAN').value,
+                debtorBIC: document.getElementById('debtorBIC').value,
+                transactions: transactions
+            };
+        }
+
+        function validateData(data) {
+            const errors = [];
+
+            if (!data.msgId) errors.push('Message ID is required');
+            if (!data.creationDateTime) errors.push('Creation Date/Time is required');
+            if (!data.initiatingPartyName) errors.push('Initiating Party Name is required');
+            if (!data.pmtInfId) errors.push('Payment Information ID is required');
+            if (!data.reqdExctnDt) errors.push('Requested Execution Date is required');
+            if (!data.debtorName) errors.push('Debtor Name is required');
+            if (!data.debtorIBAN) errors.push('Debtor IBAN is required');
+
+            data.transactions.forEach((tx, index) => {
+                if (!tx.endToEndId) errors.push(`Transaction ${index + 1}: End-to-End ID is required`);
+                if (!tx.amount || parseFloat(tx.amount) <= 0) errors.push(`Transaction ${index + 1}: Valid amount is required`);
+                if (!tx.creditorName) errors.push(`Transaction ${index + 1}: Creditor Name is required`);
+                if (!tx.creditorIBAN) errors.push(`Transaction ${index + 1}: Creditor IBAN is required`);
+            });
+
+            return errors;
+        }
+
+        function generateXML() {
+            const data = collectFormData();
+            const errors = validateData(data);
+
+            if (errors.length > 0) {
+                showMessage('Please fix the following errors:\n• ' + errors.join('\n• '), 'error');
+                return;
+            }
+
+            const namespace = getNamespace(data.messageType);
+            const rootElement = getRootElement(data.messageType);
+            const creationDt = new Date(data.creationDateTime).toISOString();
+            const execDt = data.reqdExctnDt;
+
+            // Calculate control sum
+            const controlSum = data.transactions.reduce((sum, tx) => sum + parseFloat(tx.amount || 0), 0).toFixed(2);
+
+            let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+            xml += `<Document xmlns="${namespace}" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n`;
+            xml += `  <${rootElement}>\n`;
+            xml += `    <GrpHdr>\n`;
+            xml += `      <MsgId>${escapeXml(data.msgId)}</MsgId>\n`;
+            xml += `      <CreDtTm>${creationDt}</CreDtTm>\n`;
+            xml += `      <NbOfTxs>${data.numberOfTxs}</NbOfTxs>\n`;
+            xml += `      <CtrlSum>${controlSum}</CtrlSum>\n`;
+            xml += `      <InitgPty>\n`;
+            xml += `        <Nm>${escapeXml(data.initiatingPartyName)}</Nm>\n`;
+            xml += `      </InitgPty>\n`;
+            xml += `    </GrpHdr>\n`;
+            xml += `    <PmtInf>\n`;
+            xml += `      <PmtInfId>${escapeXml(data.pmtInfId)}</PmtInfId>\n`;
+            xml += `      <PmtMtd>${data.pmtMtd}</PmtMtd>\n`;
+            xml += `      <BtchBookg>true</BtchBookg>\n`;
+            xml += `      <NbOfTxs>${data.numberOfTxs}</NbOfTxs>\n`;
+            xml += `      <CtrlSum>${controlSum}</CtrlSum>\n`;
+            xml += `      <ReqdExctnDt>${execDt}</ReqdExctnDt>\n`;
+            xml += `      <Dbtr>\n`;
+            xml += `        <Nm>${escapeXml(data.debtorName)}</Nm>\n`;
+            xml += `      </Dbtr>\n`;
+            xml += `      <DbtrAcct>\n`;
+            xml += `        <Id>\n`;
+            xml += `          <IBAN>${data.debtorIBAN}</IBAN>\n`;
+            xml += `        </Id>\n`;
+            xml += `      </DbtrAcct>\n`;
+            if (data.debtorBIC) {
+                xml += `      <DbtrAgt>\n`;
+                xml += `        <FinInstnId>\n`;
+                xml += `          <BIC>${data.debtorBIC}</BIC>\n`;
+                xml += `        </FinInstnId>\n`;
+                xml += `      </DbtrAgt>\n`;
+            }
+
+            // Add transactions
+            data.transactions.forEach(tx => {
+                xml += `      <CdtTrfTxInf>\n`;
+                xml += `        <PmtId>\n`;
+                xml += `          <EndToEndId>${escapeXml(tx.endToEndId)}</EndToEndId>\n`;
+                xml += `        </PmtId>\n`;
+                xml += `        <Amt>\n`;
+                xml += `          <InstdAmt Ccy="${tx.currency}">${parseFloat(tx.amount).toFixed(2)}</InstdAmt>\n`;
+                xml += `        </Amt>\n`;
+                if (tx.creditorBIC) {
+                    xml += `        <CdtrAgt>\n`;
+                    xml += `          <FinInstnId>\n`;
+                    xml += `            <BIC>${tx.creditorBIC}</BIC>\n`;
+                    xml += `          </FinInstnId>\n`;
+                    xml += `        </CdtrAgt>\n`;
+                }
+                xml += `        <Cdtr>\n`;
+                xml += `          <Nm>${escapeXml(tx.creditorName)}</Nm>\n`;
+                xml += `        </Cdtr>\n`;
+                xml += `        <CdtrAcct>\n`;
+                xml += `          <Id>\n`;
+                xml += `            <IBAN>${tx.creditorIBAN}</IBAN>\n`;
+                xml += `          </Id>\n`;
+                xml += `        </CdtrAcct>\n`;
+                if (tx.remittanceInfo) {
+                    xml += `        <RmtInf>\n`;
+                    xml += `          <Ustrd>${escapeXml(tx.remittanceInfo)}</Ustrd>\n`;
+                    xml += `        </RmtInf>\n`;
+                }
+                xml += `      </CdtTrfTxInf>\n`;
+            });
+
+            xml += `    </PmtInf>\n`;
+            xml += `  </${rootElement}>\n`;
+            xml += `</Document>`;
+
+            document.getElementById('xmlOutput').textContent = xml;
+            showMessage('XML generated successfully!', 'success');
+        }
+
+        function generateJSON() {
+            const data = collectFormData();
+            const errors = validateData(data);
+
+            if (errors.length > 0) {
+                showMessage('Please fix the following errors:\n• ' + errors.join('\n• '), 'error');
+                return;
+            }
+
+            const namespace = getNamespace(data.messageType);
+            const rootElement = getRootElement(data.messageType);
+            const creationDt = new Date(data.creationDateTime).toISOString();
+            const controlSum = data.transactions.reduce((sum, tx) => sum + parseFloat(tx.amount || 0), 0).toFixed(2);
+
+            const jsonData = {
+                Document: {
+                    "@xmlns": namespace,
+                    [rootElement]: {
+                        GrpHdr: {
+                            MsgId: data.msgId,
+                            CreDtTm: creationDt,
+                            NbOfTxs: data.numberOfTxs,
+                            CtrlSum: controlSum,
+                            InitgPty: {
+                                Nm: data.initiatingPartyName
+                            }
+                        },
+                        PmtInf: {
+                            PmtInfId: data.pmtInfId,
+                            PmtMtd: data.pmtMtd,
+                            BtchBookg: true,
+                            NbOfTxs: data.numberOfTxs,
+                            CtrlSum: controlSum,
+                            ReqdExctnDt: data.reqdExctnDt,
+                            Dbtr: {
+                                Nm: data.debtorName
+                            },
+                            DbtrAcct: {
+                                Id: {
+                                    IBAN: data.debtorIBAN
+                                }
+                            },
+                            ...(data.debtorBIC && {
+                                DbtrAgt: {
+                                    FinInstnId: {
+                                        BIC: data.debtorBIC
+                                    }
+                                }
+                            }),
+                            CdtTrfTxInf: data.transactions.map(tx => ({
+                                PmtId: {
+                                    EndToEndId: tx.endToEndId
+                                },
+                                Amt: {
+                                    InstdAmt: {
+                                        "@Ccy": tx.currency,
+                                        "#text": parseFloat(tx.amount).toFixed(2)
+                                    }
+                                },
+                                ...(tx.creditorBIC && {
+                                    CdtrAgt: {
+                                        FinInstnId: {
+                                            BIC: tx.creditorBIC
+                                        }
+                                    }
+                                }),
+                                Cdtr: {
+                                    Nm: tx.creditorName
+                                },
+                                CdtrAcct: {
+                                    Id: {
+                                        IBAN: tx.creditorIBAN
+                                    }
+                                },
+                                ...(tx.remittanceInfo && {
+                                    RmtInf: {
+                                        Ustrd: tx.remittanceInfo
+                                    }
+                                })
+                            }))
+                        }
+                    }
+                }
+            };
+
+            const json = JSON.stringify(jsonData, null, 2);
+            document.getElementById('jsonOutput').textContent = json;
+            showMessage('JSON generated successfully!', 'success');
+        }
+
+        function getNamespace(messageType) {
+            const namespaces = {
+                'pain.001.001.03': 'urn:iso:std:iso:20022:tech:xsd:pain.001.001.03',
+                'pacs.008.001.02': 'urn:iso:std:iso:20022:tech:xsd:pacs.008.001.02',
+                'camt.053.001.02': 'urn:iso:std:iso:20022:tech:xsd:camt.053.001.02'
+            };
+            return namespaces[messageType] || namespaces['pain.001.001.03'];
+        }
+
+        function getRootElement(messageType) {
+            const elements = {
+                'pain.001.001.03': 'CstmrCdtTrfInitn',
+                'pacs.008.001.02': 'FIToFICstmrCdtTrf',
+                'camt.053.001.02': 'BkToCstmrStmt'
+            };
+            return elements[messageType] || elements['pain.001.001.03'];
+        }
+
+        function escapeXml(str) {
+            if (!str) return '';
+            return str
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&apos;');
+        }
+
+        function loadSampleData() {
+            document.getElementById('msgId').value = 'MSG-20240101-001';
+            document.getElementById('initiatingPartyName').value = 'ABC Corporation Ltd';
+            document.getElementById('pmtInfId').value = 'PMT-20240101-001';
+            document.getElementById('debtorName').value = 'John Doe';
+            document.getElementById('debtorIBAN').value = 'GB29NWBK60161331926819';
+            document.getElementById('debtorBIC').value = 'NWBKGB2L';
+
+            const container = document.querySelector('[data-transaction="1"]');
+            container.querySelector('.endToEndId').value = 'E2E-20240101-001';
+            container.querySelector('.amount').value = '1250.50';
+            container.querySelector('.currency').value = 'EUR';
+            container.querySelector('.creditorName').value = 'Jane Smith';
+            container.querySelector('.creditorIBAN').value = 'DE89370400440532013000';
+            container.querySelector('.creditorBIC').value = 'COBADEFFXXX';
+            container.querySelector('.remittanceInfo').value = 'Invoice INV-2024-001';
+
+            showMessage('Sample data loaded successfully!', 'success');
+        }
+
+        function copyToClipboard(elementId) {
+            const output = document.getElementById(elementId).textContent;
+            if (!output || output.includes('will appear here')) {
+                showMessage('No output to copy', 'error');
+                return;
+            }
+
+            navigator.clipboard.writeText(output).then(() => {
+                showMessage('Copied to clipboard!', 'success');
+            }).catch(err => {
+                showMessage('Failed to copy: ' + err.message, 'error');
+            });
+        }
+
+        function downloadOutput(format) {
+            const elementId = format === 'xml' ? 'xmlOutput' : 'jsonOutput';
+            const output = document.getElementById(elementId).textContent;
+
+            if (!output || output.includes('will appear here')) {
+                showMessage('No output to download', 'error');
+                return;
+            }
+
+            const messageType = document.getElementById('messageType').value.replace(/\./g, '_');
+            const timestamp = new Date().toISOString().slice(0, 10);
+            const filename = `iso20022_${messageType}_${timestamp}.${format}`;
+            const mimeType = format === 'xml' ? 'application/xml' : 'application/json';
+
+            const blob = new Blob([output], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            showMessage(`Downloaded as ${filename}`, 'success');
+        }
+
+        function clearAll() {
+            document.getElementById('msgId').value = '';
+            document.getElementById('initiatingPartyName').value = '';
+            document.getElementById('pmtInfId').value = '';
+            document.getElementById('debtorName').value = '';
+            document.getElementById('debtorIBAN').value = '';
+            document.getElementById('debtorBIC').value = '';
+
+            // Remove all but first transaction
+            const transactions = document.querySelectorAll('.transaction-container');
+            for (let i = 1; i < transactions.length; i++) {
+                transactions[i].remove();
+            }
+
+            // Clear first transaction
+            const firstTx = document.querySelector('[data-transaction="1"]');
+            firstTx.querySelector('.endToEndId').value = '';
+            firstTx.querySelector('.amount').value = '';
+            firstTx.querySelector('.creditorName').value = '';
+            firstTx.querySelector('.creditorIBAN').value = '';
+            firstTx.querySelector('.creditorBIC').value = '';
+            firstTx.querySelector('.remittanceInfo').value = '';
+
+            document.getElementById('xmlOutput').textContent = 'XML output will appear here...';
+            document.getElementById('jsonOutput').textContent = 'JSON output will appear here...';
+
+            updateNumberOfTransactions();
+            updateRemoveButtons();
+            initializeDates();
+
+            showMessage('All fields cleared', 'info');
+        }
+
+        function showMessage(text, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.innerHTML = `<div class="message ${type}">${text.replace(/\n/g, '<br>')}</div>`;
+            setTimeout(() => {
+                messageDiv.innerHTML = '';
+            }, 5000);
+        }
+
+        // Initialize on page load
+        initializeDates();
+        updateMessageTypeInfo();
+    </script>
+</body>
+</html>
