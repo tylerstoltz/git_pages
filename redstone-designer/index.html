@@ -392,8 +392,18 @@
             link.click();
         });
 
+        // Helper function to get canvas coordinates
+        function getCanvasCoords(e) {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            return { x, y };
+        }
+
         // Canvas interaction
         canvas.addEventListener('mousedown', (e) => {
+            const coords = getCanvasCoords(e);
+
             if (e.button === 1) { // Middle button
                 isPanning = true;
                 panStartX = e.clientX - offsetX;
@@ -401,8 +411,8 @@
                 canvas.style.cursor = 'grabbing';
                 e.preventDefault();
             } else if (e.button === 0) { // Left button
-                const gridX = Math.floor((e.offsetX - offsetX) / (gridSize * scale));
-                const gridY = Math.floor((e.offsetY - offsetY) / (gridSize * scale));
+                const gridX = Math.floor((coords.x - offsetX) / (gridSize * scale));
+                const gridY = Math.floor((coords.y - offsetY) / (gridSize * scale));
 
                 // Check if clicking on existing component
                 const clickedComponent = components.find(c => c.x === gridX && c.y === gridY);
@@ -415,8 +425,8 @@
                     placeComponent(gridX, gridY);
                 }
             } else if (e.button === 2) { // Right button
-                const gridX = Math.floor((e.offsetX - offsetX) / (gridSize * scale));
-                const gridY = Math.floor((e.offsetY - offsetY) / (gridSize * scale));
+                const gridX = Math.floor((coords.x - offsetX) / (gridSize * scale));
+                const gridY = Math.floor((coords.y - offsetY) / (gridSize * scale));
                 deleteComponent(gridX, gridY);
             }
         });
@@ -442,12 +452,13 @@
 
         canvas.addEventListener('wheel', (e) => {
             e.preventDefault();
+            const coords = getCanvasCoords(e);
             const delta = e.deltaY > 0 ? 0.9 : 1.1;
             const newScale = Math.max(0.5, Math.min(3, scale * delta));
 
             // Zoom towards mouse position
-            const mouseX = e.offsetX;
-            const mouseY = e.offsetY;
+            const mouseX = coords.x;
+            const mouseY = coords.y;
             const worldX = (mouseX - offsetX) / scale;
             const worldY = (mouseY - offsetY) / scale;
 
