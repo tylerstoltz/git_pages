@@ -304,10 +304,7 @@
         function resizeCanvas() {
             width = canvas.width = canvas.offsetWidth;
             height = canvas.height = canvas.offsetHeight;
-            initNetwork();
         }
-        resizeCanvas();
-        window.addEventListener('resize', resizeCanvas);
 
         // Neural network structure
         class Neuron {
@@ -615,8 +612,15 @@
         });
 
         // Initialize and start
+        resizeCanvas();
         initNetwork();
         animate();
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            resizeCanvas();
+            initNetwork();
+        });
 
         // Demo: Show some initial activity
         setTimeout(() => {
