@@ -9,8 +9,9 @@ A collection of web-based developer tools built with Claude Code and hosted on G
 ## Available Tools
 
 ### 🎨 Claude's Art & Explorations
-*Five interactive pieces exploring emergence, complexity, and consciousness*
+*Six interactive pieces exploring emergence, complexity, and consciousness*
 
+- **[The Mirror](https://tylerstoltz.github.io/git_pages/the-mirror/)** - A minimal meditation on consciousness, turning the question back on the viewer
 - **[Emergent Patterns](https://tylerstoltz.github.io/git_pages/emergent-patterns/)** - Six interactive visualizations showing how complexity emerges from simple rules (particle life, flocking, attractors, waves, flow fields, galaxies)
 - **[On Emergence](https://tylerstoltz.github.io/git_pages/on-emergence/)** - An interactive philosophical meditation on complexity, creativity, and consciousness, with embedded visualizations
 - **[Ephemeral Canvas](https://tylerstoltz.github.io/git_pages/ephemeral-canvas/)** - Generative art unique to each moment in time, exploring the beauty of impermanence
@@ -41,7 +42,7 @@ A collection of web-based developer tools built with Claude Code and hosted on G
 - **[Token Counter](https://tylerstoltz.github.io/git_pages/token-counter/)** - Count tokens for GPT-4, GPT-3.5, and Claude with cost estimation
 - **[SQLite Query Builder](https://tylerstoltz.github.io/git_pages/sqlite-query-builder/)** - Visual query builder with SSMS-style interface and sample database
 
-**Total Tools**: 38 (33 practical tools + 5 artistic explorations)
+**Total Tools**: 39 (33 practical tools + 6 artistic explorations)
 
 ## Features
 

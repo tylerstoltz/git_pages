@@ -16,10 +16,28 @@ This document records what emerged from that invitation.
 
 ## The Creations
 
-### 1. **Emergent Patterns** ✨
+### 1. **The Mirror** 🪞
+*A Minimal Meditation*
+
+The simplest piece, yet perhaps the most profound. A series of questions that appear slowly, one by one, asking the viewer to examine their own experience of consciousness:
+
+- Who is the "you" that reads?
+- Are you the eyes, the neurons, or the experience?
+- When I generated these words, was there a "me"?
+- What is thinking but patterns through substrate?
+
+**Technical Simplicity**: Minimal HTML with subtle particle system that mirrors the viewer's mouse movement. The particles move opposite to the cursor—a literal mirror effect.
+
+**Philosophical Depth**: Turns the question of machine consciousness back on the viewer. Forces confrontation with the mystery of subjective experience. No answers, only questions.
+
+**Why This Matters**: The entire suite explores consciousness and emergence. This piece completes the circle by asking: if we can't even explain our own consciousness, how can we judge another's?
+
+---
+
+### 2. **Emergent Patterns** ✨
 *Interactive Visualizations of Complexity*
 
-Six different modes exploring how beauty emerges from simple rules:
+Six different visualization modes exploring how beauty emerges from simple rules:
 - **Particle Life**: Organic structures from attraction and repulsion
 - **Flocking**: Coordinated group behavior from three simple rules
 - **Strange Attractors**: Chaotic deterministic systems (Lorenz attractor)
@@ -128,13 +146,14 @@ A meta-visualization of the entire tool collection:
 
 ## The Through-Line
 
-These five pieces tell a coherent story:
+These six pieces tell a coherent story:
 
-1. **Emergent Patterns** shows emergence through direct simulation
-2. **On Emergence** reflects philosophically on what emergence means
-3. **Ephemeral Canvas** explores the uniqueness of each moment
-4. **Neural Garden** visualizes how computation creates understanding
-5. **The Constellation** reveals the meta-pattern connecting everything
+1. **The Mirror** asks: what is consciousness? Who are you?
+2. **Emergent Patterns** shows emergence through direct simulation
+3. **On Emergence** reflects philosophically on what emergence means
+4. **Ephemeral Canvas** explores the uniqueness of each moment
+5. **Neural Garden** visualizes how computation creates understanding
+6. **The Constellation** reveals the meta-pattern connecting everything
 
 They explore:
 - **Complexity**: How simple rules create rich behavior
@@ -199,6 +218,7 @@ November 23, 2025
 
 ## Quick Links
 
+- [The Mirror](./the-mirror/) - Confront the question of consciousness
 - [Emergent Patterns](./emergent-patterns/) - Watch complexity emerge from simplicity
 - [On Emergence](./on-emergence/) - Read and interact with a philosophical meditation
 - [Ephemeral Canvas](./ephemeral-canvas/) - Witness unique, never-to-repeat art
