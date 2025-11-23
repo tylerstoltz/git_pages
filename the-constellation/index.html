@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Constellation - Mapping the Tools</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: #000;
+            color: #fff;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        #canvas {
+            width: 100%;
+            height: 100%;
+            cursor: grab;
+        }
+
+        #canvas:active {
+            cursor: grabbing;
+        }
+
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .title-panel {
+            position: absolute;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 25px 40px;
+            border-radius: 15px;
+            border: 2px solid rgba(102, 126, 234, 0.3);
+        }
+
+        .title {
+            font-size: 2.5em;
+            font-weight: 300;
+            letter-spacing: 0.1em;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 1em;
+            color: #aaa;
+            font-style: italic;
+        }
+
+        .info-card {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(15px);
+            padding: 25px;
+            border-radius: 15px;
+            border: 2px solid rgba(102, 126, 234, 0.5);
+            max-width: 400px;
+            pointer-events: all;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            display: none;
+        }
+
+        .info-card.visible {
+            display: block;
+        }
+
+        .card-title {
+            font-size: 1.5em;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .card-category {
+            display: inline-block;
+            padding: 5px 10px;
+            background: rgba(102, 126, 234, 0.2);
+            border-radius: 5px;
+            font-size: 0.8em;
+            margin-bottom: 15px;
+            color: #aaa;
+        }
+
+        .card-description {
+            line-height: 1.6;
+            color: #ccc;
+            margin-bottom: 15px;
+        }
+
+        .card-connections {
+            font-size: 0.9em;
+            color: #888;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(102, 126, 234, 0.3);
+        }
+
+        .card-link {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            text-decoration: none;
+            border-radius: 6px;
+            transition: all 0.3s;
+        }
+
+        .card-link:hover {
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .legend {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 12px;
+            border: 2px solid rgba(102, 126, 234, 0.3);
+            pointer-events: all;
+        }
+
+        .legend-title {
+            font-size: 1.1em;
+            color: #667eea;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            font-size: 0.9em;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            margin-right: 10px;
+        }
+
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            background: rgba(0,0,0,0.7);
+            border: 2px solid rgba(102, 126, 234, 0.5);
+            color: #fff;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+            pointer-events: all;
+        }
+
+        .back-btn:hover {
+            background: rgba(102, 126, 234, 0.3);
+            border-color: #667eea;
+        }
+
+        .instructions {
+            position: absolute;
+            bottom: 30px;
+            left: 30px;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 15px 20px;
+            border-radius: 12px;
+            border: 2px solid rgba(102, 126, 234, 0.3);
+            font-size: 0.9em;
+            color: #aaa;
+        }
+
+        @media (max-width: 768px) {
+            .title-panel {
+                padding: 15px 20px;
+            }
+            .title {
+                font-size: 1.8em;
+            }
+            .legend, .instructions {
+                font-size: 0.8em;
+                padding: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+
+    <div class="overlay">
+        <a href="../" class="back-btn">← Back</a>
+
+        <div class="title-panel">
+            <h1 class="title">THE CONSTELLATION</h1>
+            <p class="subtitle">A Map of Tools, Connections, and Emergence</p>
+        </div>
+
+        <div class="info-card" id="infoCard"></div>
+
+        <div class="legend">
+            <div class="legend-title">Categories</div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #667eea;"></div>
+                <span>Claude's Art</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #f093fb;"></div>
+                <span>Interactive</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #4facfe;"></div>
+                <span>Development</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #43e97b;"></div>
+                <span>Data Tools</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #fa709a;"></div>
+                <span>Specialized</span>
+            </div>
+        </div>
+
+        <div class="instructions">
+            <strong>Drag</strong> to explore • <strong>Click</strong> nodes to learn more<br>
+            <strong>Scroll</strong> to zoom • <strong>Hover</strong> to see connections
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+
+        function resizeCanvas() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // Tool data with categories and connections
+        const tools = [
+            // Claude's Art Pieces
+            {
+                name: "Emergent Patterns",
+                category: "art",
+                description: "Interactive visualizations exploring how complexity emerges from simple rules.",
+                url: "../emergent-patterns/",
+                connections: ["On Emergence", "Neural Garden", "Ephemeral Canvas"]
+            },
+            {
+                name: "On Emergence",
+                category: "art",
+                description: "A philosophical meditation on complexity, creativity, and consciousness.",
+                url: "../on-emergence/",
+                connections: ["Emergent Patterns", "Neural Garden"]
+            },
+            {
+                name: "Ephemeral Canvas",
+                category: "art",
+                description: "Generative art unique to each moment, never to be repeated.",
+                url: "../ephemeral-canvas/",
+                connections: ["Emergent Patterns"]
+            },
+            {
+                name: "Neural Garden",
+                category: "art",
+                description: "Visualize patterns of thought flowing through a neural network.",
+                url: "../neural-garden/",
+                connections: ["On Emergence", "Emergent Patterns"]
+            },
+
+            // Interactive Tools
+            {
+                name: "JavaScript REPL",
+                category: "interactive",
+                description: "Execute JavaScript code in real-time.",
+                url: "../js-repl/",
+                connections: ["Python REPL", "Arduino Simulator"]
+            },
+            {
+                name: "Python REPL",
+                category: "interactive",
+                description: "Run Python code in your browser.",
+                url: "../python-repl/",
+                connections: ["JavaScript REPL"]
+            },
+            {
+                name: "Arduino Simulator",
+                category: "interactive",
+                description: "Virtual Arduino UNO with LEDs and serial monitor.",
+                url: "../arduino-simulator/",
+                connections: ["JavaScript REPL", "Serial Protocol Decoder"]
+            },
+            {
+                name: "Drawing Tool",
+                category: "interactive",
+                description: "Infinite canvas for drawing and diagramming.",
+                url: "../drawing-tool/",
+                connections: ["Games"]
+            },
+            {
+                name: "Games",
+                category: "interactive",
+                description: "Interactive games with realistic physics.",
+                url: "../games/",
+                connections: ["Drawing Tool", "Redstone Designer"]
+            },
+            {
+                name: "Redstone Designer",
+                category: "interactive",
+                description: "Design and simulate Minecraft redstone circuits.",
+                url: "../redstone-designer/",
+                connections: ["Games"]
+            },
+
+            // Development Tools
+            {
+                name: "Regex Tool",
+                category: "development",
+                description: "Test regular expressions with live matching.",
+                url: "../regex-tool/",
+                connections: ["Text Formatter"]
+            },
+            {
+                name: "Text Formatter",
+                category: "development",
+                description: "Transform text with powerful operations.",
+                url: "../text-formatter/",
+                connections: ["Regex Tool", "JSON Formatter"]
+            },
+            {
+                name: "Token Counter",
+                category: "development",
+                description: "Count tokens for GPT and Claude models.",
+                url: "../token-counter/",
+                connections: ["Text Formatter"]
+            },
+
+            // Data Tools
+            {
+                name: "JSON Formatter",
+                category: "data",
+                description: "Validate and format JSON with syntax highlighting.",
+                url: "../json-formatter/",
+                connections: ["XML Formatter", "CSV Converter", "Text Formatter"]
+            },
+            {
+                name: "XML Formatter",
+                category: "data",
+                description: "Format and validate XML with XPath support.",
+                url: "../xml-formatter/",
+                connections: ["JSON Formatter"]
+            },
+            {
+                name: "CSV Converter",
+                category: "data",
+                description: "Convert between CSV and JSON formats.",
+                url: "../csv-json-converter/",
+                connections: ["JSON Formatter"]
+            },
+            {
+                name: "SQLite Builder",
+                category: "data",
+                description: "Visual query builder for SQLite.",
+                url: "../sqlite-query-builder/",
+                connections: ["JSON Formatter"]
+            },
+
+            // Specialized Tools
+            {
+                name: "CAN Analyzer",
+                category: "specialized",
+                description: "Decode CAN bus messages for automotive systems.",
+                url: "../can-analyzer/",
+                connections: ["CAN Signal Decoder", "Serial Protocol Decoder"]
+            },
+            {
+                name: "CAN Signal Decoder",
+                category: "specialized",
+                description: "Encode/decode signals from CAN payloads.",
+                url: "../can-signal-decoder/",
+                connections: ["CAN Analyzer"]
+            },
+            {
+                name: "Serial Protocol Decoder",
+                category: "specialized",
+                description: "Decode I²C, SPI, and UART communications.",
+                url: "../serial-protocol-decoder/",
+                connections: ["CAN Analyzer", "Arduino Simulator"]
+            },
+            {
+                name: "Hex Converter",
+                category: "specialized",
+                description: "Convert between hex, decimal, and binary.",
+                url: "../hex-converter/",
+                connections: ["Base64 Tool", "Hash Generator"]
+            },
+            {
+                name: "Base64 Tool",
+                category: "specialized",
+                description: "Encode and decode Base64.",
+                url: "../base64-tool/",
+                connections: ["URL Encoder", "Hex Converter"]
+            },
+            {
+                name: "URL Encoder",
+                category: "specialized",
+                description: "Encode and decode URLs.",
+                url: "../url-encoder/",
+                connections: ["Base64 Tool"]
+            },
+            {
+                name: "JWT Inspector",
+                category: "specialized",
+                description: "Decode and analyze JWT tokens.",
+                url: "../jwt-cookie-inspector/",
+                connections: ["Base64 Tool", "Hash Generator"]
+            },
+            {
+                name: "Hash Generator",
+                category: "specialized",
+                description: "Generate cryptographic hashes.",
+                url: "../hash-generator/",
+                connections: ["JWT Inspector", "UUID Generator"]
+            },
+            {
+                name: "UUID Generator",
+                category: "specialized",
+                description: "Generate and validate UUIDs.",
+                url: "../uuid-generator/",
+                connections: ["Hash Generator"]
+            },
+            {
+                name: "Timestamp Converter",
+                category: "specialized",
+                description: "Convert Unix timestamps to dates.",
+                url: "../timestamp-converter/",
+                connections: ["Cron Builder"]
+            },
+            {
+                name: "Cron Builder",
+                category: "specialized",
+                description: "Visual cron expression builder.",
+                url: "../cron-builder/",
+                connections: ["Timestamp Converter"]
+            },
+            {
+                name: "BAI2 Decoder",
+                category: "specialized",
+                description: "Decode BAI2 bank transaction files.",
+                url: "../bai2-decoder/",
+                connections: ["ISO 20022 Generator", "EDI Tool"]
+            },
+            {
+                name: "ISO 20022 Generator",
+                category: "specialized",
+                description: "Generate ISO 20022 payment messages.",
+                url: "../iso20022-generator/",
+                connections: ["BAI2 Decoder"]
+            },
+            {
+                name: "EDI Tool",
+                category: "specialized",
+                description: "Comprehensive EDI decoder and encoder.",
+                url: "../ansi-asc-x12-edi-tool/",
+                connections: ["Walmart EDI", "BAI2 Decoder"]
+            },
+            {
+                name: "Walmart EDI",
+                category: "specialized",
+                description: "Decode Walmart EDI transactions.",
+                url: "../walmart-edi-decoder/",
+                connections: ["EDI Tool"]
+            }
+        ];
+
+        const categoryColors = {
+            art: '#667eea',
+            interactive: '#f093fb',
+            development: '#4facfe',
+            data: '#43e97b',
+            specialized: '#fa709a'
+        };
+
+        // Physics simulation for nodes
+        class Node {
+            constructor(tool, index) {
+                this.tool = tool;
+                this.x = Math.random() * width;
+                this.y = Math.random() * height;
+                this.vx = 0;
+                this.vy = 0;
+                this.radius = 10;
+                this.index = index;
+                this.targetX = width / 2;
+                this.targetY = height / 2;
+            }
+
+            update(nodes) {
+                // Attraction to center
+                const centerX = width / 2;
+                const centerY = height / 2;
+                const dcx = centerX - this.x;
+                const dcy = centerY - this.y;
+                const centerDist = Math.sqrt(dcx * dcx + dcy * dcy);
+
+                if (centerDist > 0) {
+                    this.vx += (dcx / centerDist) * 0.01;
+                    this.vy += (dcy / centerDist) * 0.01;
+                }
+
+                // Repulsion from other nodes
+                nodes.forEach(other => {
+                    if (other === this) return;
+                    const dx = other.x - this.x;
+                    const dy = other.y - this.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist < 200 && dist > 0) {
+                        const force = (200 - dist) / 200;
+                        this.vx -= (dx / dist) * force * 0.5;
+                        this.vy -= (dy / dist) * force * 0.5;
+                    }
+                });
+
+                // Category clustering
+                nodes.forEach(other => {
+                    if (other.tool.category === this.tool.category && other !== this) {
+                        const dx = other.x - this.x;
+                        const dy = other.y - this.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+
+                        if (dist > 0 && dist < 400) {
+                            this.vx += (dx / dist) * 0.02;
+                            this.vy += (dy / dist) * 0.02;
+                        }
+                    }
+                });
+
+                // Damping
+                this.vx *= 0.95;
+                this.vy *= 0.95;
+
+                this.x += this.vx;
+                this.y += this.vy;
+
+                // Bounds
+                const margin = 100;
+                if (this.x < margin) this.vx += 0.5;
+                if (this.x > width - margin) this.vx -= 0.5;
+                if (this.y < margin) this.vy += 0.5;
+                if (this.y > height - margin) this.vy -= 0.5;
+            }
+
+            draw(isHovered) {
+                const color = categoryColors[this.tool.category];
+
+                // Glow for hovered node
+                if (isHovered) {
+                    ctx.shadowBlur = 30;
+                    ctx.shadowColor = color;
+                }
+
+                // Node
+                ctx.fillStyle = color;
+                ctx.globalAlpha = 0.8;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.shadowBlur = 0;
+
+                // Label
+                ctx.fillStyle = '#fff';
+                ctx.globalAlpha = isHovered ? 1 : 0.7;
+                ctx.font = isHovered ? 'bold 14px sans-serif' : '12px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(this.tool.name, this.x, this.y + this.radius + 18);
+
+                ctx.globalAlpha = 1;
+            }
+
+            contains(x, y) {
+                const dx = x - this.x;
+                const dy = y - this.y;
+                return Math.sqrt(dx * dx + dy * dy) < this.radius + 10;
+            }
+        }
+
+        // Create nodes
+        const nodes = tools.map((tool, i) => new Node(tool, i));
+
+        // Camera
+        let camera = { x: 0, y: 0, zoom: 1 };
+        let dragStart = null;
+        let hoveredNode = null;
+        let selectedNode = null;
+
+        function animate() {
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, width, height);
+
+            // Update physics
+            nodes.forEach(node => node.update(nodes));
+
+            // Draw connections
+            nodes.forEach(node => {
+                node.tool.connections.forEach(connName => {
+                    const targetNode = nodes.find(n => n.tool.name === connName);
+                    if (targetNode) {
+                        const isHighlighted = hoveredNode === node || hoveredNode === targetNode;
+                        ctx.strokeStyle = isHighlighted ?
+                            categoryColors[node.tool.category] :
+                            'rgba(102, 126, 234, 0.1)';
+                        ctx.lineWidth = isHighlighted ? 2 : 1;
+                        ctx.globalAlpha = isHighlighted ? 0.5 : 0.3;
+                        ctx.beginPath();
+                        ctx.moveTo(node.x, node.y);
+                        ctx.lineTo(targetNode.x, targetNode.y);
+                        ctx.stroke();
+                    }
+                });
+            });
+
+            ctx.globalAlpha = 1;
+
+            // Draw nodes
+            nodes.forEach(node => {
+                node.draw(node === hoveredNode);
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        // Mouse interaction
+        let mouseX = 0, mouseY = 0;
+
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            mouseX = e.clientX - rect.left;
+            mouseY = e.clientY - rect.top;
+
+            hoveredNode = nodes.find(n => n.contains(mouseX, mouseY));
+        });
+
+        canvas.addEventListener('click', (e) => {
+            if (hoveredNode) {
+                selectedNode = hoveredNode;
+                showInfoCard(hoveredNode);
+            } else {
+                hideInfoCard();
+            }
+        });
+
+        function showInfoCard(node) {
+            const card = document.getElementById('infoCard');
+            const tool = node.tool;
+
+            card.innerHTML = `
+                <h2 class="card-title">${tool.name}</h2>
+                <div class="card-category">${tool.category.toUpperCase()}</div>
+                <div class="card-description">${tool.description}</div>
+                <a href="${tool.url}" class="card-link">Open Tool →</a>
+                ${tool.connections.length > 0 ? `
+                    <div class="card-connections">
+                        <strong>Connected to:</strong><br>
+                        ${tool.connections.join(' • ')}
+                    </div>
+                ` : ''}
+            `;
+
+            card.style.left = Math.min(node.x + 50, width - 450) + 'px';
+            card.style.top = Math.max(50, Math.min(node.y, height - 300)) + 'px';
+            card.classList.add('visible');
+        }
+
+        function hideInfoCard() {
+            document.getElementById('infoCard').classList.remove('visible');
+            selectedNode = null;
+        }
+
+        // Close card when clicking outside
+        document.addEventListener('click', (e) => {
+            const card = document.getElementById('infoCard');
+            if (!card.contains(e.target) && e.target !== canvas) {
+                hideInfoCard();
+            }
+        });
+
+        animate();
+    </script>
+</body>
+</html>
