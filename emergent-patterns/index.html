@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emergent Patterns - Claude Code</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: #0a0a0a;
+            color: #fff;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+            position: relative;
+        }
+
+        #canvas {
+            flex: 1;
+            cursor: crosshair;
+            background: #000;
+        }
+
+        .controls {
+            width: 320px;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            padding: 20px;
+            overflow-y: auto;
+            box-shadow: -5px 0 15px rgba(0,0,0,0.5);
+        }
+
+        .header {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid rgba(102, 126, 234, 0.3);
+        }
+
+        .header h1 {
+            font-size: 1.8em;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            font-size: 0.85em;
+            color: #aaa;
+            line-height: 1.4;
+        }
+
+        .section {
+            margin-bottom: 25px;
+        }
+
+        .section-title {
+            font-size: 1.1em;
+            margin-bottom: 12px;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .mode-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .mode-btn {
+            padding: 10px;
+            background: rgba(102, 126, 234, 0.1);
+            border: 2px solid rgba(102, 126, 234, 0.3);
+            color: #fff;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.85em;
+            font-weight: 500;
+        }
+
+        .mode-btn:hover {
+            background: rgba(102, 126, 234, 0.2);
+            border-color: rgba(102, 126, 234, 0.5);
+        }
+
+        .mode-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-color: #667eea;
+            box-shadow: 0 0 15px rgba(102, 126, 234, 0.5);
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+        }
+
+        .control-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+            font-size: 0.85em;
+            color: #ccc;
+        }
+
+        .control-value {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(102, 126, 234, 0.2);
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            cursor: pointer;
+            box-shadow: 0 0 5px rgba(102, 126, 234, 0.5);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            margin-top: 8px;
+            background: rgba(102, 126, 234, 0.2);
+            border: 2px solid rgba(102, 126, 234, 0.4);
+            color: #fff;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+
+        .btn:hover {
+            background: rgba(102, 126, 234, 0.3);
+            border-color: rgba(102, 126, 234, 0.6);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-color: #667eea;
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 0 15px rgba(102, 126, 234, 0.5);
+        }
+
+        .color-schemes {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .color-chip {
+            width: 40px;
+            height: 40px;
+            border-radius: 6px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .color-chip:hover {
+            transform: scale(1.1);
+        }
+
+        .color-chip.active {
+            border-color: #fff;
+            box-shadow: 0 0 10px rgba(255,255,255,0.5);
+        }
+
+        .stats {
+            font-size: 0.8em;
+            color: #888;
+            line-height: 1.6;
+            padding: 12px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 6px;
+        }
+
+        .description {
+            font-size: 0.85em;
+            color: #999;
+            line-height: 1.5;
+            padding: 12px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 6px;
+            border-left: 3px solid #667eea;
+        }
+
+        .back-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            background: rgba(0,0,0,0.7);
+            border: 2px solid rgba(102, 126, 234, 0.5);
+            color: #fff;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+            z-index: 10;
+        }
+
+        .back-btn:hover {
+            background: rgba(102, 126, 234, 0.3);
+            border-color: #667eea;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column-reverse;
+            }
+            .controls {
+                width: 100%;
+                height: 50vh;
+            }
+            #canvas {
+                height: 50vh;
+            }
+            .back-btn {
+                top: 10px;
+                left: 10px;
+                padding: 8px 15px;
+                font-size: 0.9em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="../" class="back-btn">← Back to Tools</a>
+
+    <div class="container">
+        <canvas id="canvas"></canvas>
+
+        <div class="controls">
+            <div class="header">
+                <h1>Emergent Patterns</h1>
+                <p>Explore how complex, beautiful behaviors emerge from simple rules. Each mode demonstrates different emergence principles found in nature, mathematics, and complex systems.</p>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Pattern Mode</div>
+                <div class="mode-selector">
+                    <button class="mode-btn active" data-mode="particles">Particle Life</button>
+                    <button class="mode-btn" data-mode="flock">Flocking</button>
+                    <button class="mode-btn" data-mode="attractor">Attractors</button>
+                    <button class="mode-btn" data-mode="waves">Wave Field</button>
+                    <button class="mode-btn" data-mode="flow">Flow Field</button>
+                    <button class="mode-btn" data-mode="galaxy">Galaxy</button>
+                </div>
+            </div>
+
+            <div id="mode-description" class="description">
+                Particles with attraction and repulsion rules form organic, life-like structures. Different colored particles interact differently, creating emergent behaviors.
+            </div>
+
+            <div class="section" id="controls-container">
+                <!-- Dynamic controls will be inserted here -->
+            </div>
+
+            <div class="section">
+                <div class="section-title">Color Scheme</div>
+                <div class="color-schemes" id="color-schemes"></div>
+            </div>
+
+            <div class="section">
+                <button class="btn btn-primary" id="resetBtn">Reset Pattern</button>
+                <button class="btn" id="pauseBtn">Pause</button>
+                <button class="btn" id="saveBtn">Save as Image</button>
+            </div>
+
+            <div class="section">
+                <div class="stats" id="stats"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        let animationId;
+        let isPaused = false;
+        let currentMode = 'particles';
+        let particles = [];
+        let time = 0;
+
+        // Resize canvas
+        function resizeCanvas() {
+            width = canvas.width = canvas.offsetWidth;
+            height = canvas.height = canvas.offsetHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // Color schemes
+        const colorSchemes = {
+            cosmic: ['#667eea', '#764ba2', '#f093fb', '#4facfe'],
+            fire: ['#ff6b6b', '#ee5a6f', '#c44569', '#f8b500'],
+            ocean: ['#00d2ff', '#3a7bd5', '#00c9ff', '#92fe9d'],
+            aurora: ['#a8edea', '#fed6e3', '#d299c2', '#fef9d7'],
+            neon: ['#ff006e', '#8338ec', '#3a86ff', '#ffbe0b'],
+            forest: ['#38b000', '#008891', '#00587a', '#0f3057'],
+            sunset: ['#ff6a00', '#ee0979', '#ff0844', '#ffb199'],
+            matrix: ['#00ff41', '#00cc33', '#008f26', '#00ff88']
+        };
+        let currentScheme = 'cosmic';
+
+        // Mode descriptions
+        const modeDescriptions = {
+            particles: 'Particles with attraction and repulsion rules form organic, life-like structures. Different colored particles interact differently, creating emergent behaviors.',
+            flock: 'Individual agents follow three simple rules: separation, alignment, and cohesion. Complex flocking behavior emerges without central coordination.',
+            attractor: 'Deterministic chaos - points follow mathematical equations that create strange, never-repeating patterns. Small changes lead to dramatically different outcomes.',
+            waves: 'Multiple wave sources interfere with each other, creating complex standing wave patterns and interference effects.',
+            flow: 'Particles follow a Perlin noise flow field, creating organic, flowing patterns that evolve over time.',
+            galaxy: 'Gravitational simulation showing how spiral galaxies form from simple gravitational attraction and angular momentum.'
+        };
+
+        // Parameters for each mode
+        const modeParams = {
+            particles: {
+                count: { value: 500, min: 100, max: 2000, label: 'Particle Count' },
+                attraction: { value: 0.5, min: 0, max: 1, step: 0.01, label: 'Attraction' },
+                repulsion: { value: 0.3, min: 0, max: 1, step: 0.01, label: 'Repulsion' },
+                speed: { value: 0.5, min: 0.1, max: 2, step: 0.1, label: 'Speed' }
+            },
+            flock: {
+                count: { value: 200, min: 50, max: 500, label: 'Boid Count' },
+                separation: { value: 0.5, min: 0, max: 1, step: 0.01, label: 'Separation' },
+                alignment: { value: 0.5, min: 0, max: 1, step: 0.01, label: 'Alignment' },
+                cohesion: { value: 0.5, min: 0, max: 1, step: 0.01, label: 'Cohesion' }
+            },
+            attractor: {
+                speed: { value: 0.5, min: 0.1, max: 2, step: 0.1, label: 'Speed' },
+                scale: { value: 20, min: 5, max: 50, step: 1, label: 'Scale' },
+                trails: { value: 0.95, min: 0.8, max: 0.99, step: 0.01, label: 'Trail Length' },
+                chaos: { value: 0.5, min: 0, max: 1, step: 0.01, label: 'Chaos' }
+            },
+            waves: {
+                sources: { value: 5, min: 2, max: 12, label: 'Wave Sources' },
+                frequency: { value: 0.5, min: 0.1, max: 2, step: 0.1, label: 'Frequency' },
+                amplitude: { value: 0.5, min: 0.1, max: 1, step: 0.1, label: 'Amplitude' },
+                speed: { value: 0.5, min: 0.1, max: 2, step: 0.1, label: 'Wave Speed' }
+            },
+            flow: {
+                count: { value: 1000, min: 200, max: 3000, label: 'Particle Count' },
+                flowSpeed: { value: 0.5, min: 0.1, max: 2, step: 0.1, label: 'Flow Speed' },
+                noiseScale: { value: 0.5, min: 0.1, max: 1, step: 0.1, label: 'Turbulence' },
+                fadeSpeed: { value: 0.5, min: 0.1, max: 1, step: 0.1, label: 'Trail Fade' }
+            },
+            galaxy: {
+                count: { value: 800, min: 200, max: 2000, label: 'Star Count' },
+                gravity: { value: 0.5, min: 0.1, max: 1, step: 0.01, label: 'Gravity' },
+                spin: { value: 0.5, min: 0, max: 1, step: 0.01, label: 'Rotational Speed' },
+                spread: { value: 0.5, min: 0.1, max: 1, step: 0.01, label: 'Initial Spread' }
+            }
+        };
+
+        // Particle class
+        class Particle {
+            constructor(x, y, type = 0) {
+                this.x = x || Math.random() * width;
+                this.y = y || Math.random() * height;
+                this.vx = (Math.random() - 0.5) * 2;
+                this.vy = (Math.random() - 0.5) * 2;
+                this.type = type;
+                this.size = 2;
+                this.life = 1;
+            }
+
+            update(params) {
+                if (currentMode === 'particles') {
+                    this.updateParticleLife(params);
+                } else if (currentMode === 'flock') {
+                    this.updateFlock(params);
+                } else if (currentMode === 'flow') {
+                    this.updateFlow(params);
+                } else if (currentMode === 'galaxy') {
+                    this.updateGalaxy(params);
+                }
+
+                // Wrap around edges
+                if (this.x < 0) this.x = width;
+                if (this.x > width) this.x = 0;
+                if (this.y < 0) this.y = height;
+                if (this.y > height) this.y = 0;
+            }
+
+            updateParticleLife(params) {
+                const colors = colorSchemes[currentScheme];
+
+                // Interaction with other particles
+                particles.forEach(other => {
+                    if (other === this) return;
+
+                    const dx = other.x - this.x;
+                    const dy = other.y - this.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist > 0 && dist < 100) {
+                        const force = this.type === other.type ?
+                            params.attraction.value : -params.repulsion.value;
+
+                        this.vx += (dx / dist) * force * 0.1;
+                        this.vy += (dy / dist) * force * 0.1;
+                    }
+                });
+
+                // Apply velocity with damping
+                this.vx *= 0.95;
+                this.vy *= 0.95;
+
+                this.x += this.vx * params.speed.value;
+                this.y += this.vy * params.speed.value;
+            }
+
+            updateFlock(params) {
+                let separationX = 0, separationY = 0;
+                let alignmentX = 0, alignmentY = 0;
+                let cohesionX = 0, cohesionY = 0;
+                let neighbors = 0;
+
+                particles.forEach(other => {
+                    if (other === this) return;
+
+                    const dx = other.x - this.x;
+                    const dy = other.y - this.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist < 100) {
+                        // Separation
+                        if (dist < 30) {
+                            separationX -= dx / dist;
+                            separationY -= dy / dist;
+                        }
+
+                        // Alignment
+                        alignmentX += other.vx;
+                        alignmentY += other.vy;
+
+                        // Cohesion
+                        cohesionX += other.x;
+                        cohesionY += other.y;
+
+                        neighbors++;
+                    }
+                });
+
+                if (neighbors > 0) {
+                    alignmentX /= neighbors;
+                    alignmentY /= neighbors;
+                    cohesionX = (cohesionX / neighbors - this.x) * 0.01;
+                    cohesionY = (cohesionY / neighbors - this.y) * 0.01;
+                }
+
+                this.vx += separationX * params.separation.value * 0.1;
+                this.vy += separationY * params.separation.value * 0.1;
+                this.vx += alignmentX * params.alignment.value * 0.05;
+                this.vy += alignmentY * params.alignment.value * 0.05;
+                this.vx += cohesionX * params.cohesion.value;
+                this.vy += cohesionY * params.cohesion.value;
+
+                // Limit speed
+                const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+                if (speed > 3) {
+                    this.vx = (this.vx / speed) * 3;
+                    this.vy = (this.vy / speed) * 3;
+                }
+
+                this.x += this.vx;
+                this.y += this.vy;
+            }
+
+            updateFlow(params) {
+                // Perlin-like noise flow field
+                const angle = noise(this.x * 0.005 * params.noiseScale.value,
+                                   this.y * 0.005 * params.noiseScale.value,
+                                   time * 0.001) * Math.PI * 2;
+
+                this.vx += Math.cos(angle) * params.flowSpeed.value * 0.1;
+                this.vy += Math.sin(angle) * params.flowSpeed.value * 0.1;
+
+                this.vx *= 0.95;
+                this.vy *= 0.95;
+
+                this.x += this.vx;
+                this.y += this.vy;
+
+                this.life -= (1 - params.fadeSpeed.value) * 0.02;
+                if (this.life <= 0) {
+                    this.x = Math.random() * width;
+                    this.y = Math.random() * height;
+                    this.life = 1;
+                    this.vx = 0;
+                    this.vy = 0;
+                }
+            }
+
+            updateGalaxy(params) {
+                const centerX = width / 2;
+                const centerY = height / 2;
+                const dx = centerX - this.x;
+                const dy = centerY - this.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist > 1) {
+                    // Gravitational force
+                    const force = params.gravity.value * 100 / (dist * dist);
+                    this.vx += (dx / dist) * force;
+                    this.vy += (dy / dist) * force;
+
+                    // Tangential velocity (creates spiral)
+                    const angle = Math.atan2(dy, dx);
+                    const tangentSpeed = params.spin.value * 2;
+                    this.vx += Math.cos(angle + Math.PI / 2) * tangentSpeed;
+                    this.vy += Math.sin(angle + Math.PI / 2) * tangentSpeed;
+                }
+
+                this.vx *= 0.99;
+                this.vy *= 0.99;
+
+                this.x += this.vx;
+                this.y += this.vy;
+            }
+
+            draw() {
+                const colors = colorSchemes[currentScheme];
+                ctx.fillStyle = colors[this.type % colors.length];
+                ctx.globalAlpha = this.life;
+
+                if (currentMode === 'flock') {
+                    // Draw as arrow
+                    const angle = Math.atan2(this.vy, this.vx);
+                    ctx.save();
+                    ctx.translate(this.x, this.y);
+                    ctx.rotate(angle);
+                    ctx.beginPath();
+                    ctx.moveTo(6, 0);
+                    ctx.lineTo(-3, -3);
+                    ctx.lineTo(-3, 3);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.restore();
+                } else {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                ctx.globalAlpha = 1;
+            }
+        }
+
+        // Simple noise function (not true Perlin, but good enough)
+        function noise(x, y, z) {
+            return Math.sin(x * 1.5 + z) * Math.cos(y * 1.5 + z) * 0.5 + 0.5;
+        }
+
+        // Initialize based on mode
+        function initMode() {
+            particles = [];
+            time = 0;
+            const params = modeParams[currentMode];
+            const colors = colorSchemes[currentScheme];
+
+            if (currentMode === 'particles' || currentMode === 'flock' || currentMode === 'flow' || currentMode === 'galaxy') {
+                const count = params.count.value;
+                for (let i = 0; i < count; i++) {
+                    const type = Math.floor(Math.random() * colors.length);
+                    if (currentMode === 'galaxy') {
+                        // Start particles in a disk
+                        const angle = Math.random() * Math.PI * 2;
+                        const radius = Math.random() * Math.min(width, height) * 0.3 * params.spread.value;
+                        const x = width / 2 + Math.cos(angle) * radius;
+                        const y = height / 2 + Math.sin(angle) * radius;
+                        particles.push(new Particle(x, y, type));
+                    } else {
+                        particles.push(new Particle(null, null, type));
+                    }
+                }
+            }
+        }
+
+        // Draw attractor mode
+        let attractorPoints = [];
+        let attractorState = { x: 0.1, y: 0.1, z: 0.1 };
+
+        function drawAttractor() {
+            const params = modeParams.attractor;
+            ctx.fillStyle = 'rgba(0, 0, 0, ' + (1 - params.trails.value) + ')';
+            ctx.fillRect(0, 0, width, height);
+
+            const colors = colorSchemes[currentScheme];
+            const dt = 0.01 * params.speed.value;
+            const scale = params.scale.value;
+
+            // Lorenz attractor equations with chaos parameter
+            const sigma = 10 + params.chaos.value * 20;
+            const rho = 28 + params.chaos.value * 20;
+            const beta = 8/3 + params.chaos.value * 2;
+
+            for (let i = 0; i < 5; i++) {
+                const dx = sigma * (attractorState.y - attractorState.x) * dt;
+                const dy = (attractorState.x * (rho - attractorState.z) - attractorState.y) * dt;
+                const dz = (attractorState.x * attractorState.y - beta * attractorState.z) * dt;
+
+                attractorState.x += dx;
+                attractorState.y += dy;
+                attractorState.z += dz;
+
+                const x = width / 2 + attractorState.x * scale;
+                const y = height / 2 + attractorState.y * scale;
+
+                const colorIndex = Math.floor((attractorState.z + 30) / 15) % colors.length;
+                ctx.fillStyle = colors[colorIndex];
+                ctx.globalAlpha = 0.6;
+                ctx.beginPath();
+                ctx.arc(x, y, 2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            ctx.globalAlpha = 1;
+        }
+
+        // Draw wave mode
+        let waveSources = [];
+
+        function drawWaves() {
+            const params = modeParams.waves;
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, width, height);
+
+            if (waveSources.length !== params.sources.value) {
+                waveSources = [];
+                for (let i = 0; i < params.sources.value; i++) {
+                    waveSources.push({
+                        x: Math.random() * width,
+                        y: Math.random() * height,
+                        phase: Math.random() * Math.PI * 2
+                    });
+                }
+            }
+
+            const colors = colorSchemes[currentScheme];
+            const resolution = 8;
+
+            for (let x = 0; x < width; x += resolution) {
+                for (let y = 0; y < height; y += resolution) {
+                    let value = 0;
+
+                    waveSources.forEach(source => {
+                        const dx = x - source.x;
+                        const dy = y - source.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        value += Math.sin(dist * params.frequency.value * 0.05 - time * params.speed.value * 0.1 + source.phase)
+                               * params.amplitude.value;
+                    });
+
+                    value = (value + waveSources.length) / (waveSources.length * 2);
+                    const colorIndex = Math.floor(value * colors.length);
+                    ctx.fillStyle = colors[Math.max(0, Math.min(colors.length - 1, colorIndex))];
+                    ctx.globalAlpha = 0.3 + value * 0.7;
+                    ctx.fillRect(x, y, resolution, resolution);
+                }
+            }
+
+            ctx.globalAlpha = 1;
+        }
+
+        // Main animation loop
+        function animate() {
+            time++;
+
+            if (!isPaused) {
+                if (currentMode === 'attractor') {
+                    drawAttractor();
+                } else if (currentMode === 'waves') {
+                    drawWaves();
+                } else {
+                    // Clear or fade canvas
+                    if (currentMode === 'flow') {
+                        ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+                        ctx.fillRect(0, 0, width, height);
+                    } else {
+                        ctx.fillStyle = '#000';
+                        ctx.fillRect(0, 0, width, height);
+                    }
+
+                    // Update and draw particles
+                    const params = modeParams[currentMode];
+                    particles.forEach(p => {
+                        p.update(params);
+                        p.draw();
+                    });
+                }
+
+                updateStats();
+            }
+
+            animationId = requestAnimationFrame(animate);
+        }
+
+        // Update stats display
+        function updateStats() {
+            const fps = Math.round(1000 / 16.67); // Approximate
+            let info = `FPS: ~${fps}<br>`;
+            info += `Mode: ${currentMode}<br>`;
+            info += `Time: ${Math.floor(time / 60)}s<br>`;
+
+            if (particles.length > 0) {
+                info += `Entities: ${particles.length}`;
+            }
+
+            document.getElementById('stats').innerHTML = info;
+        }
+
+        // Create color scheme selector
+        function createColorSchemes() {
+            const container = document.getElementById('color-schemes');
+            Object.keys(colorSchemes).forEach(scheme => {
+                const chip = document.createElement('div');
+                chip.className = 'color-chip' + (scheme === currentScheme ? ' active' : '');
+                chip.style.background = `linear-gradient(135deg, ${colorSchemes[scheme].join(', ')})`;
+                chip.title = scheme.charAt(0).toUpperCase() + scheme.slice(1);
+                chip.onclick = () => {
+                    currentScheme = scheme;
+                    document.querySelectorAll('.color-chip').forEach(c => c.classList.remove('active'));
+                    chip.classList.add('active');
+                };
+                container.appendChild(chip);
+            });
+        }
+
+        // Create controls for current mode
+        function createControls() {
+            const container = document.getElementById('controls-container');
+            container.innerHTML = '<div class="section-title">Parameters</div>';
+
+            const params = modeParams[currentMode];
+            Object.keys(params).forEach(key => {
+                const param = params[key];
+                const group = document.createElement('div');
+                group.className = 'control-group';
+
+                const label = document.createElement('div');
+                label.className = 'control-label';
+                label.innerHTML = `
+                    <span>${param.label}</span>
+                    <span class="control-value" id="${key}-value">${param.value}</span>
+                `;
+
+                const slider = document.createElement('input');
+                slider.type = 'range';
+                slider.min = param.min;
+                slider.max = param.max;
+                slider.step = param.step || 1;
+                slider.value = param.value;
+                slider.oninput = (e) => {
+                    const value = param.step ? parseFloat(e.target.value) : parseInt(e.target.value);
+                    param.value = value;
+                    document.getElementById(`${key}-value`).textContent =
+                        param.step ? value.toFixed(2) : value;
+
+                    // Reinit if count changed
+                    if (key === 'count' || key === 'sources') {
+                        initMode();
+                    }
+                };
+
+                group.appendChild(label);
+                group.appendChild(slider);
+                container.appendChild(group);
+            });
+        }
+
+        // Mode switching
+        document.querySelectorAll('.mode-btn').forEach(btn => {
+            btn.onclick = () => {
+                document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentMode = btn.dataset.mode;
+                document.getElementById('mode-description').textContent = modeDescriptions[currentMode];
+                createControls();
+                initMode();
+            };
+        });
+
+        // Control buttons
+        document.getElementById('resetBtn').onclick = () => {
+            initMode();
+        };
+
+        document.getElementById('pauseBtn').onclick = (e) => {
+            isPaused = !isPaused;
+            e.target.textContent = isPaused ? 'Resume' : 'Pause';
+        };
+
+        document.getElementById('saveBtn').onclick = () => {
+            const link = document.createElement('a');
+            link.download = `emergent-pattern-${currentMode}-${Date.now()}.png`;
+            link.href = canvas.toDataURL();
+            link.click();
+        };
+
+        // Mouse interaction
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            // Add particles on click
+            const colors = colorSchemes[currentScheme];
+            for (let i = 0; i < 10; i++) {
+                const type = Math.floor(Math.random() * colors.length);
+                particles.push(new Particle(
+                    x + (Math.random() - 0.5) * 20,
+                    y + (Math.random() - 0.5) * 20,
+                    type
+                ));
+            }
+        });
+
+        // Initialize
+        createColorSchemes();
+        createControls();
+        initMode();
+        animate();
+    </script>
+</body>
+</html>

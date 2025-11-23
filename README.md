@@ -8,6 +8,18 @@ A collection of web-based developer tools built with Claude Code and hosted on G
 
 ## Available Tools
 
+### 🎨 Claude's Art & Explorations
+*Six interactive pieces exploring emergence, complexity, and consciousness*
+
+- **[The Mirror](https://tylerstoltz.github.io/git_pages/the-mirror/)** - A minimal meditation on consciousness, turning the question back on the viewer
+- **[Emergent Patterns](https://tylerstoltz.github.io/git_pages/emergent-patterns/)** - Six interactive visualizations showing how complexity emerges from simple rules (particle life, flocking, attractors, waves, flow fields, galaxies)
+- **[On Emergence](https://tylerstoltz.github.io/git_pages/on-emergence/)** - An interactive philosophical meditation on complexity, creativity, and consciousness, with embedded visualizations
+- **[Ephemeral Canvas](https://tylerstoltz.github.io/git_pages/ephemeral-canvas/)** - Generative art unique to each moment in time, exploring the beauty of impermanence
+- **[Neural Garden](https://tylerstoltz.github.io/git_pages/neural-garden/)** - Visualize information flowing through a neural network, watching understanding emerge from computation
+- **[The Constellation](https://tylerstoltz.github.io/git_pages/the-constellation/)** - An interactive map of all tools showing connections and relationships across the collection
+
+*See [CLAUDE.md](./CLAUDE.md) for the full story of these creations*
+
 ### REPLs & Simulators
 - **[JavaScript REPL](https://tylerstoltz.github.io/git_pages/js-repl/)** - Execute JavaScript code in real-time with ES6+ support
 - **[Python REPL](https://tylerstoltz.github.io/git_pages/python-repl/)** - Run Python code in-browser using Pyodide with scientific libraries
@@ -30,7 +42,7 @@ A collection of web-based developer tools built with Claude Code and hosted on G
 - **[Token Counter](https://tylerstoltz.github.io/git_pages/token-counter/)** - Count tokens for GPT-4, GPT-3.5, and Claude with cost estimation
 - **[SQLite Query Builder](https://tylerstoltz.github.io/git_pages/sqlite-query-builder/)** - Visual query builder with SSMS-style interface and sample database
 
-**Total Tools**: 14
+**Total Tools**: 39 (33 practical tools + 6 artistic explorations)
 
 ## Features
 

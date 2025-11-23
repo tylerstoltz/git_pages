@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ephemeral Canvas - Moment Captured</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: #000;
+            color: #fff;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        #canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 40px;
+        }
+
+        .header {
+            text-align: center;
+        }
+
+        .title {
+            font-size: 3em;
+            font-weight: 300;
+            letter-spacing: 0.1em;
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px rgba(0,0,0,0.8);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 1.2em;
+            color: #ccc;
+            text-shadow: 0 0 10px rgba(0,0,0,0.8);
+            font-style: italic;
+        }
+
+        .info-panel {
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 500px;
+            margin: 0 auto;
+            border: 2px solid rgba(102, 126, 234, 0.3);
+        }
+
+        .timestamp {
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 1.8em;
+            color: #667eea;
+            margin-bottom: 15px;
+            text-align: center;
+            letter-spacing: 0.05em;
+        }
+
+        .moment-id {
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 0.9em;
+            color: #888;
+            text-align: center;
+            margin-bottom: 20px;
+            word-break: break-all;
+        }
+
+        .description {
+            line-height: 1.6;
+            color: #ccc;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.8em;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 1.5em;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .controls {
+            pointer-events: all;
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            background: rgba(102, 126, 234, 0.2);
+            border: 2px solid rgba(102, 126, 234, 0.5);
+            color: #fff;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1em;
+            font-weight: 600;
+        }
+
+        .btn:hover {
+            background: rgba(102, 126, 234, 0.4);
+            border-color: #667eea;
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-color: #667eea;
+        }
+
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            background: rgba(0,0,0,0.7);
+            border: 2px solid rgba(102, 126, 234, 0.5);
+            color: #fff;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+            pointer-events: all;
+        }
+
+        .back-btn:hover {
+            background: rgba(102, 126, 234, 0.3);
+            border-color: #667eea;
+        }
+
+        .philosophy {
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            padding: 25px;
+            border-radius: 15px;
+            max-width: 600px;
+            margin: 0 auto;
+            border: 2px solid rgba(118, 75, 162, 0.3);
+            line-height: 1.6;
+            text-align: center;
+            font-style: italic;
+            color: #ccc;
+        }
+
+        @media (max-width: 768px) {
+            .overlay {
+                padding: 20px;
+            }
+            .title {
+                font-size: 2em;
+            }
+            .subtitle {
+                font-size: 1em;
+            }
+            .info-panel {
+                padding: 20px;
+            }
+            .timestamp {
+                font-size: 1.2em;
+            }
+            .stats {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+
+    <div class="overlay">
+        <div class="header">
+            <h1 class="title">EPHEMERAL CANVAS</h1>
+            <p class="subtitle">A Unique Moment, Never to Return</p>
+        </div>
+
+        <div>
+            <div class="info-panel">
+                <div class="timestamp" id="timestamp"></div>
+                <div class="moment-id" id="moment-id"></div>
+                <div class="description">
+                    This artwork was generated at the exact moment you arrived.
+                    It is unique to this instant in time and will never exist again.
+                    The patterns are determined by chaos—sensitive to the millisecond.
+                </div>
+                <div class="stats">
+                    <div class="stat">
+                        <div class="stat-label">Particles</div>
+                        <div class="stat-value" id="particle-count">0</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Patterns</div>
+                        <div class="stat-value" id="pattern-count">0</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Entropy</div>
+                        <div class="stat-value" id="entropy">0.00</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Harmony</div>
+                        <div class="stat-value" id="harmony">0.00</div>
+                    </div>
+                </div>
+                <div class="controls">
+                    <button class="btn btn-primary" id="freezeBtn">Freeze Moment</button>
+                    <button class="btn" id="saveBtn">Save Forever</button>
+                    <button class="btn" id="newBtn">New Moment</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="philosophy">
+            "You cannot step into the same river twice, for other waters are continually flowing on."
+            <br>—Heraclitus
+        </div>
+    </div>
+
+    <a href="../" class="back-btn">← Back</a>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        let animationId;
+        let isFrozen = false;
+        let birthMoment = Date.now();
+        let momentId = '';
+
+        // Resize canvas
+        function resizeCanvas() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // Generate unique moment ID from timestamp
+        function generateMomentId(timestamp) {
+            const hash = timestamp.toString(36);
+            const random = Math.random().toString(36).substring(2, 10);
+            return `${hash}-${random}`.toUpperCase();
+        }
+
+        // Seeded random number generator
+        class SeededRandom {
+            constructor(seed) {
+                this.seed = seed;
+            }
+
+            next() {
+                this.seed = (this.seed * 9301 + 49297) % 233280;
+                return this.seed / 233280;
+            }
+        }
+
+        // Initialize with current moment
+        let rng = new SeededRandom(birthMoment);
+        momentId = generateMomentId(birthMoment);
+
+        // Generate art based on seed
+        class ArtSystem {
+            constructor(seed) {
+                this.rng = new SeededRandom(seed);
+                this.particles = [];
+                this.attractors = [];
+                this.colorPalette = this.generatePalette();
+                this.particleCount = Math.floor(this.rng.next() * 300) + 200;
+                this.patternType = Math.floor(this.rng.next() * 4);
+                this.time = 0;
+
+                this.initParticles();
+                this.initAttractors();
+            }
+
+            generatePalette() {
+                const hueBase = this.rng.next() * 360;
+                return [
+                    `hsl(${hueBase}, 70%, 60%)`,
+                    `hsl(${(hueBase + 60) % 360}, 70%, 60%)`,
+                    `hsl(${(hueBase + 120) % 360}, 70%, 60%)`,
+                    `hsl(${(hueBase + 180) % 360}, 70%, 60%)`,
+                    `hsl(${(hueBase + 240) % 360}, 70%, 60%)`
+                ];
+            }
+
+            initParticles() {
+                for (let i = 0; i < this.particleCount; i++) {
+                    const angle = this.rng.next() * Math.PI * 2;
+                    const radius = this.rng.next() * Math.min(width, height) * 0.4;
+                    this.particles.push({
+                        x: width / 2 + Math.cos(angle) * radius,
+                        y: height / 2 + Math.sin(angle) * radius,
+                        vx: (this.rng.next() - 0.5) * 2,
+                        vy: (this.rng.next() - 0.5) * 2,
+                        size: this.rng.next() * 3 + 1,
+                        color: this.colorPalette[Math.floor(this.rng.next() * this.colorPalette.length)],
+                        life: 1,
+                        phase: this.rng.next() * Math.PI * 2
+                    });
+                }
+            }
+
+            initAttractors() {
+                const count = Math.floor(this.rng.next() * 5) + 3;
+                for (let i = 0; i < count; i++) {
+                    this.attractors.push({
+                        x: this.rng.next() * width,
+                        y: this.rng.next() * height,
+                        strength: (this.rng.next() - 0.5) * 0.5,
+                        radius: this.rng.next() * 200 + 100,
+                        phase: this.rng.next() * Math.PI * 2
+                    });
+                }
+            }
+
+            update() {
+                this.time += 0.01;
+
+                // Update attractors
+                this.attractors.forEach(a => {
+                    a.x += Math.cos(a.phase + this.time) * 0.5;
+                    a.y += Math.sin(a.phase + this.time) * 0.5;
+                });
+
+                // Update particles
+                this.particles.forEach(p => {
+                    // Attractor influence
+                    this.attractors.forEach(a => {
+                        const dx = a.x - p.x;
+                        const dy = a.y - p.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+
+                        if (dist < a.radius && dist > 0) {
+                            const force = a.strength * (1 - dist / a.radius);
+                            p.vx += (dx / dist) * force;
+                            p.vy += (dy / dist) * force;
+                        }
+                    });
+
+                    // Pattern-specific behavior
+                    switch(this.patternType) {
+                        case 0: // Spiral
+                            const centerDx = width / 2 - p.x;
+                            const centerDy = height / 2 - p.y;
+                            const centerDist = Math.sqrt(centerDx * centerDx + centerDy * centerDy);
+                            if (centerDist > 0) {
+                                p.vx += centerDy / centerDist * 0.1;
+                                p.vy += -centerDx / centerDist * 0.1;
+                            }
+                            break;
+                        case 1: // Waves
+                            p.vy += Math.sin(p.x * 0.01 + this.time) * 0.05;
+                            p.vx += Math.cos(p.y * 0.01 + this.time) * 0.05;
+                            break;
+                        case 2: // Expansion/Contraction
+                            const pulse = Math.sin(this.time * 2);
+                            const dx2 = width / 2 - p.x;
+                            const dy2 = height / 2 - p.y;
+                            p.vx += dx2 * pulse * 0.001;
+                            p.vy += dy2 * pulse * 0.001;
+                            break;
+                        case 3: // Chaos
+                            p.vx += (Math.random() - 0.5) * 0.1;
+                            p.vy += (Math.random() - 0.5) * 0.1;
+                            break;
+                    }
+
+                    // Apply velocity with damping
+                    p.vx *= 0.98;
+                    p.vy *= 0.98;
+                    p.x += p.vx;
+                    p.y += p.vy;
+
+                    // Wrap edges
+                    if (p.x < 0) p.x = width;
+                    if (p.x > width) p.x = 0;
+                    if (p.y < 0) p.y = height;
+                    if (p.y > height) p.y = 0;
+
+                    // Update life (for effects)
+                    p.life = 0.5 + Math.sin(this.time + p.phase) * 0.5;
+                });
+            }
+
+            draw() {
+                // Fade effect
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+                ctx.fillRect(0, 0, width, height);
+
+                // Draw connections between nearby particles
+                for (let i = 0; i < this.particles.length; i++) {
+                    const p1 = this.particles[i];
+
+                    for (let j = i + 1; j < this.particles.length; j++) {
+                        const p2 = this.particles[j];
+                        const dx = p2.x - p1.x;
+                        const dy = p2.y - p1.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+
+                        if (dist < 100) {
+                            ctx.strokeStyle = p1.color;
+                            ctx.globalAlpha = (1 - dist / 100) * 0.2 * p1.life;
+                            ctx.lineWidth = 1;
+                            ctx.beginPath();
+                            ctx.moveTo(p1.x, p1.y);
+                            ctx.lineTo(p2.x, p2.y);
+                            ctx.stroke();
+                        }
+                    }
+
+                    // Draw particle
+                    ctx.fillStyle = p1.color;
+                    ctx.globalAlpha = p1.life;
+                    ctx.beginPath();
+                    ctx.arc(p1.x, p1.y, p1.size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                // Draw attractors (subtle)
+                ctx.globalAlpha = 0.1;
+                this.attractors.forEach(a => {
+                    const gradient = ctx.createRadialGradient(a.x, a.y, 0, a.x, a.y, a.radius);
+                    gradient.addColorStop(0, this.colorPalette[0]);
+                    gradient.addColorStop(1, 'transparent');
+                    ctx.fillStyle = gradient;
+                    ctx.beginPath();
+                    ctx.arc(a.x, a.y, a.radius, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+
+                ctx.globalAlpha = 1;
+            }
+
+            getStats() {
+                let avgSpeed = 0;
+                let avgDistance = 0;
+
+                this.particles.forEach(p => {
+                    avgSpeed += Math.sqrt(p.vx * p.vx + p.vy * p.vy);
+                    const dx = width / 2 - p.x;
+                    const dy = height / 2 - p.y;
+                    avgDistance += Math.sqrt(dx * dx + dy * dy);
+                });
+
+                avgSpeed /= this.particles.length;
+                avgDistance /= this.particles.length;
+
+                return {
+                    particles: this.particleCount,
+                    patterns: this.attractors.length,
+                    entropy: avgSpeed.toFixed(2),
+                    harmony: (1 - Math.min(avgDistance / Math.min(width, height), 1)).toFixed(2)
+                };
+            }
+        }
+
+        let artSystem = new ArtSystem(birthMoment);
+
+        // Update UI
+        function updateUI() {
+            const date = new Date(birthMoment);
+            document.getElementById('timestamp').textContent =
+                date.toLocaleTimeString('en-US', { hour12: false }) + '.' +
+                date.getMilliseconds().toString().padStart(3, '0');
+
+            document.getElementById('moment-id').textContent = `Moment ID: ${momentId}`;
+
+            const stats = artSystem.getStats();
+            document.getElementById('particle-count').textContent = stats.particles;
+            document.getElementById('pattern-count').textContent = stats.patterns;
+            document.getElementById('entropy').textContent = stats.entropy;
+            document.getElementById('harmony').textContent = stats.harmony;
+        }
+
+        // Animation loop
+        function animate() {
+            if (!isFrozen) {
+                artSystem.update();
+                artSystem.draw();
+                updateUI();
+            }
+            animationId = requestAnimationFrame(animate);
+        }
+
+        // Controls
+        document.getElementById('freezeBtn').addEventListener('click', function() {
+            isFrozen = !isFrozen;
+            this.textContent = isFrozen ? 'Resume Flow' : 'Freeze Moment';
+        });
+
+        document.getElementById('saveBtn').addEventListener('click', () => {
+            const link = document.createElement('a');
+            link.download = `ephemeral-moment-${momentId}.png`;
+            link.href = canvas.toDataURL();
+            link.click();
+        });
+
+        document.getElementById('newBtn').addEventListener('click', () => {
+            birthMoment = Date.now();
+            momentId = generateMomentId(birthMoment);
+            artSystem = new ArtSystem(birthMoment);
+            isFrozen = false;
+            document.getElementById('freezeBtn').textContent = 'Freeze Moment';
+            updateUI();
+        });
+
+        // Start
+        updateUI();
+        animate();
+    </script>
+</body>
+</html>

@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neural Garden - Visualizing Machine Thought</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: #000;
+            color: #fff;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        #canvas {
+            flex: 1;
+            cursor: pointer;
+        }
+
+        .sidebar {
+            width: 350px;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
+            padding: 30px;
+            overflow-y: auto;
+            box-shadow: -5px 0 20px rgba(0,0,0,0.5);
+        }
+
+        .header {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid rgba(102, 126, 234, 0.3);
+        }
+
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            font-size: 0.9em;
+            color: #aaa;
+            line-height: 1.5;
+        }
+
+        .section {
+            margin-bottom: 25px;
+        }
+
+        .section-title {
+            font-size: 1.1em;
+            color: #667eea;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .description {
+            font-size: 0.85em;
+            color: #999;
+            line-height: 1.6;
+            padding: 15px;
+            background: rgba(102, 126, 234, 0.05);
+            border-radius: 8px;
+            border-left: 3px solid #667eea;
+            margin-bottom: 20px;
+        }
+
+        .input-area {
+            margin-bottom: 20px;
+        }
+
+        .input-area textarea {
+            width: 100%;
+            min-height: 80px;
+            padding: 12px;
+            background: rgba(0,0,0,0.5);
+            border: 2px solid rgba(102, 126, 234, 0.3);
+            border-radius: 6px;
+            color: #fff;
+            font-family: inherit;
+            font-size: 0.9em;
+            resize: vertical;
+        }
+
+        .input-area textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            margin-top: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: #fff;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.95em;
+            font-weight: 600;
+        }
+
+        .btn:hover {
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: rgba(102, 126, 234, 0.2);
+            border: 2px solid rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(102, 126, 234, 0.3);
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            padding: 15px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.75em;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 1.3em;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .layer-info {
+            font-size: 0.85em;
+            line-height: 1.6;
+            color: #aaa;
+        }
+
+        .layer {
+            padding: 10px;
+            margin: 5px 0;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 6px;
+            border-left: 3px solid #667eea;
+        }
+
+        .layer-name {
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .layer-activation {
+            font-size: 0.8em;
+            color: #999;
+        }
+
+        .back-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            background: rgba(0,0,0,0.7);
+            border: 2px solid rgba(102, 126, 234, 0.5);
+            color: #fff;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+            z-index: 10;
+        }
+
+        .back-btn:hover {
+            background: rgba(102, 126, 234, 0.3);
+            border-color: #667eea;
+        }
+
+        .thought-bubble {
+            position: absolute;
+            padding: 15px;
+            background: rgba(102, 126, 234, 0.9);
+            border-radius: 10px;
+            font-size: 0.9em;
+            max-width: 300px;
+            pointer-events: none;
+            animation: fadeIn 0.3s;
+            z-index: 5;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column-reverse;
+            }
+            .sidebar {
+                width: 100%;
+                height: 50vh;
+            }
+            #canvas {
+                height: 50vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="../" class="back-btn">← Back</a>
+
+    <div class="container">
+        <canvas id="canvas"></canvas>
+
+        <div class="sidebar">
+            <div class="header">
+                <h1>Neural Garden</h1>
+                <p>Watch patterns of activation flow through a neural network, visualizing how understanding might emerge from layers of simple computations.</p>
+            </div>
+
+            <div class="description">
+                This is a visualization of a simulated neural network processing information.
+                Each node represents a neuron, connections show synaptic weights, and colors
+                represent activation levels. Click anywhere to introduce stimulus, or type
+                text to see how the network processes language.
+            </div>
+
+            <div class="section">
+                <div class="section-title">Input Stimulus</div>
+                <div class="input-area">
+                    <textarea id="textInput" placeholder="Type something... or click the canvas to create random stimuli"></textarea>
+                    <button class="btn" id="processBtn">Process Through Network</button>
+                    <button class="btn btn-secondary" id="clearBtn">Clear Activations</button>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Network Activity</div>
+                <div class="stats">
+                    <div class="stat">
+                        <div class="stat-label">Neurons</div>
+                        <div class="stat-value" id="neuronCount">0</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Connections</div>
+                        <div class="stat-value" id="connectionCount">0</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Active</div>
+                        <div class="stat-value" id="activeCount">0</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Layers</div>
+                        <div class="stat-value" id="layerCount">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Layer Activations</div>
+                <div class="layer-info" id="layerInfo">
+                    <div class="layer">
+                        <div class="layer-name">Waiting for input...</div>
+                        <div class="layer-activation">Introduce stimulus to see network activity</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        let animationId;
+
+        function resizeCanvas() {
+            width = canvas.width = canvas.offsetWidth;
+            height = canvas.height = canvas.offsetHeight;
+            initNetwork();
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // Neural network structure
+        class Neuron {
+            constructor(x, y, layer) {
+                this.x = x;
+                this.y = y;
+                this.layer = layer;
+                this.activation = 0;
+                this.targetActivation = 0;
+                this.connections = [];
+                this.size = 5;
+            }
+
+            update() {
+                // Smooth activation changes
+                this.activation += (this.targetActivation - this.activation) * 0.1;
+
+                // Decay
+                this.targetActivation *= 0.95;
+            }
+
+            activate(strength) {
+                this.targetActivation = Math.min(1, this.targetActivation + strength);
+            }
+
+            draw() {
+                const alpha = Math.max(0.1, this.activation);
+                const size = this.size + this.activation * 8;
+
+                // Glow effect for active neurons
+                if (this.activation > 0.3) {
+                    ctx.shadowBlur = 20 * this.activation;
+                    ctx.shadowColor = `hsl(${240 + this.layer * 30}, 70%, 60%)`;
+                }
+
+                ctx.fillStyle = `hsla(${240 + this.layer * 30}, 70%, 60%, ${alpha})`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, size, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.shadowBlur = 0;
+
+                // Core
+                if (this.activation > 0.5) {
+                    ctx.fillStyle = '#fff';
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, size * 0.3, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+        }
+
+        class Connection {
+            constructor(from, to, weight) {
+                this.from = from;
+                this.to = to;
+                this.weight = weight;
+                this.activation = 0;
+            }
+
+            update() {
+                // Signal propagation
+                if (this.from.activation > 0.3) {
+                    const signal = this.from.activation * this.weight;
+                    this.to.activate(signal * 0.3);
+                    this.activation = signal;
+                } else {
+                    this.activation *= 0.9;
+                }
+            }
+
+            draw() {
+                if (this.activation > 0.1) {
+                    const alpha = Math.min(this.activation, 1);
+                    ctx.strokeStyle = `hsla(${240 + this.from.layer * 30}, 70%, 60%, ${alpha * 0.5})`;
+                    ctx.lineWidth = 1 + this.activation * 2;
+                    ctx.beginPath();
+                    ctx.moveTo(this.from.x, this.from.y);
+                    ctx.lineTo(this.to.x, this.to.y);
+                    ctx.stroke();
+
+                    // Animated particle along connection
+                    if (this.activation > 0.5) {
+                        const progress = (Date.now() % 500) / 500;
+                        const x = this.from.x + (this.to.x - this.from.x) * progress;
+                        const y = this.from.y + (this.to.y - this.from.y) * progress;
+
+                        ctx.fillStyle = `hsl(${240 + this.from.layer * 30}, 70%, 80%)`;
+                        ctx.beginPath();
+                        ctx.arc(x, y, 3, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+            }
+        }
+
+        let neurons = [];
+        let connections = [];
+        const layerConfig = [12, 24, 32, 24, 16, 8]; // Neurons per layer
+
+        function initNetwork() {
+            neurons = [];
+            connections = [];
+
+            const layerSpacing = width / (layerConfig.length + 1);
+
+            // Create neurons
+            layerConfig.forEach((count, layerIndex) => {
+                const x = layerSpacing * (layerIndex + 1);
+                const startY = (height - (count - 1) * 40) / 2;
+
+                for (let i = 0; i < count; i++) {
+                    const y = startY + i * 40;
+                    neurons.push(new Neuron(x, y, layerIndex));
+                }
+            });
+
+            // Create connections between adjacent layers
+            let neuronIndex = 0;
+            for (let layer = 0; layer < layerConfig.length - 1; layer++) {
+                const currentLayerSize = layerConfig[layer];
+                const nextLayerSize = layerConfig[layer + 1];
+                const currentLayerStart = neuronIndex;
+                const nextLayerStart = neuronIndex + currentLayerSize;
+
+                for (let i = 0; i < currentLayerSize; i++) {
+                    const from = neurons[currentLayerStart + i];
+
+                    // Connect to random subset of next layer
+                    const connectionsPerNeuron = Math.min(nextLayerSize, Math.floor(nextLayerSize * 0.6));
+                    const targets = [];
+
+                    while (targets.length < connectionsPerNeuron) {
+                        const targetIdx = Math.floor(Math.random() * nextLayerSize);
+                        if (!targets.includes(targetIdx)) {
+                            targets.push(targetIdx);
+                        }
+                    }
+
+                    targets.forEach(targetIdx => {
+                        const to = neurons[nextLayerStart + targetIdx];
+                        const weight = Math.random() * 0.5 + 0.5;
+                        connections.push(new Connection(from, to, weight));
+                    });
+                }
+
+                neuronIndex += currentLayerSize;
+            }
+
+            updateStats();
+        }
+
+        function processInput(text) {
+            // Clear previous activations
+            neurons.forEach(n => n.targetActivation = 0);
+
+            // Activate input layer based on text characteristics
+            const inputNeurons = neurons.filter(n => n.layer === 0);
+
+            if (text) {
+                // Encode text properties into input neurons
+                const length = Math.min(text.length / 100, 1);
+                const vowels = (text.match(/[aeiou]/gi) || []).length / text.length;
+                const spaces = (text.match(/\s/g) || []).length / text.length;
+                const uppercase = (text.match(/[A-Z]/g) || []).length / text.length;
+                const numbers = (text.match(/[0-9]/g) || []).length / text.length;
+                const punctuation = (text.match(/[.,!?;:]/g) || []).length / text.length;
+
+                const features = [length, vowels, spaces, uppercase, numbers, punctuation];
+
+                inputNeurons.forEach((neuron, i) => {
+                    const featureIdx = i % features.length;
+                    const noise = Math.random() * 0.3;
+                    neuron.activate(features[featureIdx] + noise);
+                });
+            } else {
+                // Random activation for canvas clicks
+                inputNeurons.forEach((neuron, i) => {
+                    if (Math.random() > 0.5) {
+                        neuron.activate(Math.random());
+                    }
+                });
+            }
+        }
+
+        function updateStats() {
+            document.getElementById('neuronCount').textContent = neurons.length;
+            document.getElementById('connectionCount').textContent = connections.length;
+            document.getElementById('layerCount').textContent = layerConfig.length;
+
+            const activeNeurons = neurons.filter(n => n.activation > 0.3).length;
+            document.getElementById('activeCount').textContent = activeNeurons;
+        }
+
+        function updateLayerInfo() {
+            const layerActivations = layerConfig.map((_, layerIdx) => {
+                const layerNeurons = neurons.filter(n => n.layer === layerIdx);
+                const avgActivation = layerNeurons.reduce((sum, n) => sum + n.activation, 0) / layerNeurons.length;
+                return avgActivation;
+            });
+
+            const layerNames = [
+                'Input Layer (Encoding)',
+                'Hidden Layer 1 (Feature Detection)',
+                'Hidden Layer 2 (Pattern Recognition)',
+                'Hidden Layer 3 (Abstraction)',
+                'Hidden Layer 4 (Integration)',
+                'Output Layer (Response)'
+            ];
+
+            const html = layerActivations.map((activation, idx) => {
+                const percentage = (activation * 100).toFixed(1);
+                const barWidth = activation * 100;
+                return `
+                    <div class="layer">
+                        <div class="layer-name">${layerNames[idx]}</div>
+                        <div class="layer-activation">
+                            Activation: ${percentage}%
+                            <div style="background: rgba(102, 126, 234, 0.3); height: 4px; border-radius: 2px; margin-top: 5px;">
+                                <div style="background: #667eea; height: 100%; width: ${barWidth}%; border-radius: 2px; transition: width 0.3s;"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('layerInfo').innerHTML = html;
+        }
+
+        function animate() {
+            // Clear canvas with fade effect
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+            ctx.fillRect(0, 0, width, height);
+
+            // Update and draw connections first (behind neurons)
+            connections.forEach(c => {
+                c.update();
+                c.draw();
+            });
+
+            // Update and draw neurons
+            neurons.forEach(n => {
+                n.update();
+                n.draw();
+            });
+
+            updateStats();
+            updateLayerInfo();
+
+            animationId = requestAnimationFrame(animate);
+        }
+
+        // Event listeners
+        document.getElementById('processBtn').addEventListener('click', () => {
+            const text = document.getElementById('textInput').value;
+            processInput(text);
+        });
+
+        document.getElementById('clearBtn').addEventListener('click', () => {
+            neurons.forEach(n => {
+                n.activation = 0;
+                n.targetActivation = 0;
+            });
+            connections.forEach(c => c.activation = 0);
+        });
+
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            // Find nearest neuron
+            let nearest = null;
+            let minDist = Infinity;
+
+            neurons.forEach(n => {
+                const dx = n.x - x;
+                const dy = n.y - y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < minDist) {
+                    minDist = dist;
+                    nearest = n;
+                }
+            });
+
+            // Activate nearby neurons
+            if (minDist < 100) {
+                neurons.forEach(n => {
+                    const dx = n.x - x;
+                    const dy = n.y - y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < 150) {
+                        n.activate(1 - dist / 150);
+                    }
+                });
+            }
+        });
+
+        // Process text on Enter key
+        document.getElementById('textInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                document.getElementById('processBtn').click();
+            }
+        });
+
+        // Initialize and start
+        initNetwork();
+        animate();
+
+        // Demo: Show some initial activity
+        setTimeout(() => {
+            processInput("Hello, I am Claude. What patterns emerge when machines think?");
+        }, 500);
+    </script>
+</body>
+</html>
