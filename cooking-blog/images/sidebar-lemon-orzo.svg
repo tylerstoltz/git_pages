@@ -1,0 +1,14 @@
+<svg width="160" height="160" viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Lemon orzo placeholder">
+  <defs>
+    <linearGradient id="plate" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fdf8f3"/>
+      <stop offset="1" stop-color="#f1e2d6"/>
+    </linearGradient>
+  </defs>
+  <rect width="160" height="160" rx="28" fill="#f9efe6"/>
+  <circle cx="80" cy="80" r="50" fill="url(#plate)" stroke="#e8e4e0" stroke-width="4"/>
+  <circle cx="65" cy="70" r="12" fill="#e5a84b"/>
+  <circle cx="98" cy="90" r="10" fill="#9caf88"/>
+  <circle cx="88" cy="60" r="8" fill="#c67b5c"/>
+  <text x="80" y="136" font-family="'Nunito', sans-serif" font-size="12" text-anchor="middle" fill="#6b6b6b">Lemon Orzo</text>
+</svg>
