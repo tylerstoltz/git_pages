@@ -171,28 +171,21 @@
         .food-image {
             width: 100%;
             aspect-ratio: 4/3;
-            background: linear-gradient(145deg, #E5A84B 0%, #C67B5C 30%, #9CAF88 70%, #7A9668 100%);
             border-radius: 16px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.15);
             position: relative;
             overflow: hidden;
+            margin: 0;
         }
 
-        .food-image::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background:
-                radial-gradient(ellipse 80% 60% at 30% 40%, rgba(229, 168, 75, 0.8) 0%, transparent 50%),
-                radial-gradient(ellipse 60% 50% at 70% 60%, rgba(198, 123, 92, 0.7) 0%, transparent 50%),
-                radial-gradient(ellipse 40% 30% at 50% 80%, rgba(156, 175, 136, 0.6) 0%, transparent 50%);
+        .food-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
         }
 
-        .food-image::after {
-            content: 'Glazed Salmon with Fresh Herbs';
+        .food-image figcaption {
             position: absolute;
             bottom: 20px;
             left: 20px;
@@ -286,25 +279,28 @@
             aspect-ratio: 1;
             border-radius: 12px;
             overflow: hidden;
+            position: relative;
+            margin: 0;
         }
 
-        .grid-image:nth-child(1) {
-            background: linear-gradient(135deg, #E5A84B 0%, #C48E3A 100%);
-        }
-
-        .grid-image:nth-child(2) {
-            background: linear-gradient(135deg, #9CAF88 0%, #7A9668 100%);
+        .grid-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
         }
 
         .grid-image-label {
-            height: 100%;
-            display: flex;
-            align-items: flex-end;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
             padding: 15px;
             color: white;
             font-weight: 600;
             font-size: 0.9em;
             text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.45) 100%);
         }
 
         /* Tips Box */
@@ -705,18 +701,93 @@
 
         .related-image {
             height: 150px;
+            overflow: hidden;
         }
 
-        .related-card:nth-child(1) .related-image {
-            background: linear-gradient(135deg, #C67B5C 0%, #E8A889 100%);
+        .related-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
         }
 
-        .related-card:nth-child(2) .related-image {
-            background: linear-gradient(135deg, #9CAF88 0%, #B8D4A8 100%);
+        /* Affiliate Section */
+        .affiliate-section {
+            margin-top: 70px;
         }
 
-        .related-card:nth-child(3) .related-image {
-            background: linear-gradient(135deg, #E5A84B 0%, #F0C87D 100%);
+        .affiliate-section h2 {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            font-size: 2em;
+            color: var(--charcoal);
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .affiliate-section p {
+            text-align: center;
+            color: var(--soft-gray);
+            margin-bottom: 35px;
+        }
+
+        .affiliate-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 25px;
+        }
+
+        .affiliate-card {
+            background: var(--warm-white);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+            text-decoration: none;
+            color: inherit;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .affiliate-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.1);
+        }
+
+        .affiliate-image {
+            height: 170px;
+            overflow: hidden;
+        }
+
+        .affiliate-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .affiliate-content {
+            padding: 20px;
+        }
+
+        .affiliate-content h3 {
+            font-size: 1.05em;
+            margin-bottom: 8px;
+            color: var(--charcoal);
+        }
+
+        .affiliate-content p {
+            text-align: left;
+            font-size: 0.85em;
+            margin-bottom: 12px;
+        }
+
+        .affiliate-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85em;
+            font-weight: 700;
+            color: var(--terracotta);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
         }
 
         .related-content {
@@ -1025,6 +1096,10 @@
                 grid-template-columns: 1fr;
             }
 
+            .affiliate-grid {
+                grid-template-columns: 1fr;
+            }
+
             .footer-inner {
                 grid-template-columns: 1fr;
                 text-align: center;
@@ -1221,7 +1296,10 @@
 
     <!-- Food Image -->
     <div class="food-image-container">
-        <div class="food-image"></div>
+        <figure class="food-image">
+            <img src="images/hero-salmon.svg" alt="Glazed salmon fillets on a ceramic plate with herbs and lemon slices">
+            <figcaption>Glazed Salmon with Fresh Herbs</figcaption>
+        </figure>
     </div>
 
     <!-- Main Content -->
@@ -1245,12 +1323,14 @@
             <p>I first made this recipe on a particularly chaotic Tuesday. You know the kind&mdash;back-to-back meetings, a forgotten grocery list, and about 30 minutes to get something on the table before everyone started rummaging through the snack drawer. I had salmon in the freezer (always keep salmon in the freezer, friends), and a handful of pantry staples. What emerged from my kitchen that night became our family's most-requested dinner.</p>
 
             <div class="image-grid">
-                <div class="grid-image">
-                    <div class="grid-image-label">The perfect golden sear</div>
-                </div>
-                <div class="grid-image">
-                    <div class="grid-image-label">Fresh herb garnish</div>
-                </div>
+                <figure class="grid-image">
+                    <img src="images/sear-pan.svg" alt="Salmon searing in a warm skillet">
+                    <figcaption class="grid-image-label">The perfect golden sear</figcaption>
+                </figure>
+                <figure class="grid-image">
+                    <img src="images/fresh-herbs.svg" alt="Fresh herbs and lemon ready for garnish">
+                    <figcaption class="grid-image-label">Fresh herb garnish</figcaption>
+                </figure>
             </div>
 
             <p>The secret to this recipe is the sauce. We're building layers of flavor here: the caramelized sweetness of honey, the punchy bite of fresh garlic, a splash of soy sauce for umami depth, and a generous amount of butter to bring it all together into silky perfection. The sauce reduces while the salmon rests, becoming gloriously sticky and perfect for drizzling.</p>
@@ -1273,6 +1353,44 @@
             </div>
 
             <p>I love serving this over a bed of jasmine rice to soak up every drop of that sauce. A simple side of steamed broccoli or roasted asparagus rounds things out beautifully. And honestly? This is impressive enough for company but easy enough for a random Tuesday. That's my favorite kind of recipe.</p>
+        </section>
+
+        <!-- Shop Section -->
+        <section class="affiliate-section">
+            <h2>Shop This Recipe</h2>
+            <p>Affiliate links help support The Cozy Kitchen at no extra cost to you.</p>
+            <div class="affiliate-grid">
+                <a class="affiliate-card" href="#">
+                    <div class="affiliate-image">
+                        <img src="images/affiliate-pan.svg" alt="Nonstick skillet with honey glaze drips">
+                    </div>
+                    <div class="affiliate-content">
+                        <h3>Everyday 12\" Nonstick Skillet</h3>
+                        <p>The pan that delivers that gorgeous golden sear without sticking.</p>
+                        <span class="affiliate-cta">Shop now →</span>
+                    </div>
+                </a>
+                <a class="affiliate-card" href="#">
+                    <div class="affiliate-image">
+                        <img src="images/affiliate-thermometer.svg" alt="Instant-read thermometer for perfect salmon doneness">
+                    </div>
+                    <div class="affiliate-content">
+                        <h3>Instant-Read Thermometer</h3>
+                        <p>Take the guesswork out of cooking salmon with quick, accurate temps.</p>
+                        <span class="affiliate-cta">Shop now →</span>
+                    </div>
+                </a>
+                <a class="affiliate-card" href="#">
+                    <div class="affiliate-image">
+                        <img src="images/affiliate-board.svg" alt="Wood cutting board with prep space">
+                    </div>
+                    <div class="affiliate-content">
+                        <h3>Maple Prep Board</h3>
+                        <p>A sturdy, beautiful board for slicing herbs and prep work.</p>
+                        <span class="affiliate-cta">Shop now →</span>
+                    </div>
+                </a>
+            </div>
         </section>
 
         <!-- Recipe Card -->
@@ -1469,7 +1587,9 @@
             <h2>You Might Also Love</h2>
             <div class="related-grid">
                 <a href="#" class="related-card">
-                    <div class="related-image"></div>
+                    <div class="related-image">
+                        <img src="images/lemon-chicken.svg" alt="Crispy lemon herb chicken thighs with pan sauce">
+                    </div>
                     <div class="related-content">
                         <h3>Crispy Lemon Herb Chicken Thighs</h3>
                         <p>Golden, juicy chicken with a bright lemon pan sauce</p>
@@ -1480,7 +1600,9 @@
                     </div>
                 </a>
                 <a href="#" class="related-card">
-                    <div class="related-image"></div>
+                    <div class="related-image">
+                        <img src="images/shrimp-pasta.svg" alt="Garlic butter shrimp pasta on a plate">
+                    </div>
                     <div class="related-content">
                         <h3>Garlic Butter Shrimp Pasta</h3>
                         <p>A 20-minute restaurant-quality pasta night</p>
@@ -1491,7 +1613,9 @@
                     </div>
                 </a>
                 <a href="#" class="related-card">
-                    <div class="related-image"></div>
+                    <div class="related-image">
+                        <img src="images/teriyaki-cod.svg" alt="Teriyaki glazed cod with herbs">
+                    </div>
                     <div class="related-content">
                         <h3>Teriyaki Glazed Cod</h3>
                         <p>Flaky white fish in homemade teriyaki</p>
