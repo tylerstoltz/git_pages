@@ -199,10 +199,20 @@
         }
 
         /* Main Content */
-        .main-content {
-            max-width: 780px;
+        .content-layout {
+            max-width: 1200px;
             margin: 0 auto;
-            padding: 60px 20px;
+            padding: 60px 20px 80px;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 320px;
+            gap: 40px;
+            align-items: start;
+        }
+
+        .main-content {
+            max-width: 100%;
+            margin: 0;
+            padding: 0;
         }
 
         /* Jump to Recipe */
@@ -814,6 +824,172 @@
             color: var(--soft-gray);
         }
 
+        /* Sidebar */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            position: sticky;
+            top: 110px;
+            align-self: start;
+        }
+
+        .sidebar-card {
+            background: var(--warm-white);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.06);
+            border: 1px solid var(--light-gray);
+        }
+
+        .sidebar-card h3 {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            font-size: 1.5em;
+            margin-bottom: 12px;
+            color: var(--charcoal);
+        }
+
+        .chef-profile {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .chef-avatar {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            overflow: hidden;
+            flex-shrink: 0;
+            border: 3px solid var(--sage);
+            background: var(--cream);
+        }
+
+        .chef-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .chef-title {
+            font-weight: 700;
+            color: var(--charcoal);
+        }
+
+        .chef-tagline {
+            font-size: 0.9em;
+            color: var(--soft-gray);
+        }
+
+        .chef-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 18px;
+        }
+
+        .chef-stat {
+            background: var(--cream);
+            border-radius: 10px;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .chef-stat strong {
+            display: block;
+            color: var(--terracotta);
+            font-size: 1.1em;
+        }
+
+        .chef-stat span {
+            font-size: 0.75em;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--soft-gray);
+        }
+
+        .sidebar-recipe {
+            display: grid;
+            grid-template-columns: 80px 1fr;
+            gap: 12px;
+            align-items: center;
+            text-decoration: none;
+            color: inherit;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--light-gray);
+        }
+
+        .sidebar-recipe:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .sidebar-recipe img {
+            width: 80px;
+            height: 80px;
+            border-radius: 10px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .sidebar-recipe h4 {
+            font-size: 0.95em;
+            margin-bottom: 6px;
+            color: var(--charcoal);
+        }
+
+        .sidebar-recipe span {
+            font-size: 0.8em;
+            color: var(--soft-gray);
+        }
+
+        .sidebar-links {
+            list-style: none;
+            display: grid;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .sidebar-links a {
+            text-decoration: none;
+            color: var(--terracotta);
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+
+        .sidebar-links a:hover {
+            color: var(--terracotta-light);
+        }
+
+        .download-card {
+            background: linear-gradient(135deg, rgba(198,123,92,0.12), rgba(156,175,136,0.12));
+            border: 1px dashed var(--sage);
+        }
+
+        .download-card p {
+            font-size: 0.9em;
+            color: var(--soft-gray);
+            margin-bottom: 15px;
+        }
+
+        .download-card button {
+            width: 100%;
+            border: none;
+            padding: 12px 16px;
+            border-radius: 10px;
+            background: var(--sage);
+            color: white;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        .download-card button:hover {
+            background: var(--sage-dark);
+        }
+
         /* Newsletter Section */
         .newsletter-section {
             margin-top: 80px;
@@ -1079,6 +1255,15 @@
                 display: none;
             }
 
+            .content-layout {
+                grid-template-columns: 1fr;
+                gap: 50px;
+            }
+
+            .sidebar {
+                position: static;
+            }
+
             .hero h1 {
                 font-size: 2.2em;
             }
@@ -1141,6 +1326,7 @@
             .newsletter-section,
             .related-section,
             .comments-section,
+            .sidebar,
             .site-footer,
             .story-section,
             .food-image-container {
@@ -1297,13 +1483,14 @@
     <!-- Food Image -->
     <div class="food-image-container">
         <figure class="food-image">
-            <img src="images/hero-salmon.png" alt="Glazed salmon fillets on a ceramic plate with herbs and lemon slices">
+            <img src="images/hero-salmon.svg" alt="Glazed salmon fillets on a ceramic plate with herbs and lemon slices">
             <figcaption>Glazed Salmon with Fresh Herbs</figcaption>
         </figure>
     </div>
 
     <!-- Main Content -->
-    <main class="main-content">
+    <div class="content-layout">
+        <main class="main-content">
         <!-- Jump to Recipe -->
         <div class="jump-to-recipe">
             <a href="#recipe-card" class="jump-btn">
@@ -1324,11 +1511,11 @@
 
             <div class="image-grid">
                 <figure class="grid-image">
-                    <img src="images/sear-pan.png" alt="Salmon searing in a warm skillet">
+                    <img src="images/sear-pan.svg" alt="Salmon searing in a warm skillet">
                     <figcaption class="grid-image-label">The perfect golden sear</figcaption>
                 </figure>
                 <figure class="grid-image">
-                    <img src="images/fresh-herbs.png" alt="Fresh herbs and lemon ready for garnish">
+                    <img src="images/fresh-herbs.svg" alt="Fresh herbs and lemon ready for garnish">
                     <figcaption class="grid-image-label">Fresh herb garnish</figcaption>
                 </figure>
             </div>
@@ -1362,7 +1549,7 @@
             <div class="affiliate-grid">
                 <a class="affiliate-card" href="#">
                     <div class="affiliate-image">
-                        <img src="images/affiliate-pan.png" alt="Nonstick skillet with honey glaze drips">
+                        <img src="images/affiliate-pan.svg" alt="Nonstick skillet with honey glaze drips">
                     </div>
                     <div class="affiliate-content">
                         <h3>Everyday 12\" Nonstick Skillet</h3>
@@ -1372,7 +1559,7 @@
                 </a>
                 <a class="affiliate-card" href="#">
                     <div class="affiliate-image">
-                        <img src="images/affiliate-thermometer.png" alt="Instant-read thermometer for perfect salmon doneness">
+                        <img src="images/affiliate-thermometer.svg" alt="Instant-read thermometer for perfect salmon doneness">
                     </div>
                     <div class="affiliate-content">
                         <h3>Instant-Read Thermometer</h3>
@@ -1382,7 +1569,7 @@
                 </a>
                 <a class="affiliate-card" href="#">
                     <div class="affiliate-image">
-                        <img src="images/affiliate-board.png" alt="Wood cutting board with prep space">
+                        <img src="images/affiliate-board.svg" alt="Wood cutting board with prep space">
                     </div>
                     <div class="affiliate-content">
                         <h3>Maple Prep Board</h3>
@@ -1588,7 +1775,7 @@
             <div class="related-grid">
                 <a href="#" class="related-card">
                     <div class="related-image">
-                        <img src="images/lemon-chicken.png" alt="Crispy lemon herb chicken thighs with pan sauce">
+                        <img src="images/lemon-chicken.svg" alt="Crispy lemon herb chicken thighs with pan sauce">
                     </div>
                     <div class="related-content">
                         <h3>Crispy Lemon Herb Chicken Thighs</h3>
@@ -1601,7 +1788,7 @@
                 </a>
                 <a href="#" class="related-card">
                     <div class="related-image">
-                        <img src="images/shrimp-pasta.png" alt="Garlic butter shrimp pasta on a plate">
+                        <img src="images/shrimp-pasta.svg" alt="Garlic butter shrimp pasta on a plate">
                     </div>
                     <div class="related-content">
                         <h3>Garlic Butter Shrimp Pasta</h3>
@@ -1708,7 +1895,83 @@
                 <button type="submit" class="submit-comment">Post Review</button>
             </div>
         </section>
-    </main>
+        </main>
+
+        <aside class="sidebar">
+            <section class="sidebar-card">
+                <div class="chef-profile">
+                    <div class="chef-avatar">
+                        <img src="images/chef-portrait.svg" alt="Portrait illustration of Chef Isla">
+                    </div>
+                    <div>
+                        <div class="chef-title">Chef Isla Moreno</div>
+                        <div class="chef-tagline">Sauce whisperer • weeknight hero</div>
+                    </div>
+                </div>
+                <p>Isla is a former line cook turned recipe developer who believes in unfussy food and extra lemon. She tests every recipe twice, usually while her corgi naps at her feet and jazz plays in the background.</p>
+                <div class="chef-stats">
+                    <div class="chef-stat">
+                        <strong>350+</strong>
+                        <span>Recipes</span>
+                    </div>
+                    <div class="chef-stat">
+                        <strong>12</strong>
+                        <span>Years</span>
+                    </div>
+                    <div class="chef-stat">
+                        <strong>5</strong>
+                        <span>Cookbooks</span>
+                    </div>
+                    <div class="chef-stat">
+                        <strong>98%</strong>
+                        <span>Glaze</span>
+                    </div>
+                </div>
+            </section>
+
+            <section class="sidebar-card">
+                <h3>More Cozy Dinners</h3>
+                <a href="#" class="sidebar-recipe">
+                    <img src="images/sidebar-lemon-orzo.svg" alt="Lemon orzo with roasted veggies">
+                    <div>
+                        <h4>Lemon Orzo with Roasted Veggies</h4>
+                        <span>30 min · ★ 4.8</span>
+                    </div>
+                </a>
+                <a href="#" class="sidebar-recipe">
+                    <img src="images/sidebar-air-fryer.svg" alt="Air fryer garlic green beans">
+                    <div>
+                        <h4>Air Fryer Garlic Green Beans</h4>
+                        <span>12 min · ★ 4.9</span>
+                    </div>
+                </a>
+                <a href="#" class="sidebar-recipe">
+                    <img src="images/sidebar-coconut-curry.svg" alt="Coconut curry salmon bowl">
+                    <div>
+                        <h4>Coconut Curry Salmon Bowls</h4>
+                        <span>25 min · ★ 4.7</span>
+                    </div>
+                </a>
+            </section>
+
+            <section class="sidebar-card download-card">
+                <h3>Free 5-Day Dinner Plan</h3>
+                <p>Grab Isla's weeknight dinner blueprint with grocery list, prep tips, and flexible swaps.</p>
+                <button type="button" onclick="alert('Dinner plan sent to your inbox!')">Send me the plan</button>
+            </section>
+
+            <section class="sidebar-card">
+                <h3>Recipe Shortcuts</h3>
+                <p>Looking for something specific? Start here and build your next menu.</p>
+                <ul class="sidebar-links">
+                    <li><a href="#">30-Minute Meals</a></li>
+                    <li><a href="#">Air Fryer Favorites</a></li>
+                    <li><a href="#">Seafood Recipes</a></li>
+                    <li><a href="#">Sauce &amp; Marinade Guide</a></li>
+                </ul>
+            </section>
+        </aside>
+    </div>
 
     <!-- Footer -->
     <footer class="site-footer">

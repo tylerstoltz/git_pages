@@ -1,0 +1,16 @@
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Chef portrait placeholder">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f7e6da"/>
+      <stop offset="1" stop-color="#e7c4ae"/>
+    </linearGradient>
+  </defs>
+  <rect width="200" height="200" rx="100" fill="url(#bg)"/>
+  <circle cx="100" cy="85" r="38" fill="#f2d0b6"/>
+  <path d="M55 170c12-30 35-45 45-45s33 15 45 45" fill="#9caf88"/>
+  <path d="M63 76c8-26 25-40 44-40s36 14 44 40" fill="#c67b5c"/>
+  <circle cx="85" cy="85" r="6" fill="#3d3d3d"/>
+  <circle cx="115" cy="85" r="6" fill="#3d3d3d"/>
+  <path d="M84 110c8 8 24 8 32 0" fill="none" stroke="#3d3d3d" stroke-width="4" stroke-linecap="round"/>
+  <text x="100" y="190" font-family="'Nunito', sans-serif" font-size="12" text-anchor="middle" fill="#3d3d3d">Chef Isla</text>
+</svg>
