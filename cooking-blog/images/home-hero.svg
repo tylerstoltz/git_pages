@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">
+  <rect width="800" height="600" fill="#FDF8F3"/>
+  <circle cx="620" cy="140" r="90" fill="#E8A889" opacity="0.35"/>
+  <circle cx="140" cy="470" r="120" fill="#9CAF88" opacity="0.25"/>
+  <rect x="140" y="130" width="520" height="320" rx="32" fill="#FFFCF9" stroke="#E8E4E0" stroke-width="3"/>
+  <ellipse cx="400" cy="300" rx="170" ry="90" fill="#C67B5C" opacity="0.25"/>
+  <ellipse cx="400" cy="300" rx="135" ry="70" fill="#E5A84B" opacity="0.35"/>
+  <path d="M280 300c30-40 70-55 120-55s90 15 120 55" fill="none" stroke="#7A9668" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="330" cy="270" r="10" fill="#7A9668"/>
+  <circle cx="470" cy="270" r="10" fill="#7A9668"/>
+  <rect x="180" y="420" width="440" height="60" rx="20" fill="#FDF8F3" stroke="#E8E4E0" stroke-width="2"/>
+  <text x="400" y="458" text-anchor="middle" font-family="Cormorant Garamond, Georgia, serif" font-size="28" fill="#3D3D3D">Weeknight Dinner</text>
+</svg>

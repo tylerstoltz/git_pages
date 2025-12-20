@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="260" height="220" viewBox="0 0 260 220">
+  <rect width="260" height="220" rx="24" fill="#FFFCF9"/>
+  <rect x="55" y="70" width="150" height="90" rx="18" fill="#9CAF88" opacity="0.4"/>
+  <rect x="75" y="88" width="50" height="54" rx="10" fill="#E8A889"/>
+  <rect x="135" y="88" width="50" height="54" rx="10" fill="#E5A84B"/>
+  <text x="130" y="185" text-anchor="middle" font-family="Nunito, sans-serif" font-size="18" fill="#3D3D3D">Meal Prep</text>
+</svg>

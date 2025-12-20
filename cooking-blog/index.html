@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Honey Garlic Butter Salmon | The Cozy Kitchen</title>
+    <title>Isla Cooks | Cozy Weeknight Recipes</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -32,11 +32,16 @@
             font-family: 'Nunito', -apple-system, BlinkMacSystemFont, sans-serif;
             background-color: var(--cream);
             color: var(--charcoal);
-            line-height: 1.8;
+            line-height: 1.7;
             font-size: 17px;
         }
 
-        /* Header & Navigation */
+        img {
+            max-width: 100%;
+            display: block;
+        }
+
+        /* Header */
         .site-header {
             background: var(--warm-white);
             border-bottom: 1px solid var(--light-gray);
@@ -48,7 +53,7 @@
         .header-inner {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 15px 20px;
+            padding: 16px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -68,16 +73,16 @@
         }
 
         .nav-links {
-            display: flex;
-            gap: 30px;
             list-style: none;
+            display: flex;
+            gap: 28px;
         }
 
         .nav-links a {
             text-decoration: none;
             color: var(--soft-gray);
             font-weight: 600;
-            font-size: 0.9em;
+            font-size: 0.85em;
             text-transform: uppercase;
             letter-spacing: 1px;
             transition: color 0.2s;
@@ -87,2046 +92,586 @@
             color: var(--terracotta);
         }
 
-        /* Hero Section */
+        /* Hero */
         .hero {
-            position: relative;
-            height: 65vh;
-            min-height: 450px;
-            background: linear-gradient(135deg, #E8D4C4 0%, #F5E6D8 50%, #E5CDB8 100%);
-            display: flex;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 70px 20px 50px;
+            display: grid;
+            grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+            gap: 40px;
             align-items: center;
-            justify-content: center;
-            overflow: hidden;
         }
 
-        .hero::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23c67b5c' fill-opacity='0.06'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-            opacity: 0.5;
-        }
-
-        .hero-content {
-            text-align: center;
-            z-index: 1;
-            padding: 20px;
-        }
-
-        .category-tag {
-            display: inline-block;
-            background: var(--sage);
-            color: white;
-            padding: 6px 16px;
-            border-radius: 20px;
-            font-size: 0.75em;
-            font-weight: 700;
+        .hero-eyebrow {
             text-transform: uppercase;
-            letter-spacing: 1.5px;
-            margin-bottom: 20px;
+            letter-spacing: 3px;
+            font-size: 0.75em;
+            color: var(--terracotta);
+            font-weight: 700;
+            margin-bottom: 16px;
         }
 
         .hero h1 {
             font-family: 'Cormorant Garamond', Georgia, serif;
-            font-size: 3.5em;
-            font-weight: 700;
-            color: var(--charcoal);
-            margin-bottom: 15px;
-            line-height: 1.1;
+            font-size: 3.4em;
+            line-height: 1.05;
+            margin-bottom: 18px;
         }
 
-        .hero-subtitle {
-            font-size: 1.2em;
+        .hero p {
             color: var(--soft-gray);
-            max-width: 600px;
-            margin: 0 auto 25px;
+            font-size: 1.1em;
+            margin-bottom: 24px;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 22px;
+            border-radius: 999px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 0.9em;
+            letter-spacing: 0.5px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--terracotta);
+            color: white;
+            box-shadow: 0 10px 20px rgba(198, 123, 92, 0.25);
+        }
+
+        .btn-primary:hover {
+            background: var(--terracotta-light);
+        }
+
+        .btn-outline {
+            border: 1px solid var(--light-gray);
+            color: var(--charcoal);
+            background: white;
+        }
+
+        .hero-card {
+            background: var(--warm-white);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.08);
+            border: 1px solid var(--light-gray);
+        }
+
+        .hero-card img {
+            border-radius: 16px;
+            background: var(--cream);
+        }
+
+        .hero-card h2 {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            font-size: 1.8em;
+            margin-top: 18px;
+            margin-bottom: 8px;
+        }
+
+        .hero-card p {
+            color: var(--soft-gray);
+            font-size: 0.95em;
+            margin-bottom: 12px;
         }
 
         .hero-meta {
             display: flex;
-            justify-content: center;
-            gap: 30px;
-            font-size: 0.9em;
+            gap: 16px;
             color: var(--soft-gray);
-        }
-
-        .hero-meta span {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        /* Food Image Placeholder */
-        .food-image-container {
-            max-width: 800px;
-            margin: -80px auto 0;
-            padding: 0 20px;
-            position: relative;
-            z-index: 10;
-        }
-
-        .food-image {
-            width: 100%;
-            aspect-ratio: 4/3;
-            border-radius: 16px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
-            position: relative;
-            overflow: hidden;
-            margin: 0;
-        }
-
-        .food-image img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-        }
-
-        .food-image figcaption {
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            background: rgba(255,255,255,0.95);
-            padding: 10px 18px;
-            border-radius: 8px;
             font-size: 0.85em;
-            font-weight: 600;
-            color: var(--charcoal);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-
-        /* Main Content */
-        .content-layout {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 60px 20px 80px;
-            display: grid;
-            grid-template-columns: minmax(0, 1fr) 320px;
-            gap: 40px;
-            align-items: start;
-        }
-
-        .main-content {
-            max-width: 100%;
-            margin: 0;
-            padding: 0;
-        }
-
-        /* Jump to Recipe */
-        .jump-to-recipe {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 50px;
-        }
-
-        .jump-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            background: var(--terracotta);
-            color: white;
-            padding: 14px 28px;
-            border-radius: 30px;
-            text-decoration: none;
-            font-weight: 700;
-            font-size: 0.95em;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            transition: all 0.3s;
-            box-shadow: 0 4px 15px rgba(198, 123, 92, 0.3);
-        }
-
-        .jump-btn:hover {
-            background: var(--terracotta-light);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(198, 123, 92, 0.4);
-        }
-
-        /* Story Section */
-        .story-section {
-            margin-bottom: 50px;
-        }
-
-        .story-section h2 {
-            font-family: 'Cormorant Garamond', Georgia, serif;
-            font-size: 2.2em;
-            color: var(--charcoal);
-            margin-bottom: 20px;
-        }
-
-        .story-section p {
-            margin-bottom: 20px;
-            color: var(--soft-gray);
-        }
-
-        .story-section p:first-of-type::first-letter {
-            font-family: 'Cormorant Garamond', Georgia, serif;
-            font-size: 4em;
-            float: left;
-            line-height: 0.8;
-            padding-right: 12px;
-            color: var(--terracotta);
-            font-weight: 700;
-        }
-
-        .story-highlight {
-            background: linear-gradient(180deg, transparent 60%, var(--terracotta-light) 60%);
-            padding: 0 4px;
-        }
-
-        /* Inline Image Grid */
-        .image-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin: 35px 0;
-        }
-
-        .grid-image {
-            aspect-ratio: 1;
-            border-radius: 12px;
-            overflow: hidden;
-            position: relative;
-            margin: 0;
-        }
-
-        .grid-image img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-        }
-
-        .grid-image-label {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            padding: 15px;
-            color: white;
-            font-weight: 600;
-            font-size: 0.9em;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.45) 100%);
-        }
-
-        /* Tips Box */
-        .tips-box {
-            background: var(--warm-white);
-            border-left: 4px solid var(--sage);
-            padding: 25px 30px;
-            margin: 35px 0;
-            border-radius: 0 12px 12px 0;
-        }
-
-        .tips-box h3 {
-            font-family: 'Cormorant Garamond', Georgia, serif;
-            font-size: 1.4em;
-            color: var(--sage-dark);
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .tips-box ul {
-            list-style: none;
-        }
-
-        .tips-box li {
-            padding: 8px 0;
-            padding-left: 25px;
-            position: relative;
-            color: var(--soft-gray);
-        }
-
-        .tips-box li::before {
-            content: '✓';
-            position: absolute;
-            left: 0;
-            color: var(--sage);
-            font-weight: 700;
-        }
-
-        /* Recipe Card */
-        .recipe-card {
-            background: var(--warm-white);
-            border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
-            margin-top: 60px;
-            border: 1px solid var(--light-gray);
-        }
-
-        .recipe-card-header {
-            text-align: center;
-            padding-bottom: 30px;
-            border-bottom: 2px dashed var(--light-gray);
-            margin-bottom: 30px;
-        }
-
-        .recipe-card h2 {
-            font-family: 'Cormorant Garamond', Georgia, serif;
-            font-size: 2.5em;
-            color: var(--charcoal);
-            margin-bottom: 10px;
-        }
-
-        .recipe-card-subtitle {
-            color: var(--soft-gray);
-            font-style: italic;
-            margin-bottom: 25px;
-        }
-
-        /* Rating */
-        .rating {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 20px;
-        }
-
-        .stars {
-            color: var(--honey);
-            font-size: 1.3em;
-            letter-spacing: 2px;
-        }
-
-        .rating-text {
-            color: var(--soft-gray);
-            font-size: 0.9em;
-        }
-
-        /* Recipe Meta */
-        .recipe-meta {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 20px;
-            background: var(--cream);
-            padding: 25px;
-            border-radius: 12px;
-        }
-
-        .meta-item {
-            text-align: center;
-        }
-
-        .meta-label {
-            font-size: 0.75em;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--soft-gray);
-            margin-bottom: 5px;
-        }
-
-        .meta-value {
-            font-size: 1.2em;
-            font-weight: 700;
-            color: var(--charcoal);
-        }
-
-        /* Print & Share Buttons */
-        .action-buttons {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin: 30px 0;
             flex-wrap: wrap;
         }
 
-        .action-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 12px 20px;
-            border-radius: 8px;
-            font-size: 0.85em;
-            font-weight: 600;
-            text-decoration: none;
-            transition: all 0.2s;
-            cursor: pointer;
-            border: none;
-            font-family: inherit;
-        }
-
-        .btn-print {
-            background: var(--charcoal);
-            color: white;
-        }
-
-        .btn-print:hover {
-            background: #555;
-        }
-
-        .btn-save {
-            background: var(--terracotta);
-            color: white;
-        }
-
-        .btn-save:hover {
-            background: var(--terracotta-light);
-        }
-
-        .btn-scale {
-            background: var(--sage);
-            color: white;
-        }
-
-        .btn-scale:hover {
-            background: var(--sage-dark);
-        }
-
-        /* Ingredients Section */
-        .recipe-section {
-            margin-top: 40px;
-        }
-
-        .recipe-section h3 {
-            font-family: 'Cormorant Garamond', Georgia, serif;
-            font-size: 1.8em;
-            color: var(--charcoal);
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid var(--honey);
-            display: inline-block;
-        }
-
-        .ingredients-list {
-            list-style: none;
-        }
-
-        .ingredients-list li {
-            padding: 12px 0;
-            border-bottom: 1px solid var(--light-gray);
-            display: flex;
-            align-items: flex-start;
-            gap: 15px;
-        }
-
-        .ingredients-list li:last-child {
-            border-bottom: none;
-        }
-
-        .ingredient-checkbox {
-            appearance: none;
-            width: 22px;
-            height: 22px;
-            border: 2px solid var(--sage);
-            border-radius: 4px;
-            cursor: pointer;
-            flex-shrink: 0;
-            margin-top: 2px;
-            position: relative;
-            transition: all 0.2s;
-        }
-
-        .ingredient-checkbox:checked {
-            background: var(--sage);
-        }
-
-        .ingredient-checkbox:checked::after {
-            content: '✓';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: white;
-            font-size: 14px;
-            font-weight: bold;
-        }
-
-        .ingredient-checkbox:checked + .ingredient-text {
-            text-decoration: line-through;
-            color: var(--light-gray);
-        }
-
-        .ingredient-text {
-            flex: 1;
-            transition: all 0.2s;
-        }
-
-        .ingredient-amount {
-            font-weight: 700;
-            color: var(--charcoal);
-        }
-
-        .ingredient-subheading {
-            font-weight: 700;
-            color: var(--terracotta);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-size: 0.85em;
-            padding-top: 20px;
-            border-bottom: none !important;
-        }
-
-        /* Instructions Section */
-        .instructions-list {
-            counter-reset: step;
-            list-style: none;
-        }
-
-        .instructions-list li {
-            padding: 25px 0;
-            padding-left: 80px;
-            border-bottom: 1px solid var(--light-gray);
-            position: relative;
-        }
-
-        .instructions-list li:last-child {
-            border-bottom: none;
-        }
-
-        .instructions-list li::before {
-            counter-increment: step;
-            content: counter(step);
-            position: absolute;
-            left: 0;
-            top: 25px;
-            width: 50px;
-            height: 50px;
-            background: var(--honey);
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'Cormorant Garamond', Georgia, serif;
-            font-size: 1.5em;
-            font-weight: 700;
-        }
-
-        .step-title {
-            font-weight: 700;
-            color: var(--charcoal);
-            margin-bottom: 8px;
-            font-size: 1.1em;
-        }
-
-        .step-content {
-            color: var(--soft-gray);
-        }
-
-        /* Nutrition Section */
-        .nutrition-section {
-            margin-top: 40px;
-            background: var(--cream);
-            padding: 30px;
-            border-radius: 12px;
-        }
-
-        .nutrition-section h3 {
-            font-family: 'Cormorant Garamond', Georgia, serif;
-            font-size: 1.5em;
-            color: var(--charcoal);
-            margin-bottom: 20px;
-        }
-
-        .nutrition-grid {
+        main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px 90px;
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 80px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            flex-wrap: wrap;
             gap: 15px;
+            margin-bottom: 30px;
         }
 
-        .nutrition-item {
-            text-align: center;
-            padding: 15px;
-            background: var(--warm-white);
-            border-radius: 8px;
-        }
-
-        .nutrition-value {
-            font-size: 1.4em;
-            font-weight: 700;
-            color: var(--terracotta);
-        }
-
-        .nutrition-label {
-            font-size: 0.8em;
-            color: var(--soft-gray);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        /* Notes Section */
-        .notes-section {
-            margin-top: 40px;
-            padding: 25px;
-            background: linear-gradient(135deg, rgba(156, 175, 136, 0.1) 0%, rgba(156, 175, 136, 0.05) 100%);
-            border-radius: 12px;
-            border: 1px dashed var(--sage);
-        }
-
-        .notes-section h4 {
+        .section-header h2 {
             font-family: 'Cormorant Garamond', Georgia, serif;
-            font-size: 1.3em;
-            color: var(--sage-dark);
-            margin-bottom: 15px;
+            font-size: 2.2em;
         }
 
-        .notes-section p {
+        .section-header p {
             color: var(--soft-gray);
-            font-size: 0.95em;
+            max-width: 520px;
         }
 
-        /* Related Recipes */
-        .related-section {
-            margin-top: 80px;
-            padding-top: 60px;
-            border-top: 1px solid var(--light-gray);
-        }
-
-        .related-section h2 {
-            font-family: 'Cormorant Garamond', Georgia, serif;
-            font-size: 2em;
-            color: var(--charcoal);
-            text-align: center;
-            margin-bottom: 40px;
-        }
-
-        .related-grid {
+        .featured-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 25px;
         }
 
-        .related-card {
+        .recipe-card {
             background: var(--warm-white);
-            border-radius: 12px;
+            border-radius: 18px;
             overflow: hidden;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
-            transition: transform 0.3s, box-shadow 0.3s;
+            border: 1px solid var(--light-gray);
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.06);
             text-decoration: none;
             color: inherit;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
 
-        .related-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        .recipe-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 18px 34px rgba(0, 0, 0, 0.1);
         }
 
-        .related-image {
-            height: 150px;
-            overflow: hidden;
-        }
-
-        .related-image img {
+        .recipe-card img {
             width: 100%;
-            height: 100%;
+            height: 230px;
             object-fit: cover;
-            display: block;
+            background: var(--cream);
         }
 
-        /* Affiliate Section */
-        .affiliate-section {
-            margin-top: 70px;
+        .recipe-card-content {
+            padding: 22px;
         }
 
-        .affiliate-section h2 {
-            font-family: 'Cormorant Garamond', Georgia, serif;
-            font-size: 2em;
-            color: var(--charcoal);
-            text-align: center;
-            margin-bottom: 15px;
+        .recipe-card h3 {
+            font-size: 1.2em;
+            margin-bottom: 6px;
         }
 
-        .affiliate-section p {
-            text-align: center;
+        .recipe-card p {
             color: var(--soft-gray);
-            margin-bottom: 35px;
+            font-size: 0.95em;
+            margin-bottom: 14px;
+        }
+
+        .recipe-meta {
+            display: flex;
+            justify-content: space-between;
+            color: var(--soft-gray);
+            font-size: 0.85em;
+        }
+
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 20px;
+        }
+
+        .category-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid var(--light-gray);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        .category-card img {
+            height: 110px;
+            margin: 0 auto 15px;
+        }
+
+        .category-card h4 {
+            font-size: 1.05em;
+            margin-bottom: 6px;
+        }
+
+        .category-card p {
+            color: var(--soft-gray);
+            font-size: 0.9em;
         }
 
         .affiliate-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 25px;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 20px;
         }
 
         .affiliate-card {
             background: var(--warm-white);
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid var(--light-gray);
             text-decoration: none;
             color: inherit;
-            transition: transform 0.3s, box-shadow 0.3s;
+            transition: transform 0.2s ease;
         }
 
         .affiliate-card:hover {
             transform: translateY(-4px);
-            box-shadow: 0 12px 30px rgba(0,0,0,0.1);
         }
 
-        .affiliate-image {
-            height: 170px;
-            overflow: hidden;
+        .affiliate-card img {
+            height: 140px;
+            margin: 0 auto 16px;
+            background: var(--cream);
+            border-radius: 14px;
         }
 
-        .affiliate-image img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-        }
-
-        .affiliate-content {
-            padding: 20px;
-        }
-
-        .affiliate-content h3 {
-            font-size: 1.05em;
+        .affiliate-card h4 {
             margin-bottom: 8px;
-            color: var(--charcoal);
         }
 
-        .affiliate-content p {
-            text-align: left;
-            font-size: 0.85em;
-            margin-bottom: 12px;
-        }
-
-        .affiliate-cta {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.85em;
-            font-weight: 700;
-            color: var(--terracotta);
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-        }
-
-        .related-content {
-            padding: 20px;
-        }
-
-        .related-content h3 {
-            font-family: 'Cormorant Garamond', Georgia, serif;
-            font-size: 1.2em;
-            margin-bottom: 8px;
-            color: var(--charcoal);
-        }
-
-        .related-content p {
-            font-size: 0.85em;
+        .affiliate-card p {
             color: var(--soft-gray);
+            font-size: 0.9em;
         }
 
-        .related-meta {
-            display: flex;
-            gap: 15px;
-            margin-top: 12px;
-            font-size: 0.8em;
-            color: var(--soft-gray);
-        }
-
-        /* Sidebar */
-        .sidebar {
-            display: flex;
-            flex-direction: column;
+        .about-section {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 30px;
-            position: sticky;
-            top: 110px;
-            align-self: start;
-        }
-
-        .sidebar-card {
+            align-items: center;
             background: var(--warm-white);
-            border-radius: 16px;
-            padding: 24px;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.06);
+            border-radius: 24px;
+            padding: 35px;
             border: 1px solid var(--light-gray);
         }
 
-        .sidebar-card h3 {
+        .about-section img {
+            border-radius: 18px;
+            background: var(--cream);
+        }
+
+        .about-section h3 {
             font-family: 'Cormorant Garamond', Georgia, serif;
-            font-size: 1.5em;
+            font-size: 2em;
             margin-bottom: 12px;
-            color: var(--charcoal);
         }
 
-        .chef-profile {
-            display: flex;
-            gap: 16px;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-
-        .chef-avatar {
-            width: 72px;
-            height: 72px;
-            border-radius: 50%;
-            overflow: hidden;
-            flex-shrink: 0;
-            border: 3px solid var(--sage);
-            background: var(--cream);
-        }
-
-        .chef-avatar img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-        }
-
-        .chef-title {
-            font-weight: 700;
-            color: var(--charcoal);
-        }
-
-        .chef-tagline {
-            font-size: 0.9em;
+        .about-section p {
             color: var(--soft-gray);
+            margin-bottom: 16px;
         }
 
-        .chef-stats {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin-top: 18px;
-        }
-
-        .chef-stat {
-            background: var(--cream);
-            border-radius: 10px;
-            padding: 12px;
-            text-align: center;
-        }
-
-        .chef-stat strong {
-            display: block;
-            color: var(--terracotta);
-            font-size: 1.1em;
-        }
-
-        .chef-stat span {
-            font-size: 0.75em;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            color: var(--soft-gray);
-        }
-
-        .sidebar-recipe {
-            display: grid;
-            grid-template-columns: 80px 1fr;
-            gap: 12px;
-            align-items: center;
-            text-decoration: none;
-            color: inherit;
-            padding: 10px 0;
-            border-bottom: 1px solid var(--light-gray);
-        }
-
-        .sidebar-recipe:last-child {
-            border-bottom: none;
-            padding-bottom: 0;
-        }
-
-        .sidebar-recipe img {
-            width: 80px;
-            height: 80px;
-            border-radius: 10px;
-            object-fit: cover;
-            display: block;
-        }
-
-        .sidebar-recipe h4 {
-            font-size: 0.95em;
-            margin-bottom: 6px;
-            color: var(--charcoal);
-        }
-
-        .sidebar-recipe span {
-            font-size: 0.8em;
-            color: var(--soft-gray);
-        }
-
-        .sidebar-links {
-            list-style: none;
-            display: grid;
-            gap: 10px;
-            margin-top: 15px;
-        }
-
-        .sidebar-links a {
-            text-decoration: none;
-            color: var(--terracotta);
-            font-weight: 600;
-            font-size: 0.9em;
-        }
-
-        .sidebar-links a:hover {
-            color: var(--terracotta-light);
-        }
-
-        .download-card {
-            background: linear-gradient(135deg, rgba(198,123,92,0.12), rgba(156,175,136,0.12));
-            border: 1px dashed var(--sage);
-        }
-
-        .download-card p {
-            font-size: 0.9em;
-            color: var(--soft-gray);
-            margin-bottom: 15px;
-        }
-
-        .download-card button {
-            width: 100%;
-            border: none;
-            padding: 12px 16px;
-            border-radius: 10px;
-            background: var(--sage);
-            color: white;
-            font-weight: 700;
-            cursor: pointer;
-            font-family: inherit;
-        }
-
-        .download-card button:hover {
-            background: var(--sage-dark);
-        }
-
-        /* Newsletter Section */
         .newsletter-section {
-            margin-top: 80px;
             background: linear-gradient(135deg, var(--terracotta) 0%, var(--terracotta-light) 100%);
-            padding: 50px 40px;
             border-radius: 20px;
-            text-align: center;
+            padding: 45px 35px;
             color: white;
+            text-align: center;
         }
 
         .newsletter-section h2 {
             font-family: 'Cormorant Garamond', Georgia, serif;
-            font-size: 2em;
+            font-size: 2.2em;
             margin-bottom: 10px;
         }
 
         .newsletter-section p {
             opacity: 0.9;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
         }
 
         .newsletter-form {
-            display: flex;
-            max-width: 450px;
-            margin: 0 auto;
-            gap: 10px;
-        }
-
-        .newsletter-form input {
-            flex: 1;
-            padding: 14px 20px;
-            border: none;
-            border-radius: 8px;
-            font-size: 1em;
-            font-family: inherit;
-        }
-
-        .newsletter-form button {
-            padding: 14px 28px;
-            background: var(--charcoal);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: background 0.2s;
-            font-family: inherit;
-        }
-
-        .newsletter-form button:hover {
-            background: #555;
-        }
-
-        /* Comments Section */
-        .comments-section {
-            margin-top: 80px;
-            padding-top: 60px;
-            border-top: 1px solid var(--light-gray);
-        }
-
-        .comments-section h2 {
-            font-family: 'Cormorant Garamond', Georgia, serif;
-            font-size: 2em;
-            color: var(--charcoal);
-            margin-bottom: 30px;
-        }
-
-        .comment {
-            display: flex;
-            gap: 20px;
-            padding: 25px 0;
-            border-bottom: 1px solid var(--light-gray);
-        }
-
-        .comment-avatar {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: var(--sage);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 700;
-            flex-shrink: 0;
-        }
-
-        .comment-body {
-            flex: 1;
-        }
-
-        .comment-header {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 8px;
-        }
-
-        .comment-author {
-            font-weight: 700;
-            color: var(--charcoal);
-        }
-
-        .comment-date {
-            font-size: 0.85em;
-            color: var(--soft-gray);
-        }
-
-        .comment-rating {
-            color: var(--honey);
-            font-size: 0.9em;
-        }
-
-        .comment-text {
-            color: var(--soft-gray);
-        }
-
-        .comment-form {
-            margin-top: 40px;
-            background: var(--cream);
-            padding: 30px;
-            border-radius: 12px;
-        }
-
-        .comment-form h3 {
-            font-family: 'Cormorant Garamond', Georgia, serif;
-            font-size: 1.5em;
-            color: var(--charcoal);
-            margin-bottom: 20px;
-        }
-
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: var(--charcoal);
-            font-size: 0.9em;
-        }
-
-        .form-group input,
-        .form-group textarea {
-            width: 100%;
-            padding: 12px 15px;
-            border: 1px solid var(--light-gray);
-            border-radius: 8px;
-            font-family: inherit;
-            font-size: 1em;
-            transition: border-color 0.2s;
-        }
-
-        .form-group input:focus,
-        .form-group textarea:focus {
-            outline: none;
-            border-color: var(--sage);
-        }
-
-        .form-group textarea {
-            height: 120px;
-            resize: vertical;
-        }
-
-        .star-rating-input {
-            display: flex;
-            gap: 5px;
-        }
-
-        .star-rating-input span {
-            cursor: pointer;
-            font-size: 1.5em;
-            color: var(--light-gray);
-            transition: color 0.2s;
-        }
-
-        .star-rating-input span:hover,
-        .star-rating-input span.active {
-            color: var(--honey);
-        }
-
-        .submit-comment {
-            background: var(--sage);
-            color: white;
-            border: none;
-            padding: 14px 35px;
-            border-radius: 8px;
-            font-weight: 700;
-            cursor: pointer;
-            font-family: inherit;
-            font-size: 1em;
-            transition: background 0.2s;
-        }
-
-        .submit-comment:hover {
-            background: var(--sage-dark);
-        }
-
-        /* Footer */
-        .site-footer {
-            background: var(--charcoal);
-            color: white;
-            padding: 60px 20px 30px;
-            margin-top: 80px;
-        }
-
-        .footer-inner {
-            max-width: 1000px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 40px;
-        }
-
-        .footer-column h4 {
-            font-family: 'Cormorant Garamond', Georgia, serif;
-            font-size: 1.3em;
-            margin-bottom: 20px;
-        }
-
-        .footer-column ul {
-            list-style: none;
-        }
-
-        .footer-column li {
-            margin-bottom: 10px;
-        }
-
-        .footer-column a {
-            color: rgba(255,255,255,0.7);
-            text-decoration: none;
-            transition: color 0.2s;
-        }
-
-        .footer-column a:hover {
-            color: white;
-        }
-
-        .footer-bottom {
-            text-align: center;
-            padding-top: 40px;
-            margin-top: 40px;
-            border-top: 1px solid rgba(255,255,255,0.1);
-            color: rgba(255,255,255,0.5);
-            font-size: 0.9em;
-        }
-
-        .footer-bottom a {
-            color: var(--terracotta-light);
-        }
-
-        /* Mobile Responsive */
-        @media (max-width: 768px) {
-            .nav-links {
-                display: none;
-            }
-
-            .content-layout {
-                grid-template-columns: 1fr;
-                gap: 50px;
-            }
-
-            .sidebar {
-                position: static;
-            }
-
-            .hero h1 {
-                font-size: 2.2em;
-            }
-
-            .hero-meta {
-                flex-wrap: wrap;
-                gap: 15px;
-            }
-
-            .recipe-meta {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .related-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .affiliate-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .footer-inner {
-                grid-template-columns: 1fr;
-                text-align: center;
-            }
-
-            .form-row {
-                grid-template-columns: 1fr;
-            }
-
-            .newsletter-form {
-                flex-direction: column;
-            }
-
-            .image-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .action-buttons {
-                flex-direction: column;
-                align-items: center;
-            }
-
-            .instructions-list li {
-                padding-left: 60px;
-            }
-
-            .instructions-list li::before {
-                width: 40px;
-                height: 40px;
-                font-size: 1.2em;
-            }
-        }
-
-        /* Print Styles */
-        @media print {
-            .site-header,
-            .jump-to-recipe,
-            .action-buttons,
-            .newsletter-section,
-            .related-section,
-            .comments-section,
-            .sidebar,
-            .site-footer,
-            .story-section,
-            .food-image-container {
-                display: none !important;
-            }
-
-            .recipe-card {
-                box-shadow: none;
-                border: 1px solid #ccc;
-            }
-
-            body {
-                font-size: 12pt;
-            }
-        }
-
-        /* Back to tools link */
-        .back-link {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: var(--charcoal);
-            color: white;
-            padding: 12px 20px;
-            border-radius: 30px;
-            text-decoration: none;
-            font-size: 0.85em;
-            font-weight: 600;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            z-index: 100;
-            transition: all 0.3s;
-        }
-
-        .back-link:hover {
-            background: #555;
-            transform: translateY(-2px);
-        }
-
-        /* Servings scaler */
-        .scale-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.5);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .scale-modal.active {
-            display: flex;
-        }
-
-        .scale-modal-content {
-            background: white;
-            padding: 30px;
-            border-radius: 16px;
-            max-width: 350px;
-            width: 90%;
-            text-align: center;
-        }
-
-        .scale-modal h3 {
-            font-family: 'Cormorant Garamond', Georgia, serif;
-            font-size: 1.5em;
-            margin-bottom: 20px;
-        }
-
-        .scale-buttons {
             display: flex;
             gap: 10px;
             justify-content: center;
             flex-wrap: wrap;
         }
 
-        .scale-btn {
-            padding: 10px 20px;
-            border: 2px solid var(--sage);
-            background: white;
+        .newsletter-form input {
+            padding: 12px 16px;
             border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.2s;
-        }
-
-        .scale-btn:hover,
-        .scale-btn.active {
-            background: var(--sage);
-            color: white;
-        }
-
-        .scale-close {
-            margin-top: 20px;
-            background: none;
             border: none;
-            color: var(--soft-gray);
+            min-width: 240px;
+            font-size: 1em;
+        }
+
+        .newsletter-form button {
+            padding: 12px 22px;
+            border-radius: 8px;
+            border: none;
+            background: var(--charcoal);
+            color: white;
+            font-weight: 700;
             cursor: pointer;
+        }
+
+        /* Footer */
+        .site-footer {
+            background: var(--warm-white);
+            border-top: 1px solid var(--light-gray);
+        }
+
+        .footer-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 30px;
+        }
+
+        .footer-inner h4 {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            font-size: 1.2em;
+            margin-bottom: 10px;
+        }
+
+        .footer-inner ul {
+            list-style: none;
+            display: grid;
+            gap: 8px;
+        }
+
+        .footer-inner a {
+            text-decoration: none;
+            color: var(--soft-gray);
+        }
+
+        .footer-inner a:hover {
+            color: var(--terracotta);
+        }
+
+        .footer-bottom {
+            border-top: 1px solid var(--light-gray);
+            text-align: center;
+            padding: 18px 20px 30px;
+            color: var(--soft-gray);
             font-size: 0.9em;
+        }
+
+        .affiliate-disclosure {
+            font-size: 0.85em;
+            color: var(--soft-gray);
+            margin-top: 12px;
+        }
+
+        @media (max-width: 980px) {
+            .hero {
+                grid-template-columns: 1fr;
+            }
+
+            .featured-grid,
+            .category-grid,
+            .affiliate-grid,
+            .about-section {
+                grid-template-columns: 1fr;
+            }
+
+            .header-inner {
+                flex-direction: column;
+                gap: 12px;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .nav-links {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .hero h1 {
+                font-size: 2.6em;
+            }
+
+            .recipe-card img {
+                height: 200px;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- Header -->
     <header class="site-header">
         <div class="header-inner">
-            <a href="../" class="logo">the cozy<span>kitchen</span></a>
+            <a href="index.html" class="logo">isla<span>cooks</span></a>
             <nav>
                 <ul class="nav-links">
-                    <li><a href="#">Recipes</a></li>
-                    <li><a href="#">About</a></li>
-                    <li><a href="#">Meal Prep</a></li>
-                    <li><a href="#">Subscribe</a></li>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="#recipes">Recipes</a></li>
+                    <li><a href="#meal-prep">Meal Prep</a></li>
+                    <li><a href="#about">About</a></li>
+                    <li><a href="#newsletter">Newsletter</a></li>
                 </ul>
             </nav>
         </div>
     </header>
 
-    <!-- Hero -->
     <section class="hero">
-        <div class="hero-content">
-            <span class="category-tag">Quick Weeknight Dinners</span>
-            <h1>Honey Garlic Butter Salmon</h1>
-            <p class="hero-subtitle">Perfectly glazed salmon fillets in a sticky-sweet honey garlic sauce that comes together in just 25 minutes</p>
+        <div>
+            <div class="hero-eyebrow">Isla Cooks</div>
+            <h1>Cozy, crave-worthy dinners for busy nights.</h1>
+            <p>We test every recipe to make sure it works in a real kitchen: bold flavors, minimal dishes, and just the right amount of butter.</p>
+            <div class="hero-actions">
+                <a class="btn btn-primary" href="#recipes">Browse recipes</a>
+                <a class="btn btn-outline" href="#newsletter">Get the weekly plan</a>
+            </div>
+        </div>
+        <div class="hero-card">
+            <img src="images/home-hero.svg" alt="Illustrated platter of a weeknight dinner with herbs and lemon">
+            <h2>Weeknight Hero</h2>
+            <p>Start with our most-loved salmon recipe. Sticky honey glaze, fast prep, and a dinner that looks like you tried.</p>
             <div class="hero-meta">
-                <span>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <polyline points="12 6 12 12 16 14"></polyline>
-                    </svg>
-                    25 minutes
-                </span>
-                <span>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="9" cy="7" r="4"></circle>
-                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                    </svg>
-                    Serves 4
-                </span>
-                <span>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                    </svg>
-                    4.9 (247 reviews)
-                </span>
+                <span>25 minutes</span>
+                <span>&#9733; 4.9 rating</span>
+                <span>Seared skillet</span>
             </div>
         </div>
     </section>
 
-    <!-- Food Image -->
-    <div class="food-image-container">
-        <figure class="food-image">
-            <img src="images/hero-salmon.png" alt="Glazed salmon fillets on a ceramic plate with herbs and lemon slices">
-            <figcaption>Glazed Salmon with Fresh Herbs</figcaption>
-        </figure>
-    </div>
-
-    <!-- Main Content -->
-    <div class="content-layout">
-        <main class="main-content">
-        <!-- Jump to Recipe -->
-        <div class="jump-to-recipe">
-            <a href="#recipe-card" class="jump-btn">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="12" y1="5" x2="12" y2="19"></line>
-                    <polyline points="19 12 12 19 5 12"></polyline>
-                </svg>
-                Jump to Recipe
-            </a>
-        </div>
-
-        <!-- Story Section -->
-        <section class="story-section">
-            <h2>Why This Recipe Works</h2>
-            <p>There's something almost magical about the moment a beautifully glazed salmon fillet hits the table. The way the honey catches the light, that gentle sheen from the butter, the aromatic whisper of garlic filling the kitchen. This is the kind of dinner that feels fancy but is secretly <span class="story-highlight">ridiculously easy to make</span>.</p>
-
-            <p>I first made this recipe on a particularly chaotic Tuesday. You know the kind&mdash;back-to-back meetings, a forgotten grocery list, and about 30 minutes to get something on the table before everyone started rummaging through the snack drawer. I had salmon in the freezer (always keep salmon in the freezer, friends), and a handful of pantry staples. What emerged from my kitchen that night became our family's most-requested dinner.</p>
-
-            <div class="image-grid">
-                <figure class="grid-image">
-                    <img src="images/sear-pan.png" alt="Salmon searing in a warm skillet">
-                    <figcaption class="grid-image-label">The perfect golden sear</figcaption>
-                </figure>
-                <figure class="grid-image">
-                    <img src="images/fresh-herbs.png" alt="Fresh herbs and lemon ready for garnish">
-                    <figcaption class="grid-image-label">Fresh herb garnish</figcaption>
-                </figure>
-            </div>
-
-            <p>The secret to this recipe is the sauce. We're building layers of flavor here: the caramelized sweetness of honey, the punchy bite of fresh garlic, a splash of soy sauce for umami depth, and a generous amount of butter to bring it all together into silky perfection. The sauce reduces while the salmon rests, becoming gloriously sticky and perfect for drizzling.</p>
-
-            <div class="tips-box">
-                <h3>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <line x1="12" y1="16" x2="12" y2="12"></line>
-                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                    </svg>
-                    Pro Tips Before You Start
-                </h3>
-                <ul>
-                    <li>Pat your salmon dry with paper towels for the best sear</li>
-                    <li>Let the fish come to room temperature for 15 minutes before cooking</li>
-                    <li>Don't move the salmon once it hits the pan&mdash;let that crust develop</li>
-                    <li>Use a fish spatula for the easiest flip of your life</li>
-                </ul>
-            </div>
-
-            <p>I love serving this over a bed of jasmine rice to soak up every drop of that sauce. A simple side of steamed broccoli or roasted asparagus rounds things out beautifully. And honestly? This is impressive enough for company but easy enough for a random Tuesday. That's my favorite kind of recipe.</p>
-        </section>
-
-        <!-- Shop Section -->
-        <section class="affiliate-section">
-            <h2>Shop This Recipe</h2>
-            <p>Affiliate links help support The Cozy Kitchen at no extra cost to you.</p>
-            <div class="affiliate-grid">
-                <a class="affiliate-card" href="#">
-                    <div class="affiliate-image">
-                        <img src="images/affiliate-pan.png" alt="Nonstick skillet with honey glaze drips">
-                    </div>
-                    <div class="affiliate-content">
-                        <h3>Everyday 12\" Nonstick Skillet</h3>
-                        <p>The pan that delivers that gorgeous golden sear without sticking.</p>
-                        <span class="affiliate-cta">Shop now →</span>
-                    </div>
-                </a>
-                <a class="affiliate-card" href="#">
-                    <div class="affiliate-image">
-                        <img src="images/affiliate-thermometer.png" alt="Instant-read thermometer for perfect salmon doneness">
-                    </div>
-                    <div class="affiliate-content">
-                        <h3>Instant-Read Thermometer</h3>
-                        <p>Take the guesswork out of cooking salmon with quick, accurate temps.</p>
-                        <span class="affiliate-cta">Shop now →</span>
-                    </div>
-                </a>
-                <a class="affiliate-card" href="#">
-                    <div class="affiliate-image">
-                        <img src="images/affiliate-board.png" alt="Wood cutting board with prep space">
-                    </div>
-                    <div class="affiliate-content">
-                        <h3>Maple Prep Board</h3>
-                        <p>A sturdy, beautiful board for slicing herbs and prep work.</p>
-                        <span class="affiliate-cta">Shop now →</span>
-                    </div>
-                </a>
-            </div>
-        </section>
-
-        <!-- Recipe Card -->
-        <div id="recipe-card" class="recipe-card">
-            <div class="recipe-card-header">
-                <h2>Honey Garlic Butter Salmon</h2>
-                <p class="recipe-card-subtitle">A 25-minute weeknight wonder that tastes like you spent hours</p>
-
-                <div class="rating">
-                    <span class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
-                    <span class="rating-text">4.9 from 247 reviews</span>
+    <main>
+        <section id="recipes">
+            <div class="section-header">
+                <div>
+                    <h2>Featured Recipe</h2>
+                    <p>Our flagship recipe page is ready for SEO love, print buttons, and all the cozy details.</p>
                 </div>
-
-                <div class="recipe-meta">
-                    <div class="meta-item">
-                        <div class="meta-label">Prep Time</div>
-                        <div class="meta-value">10 min</div>
-                    </div>
-                    <div class="meta-item">
-                        <div class="meta-label">Cook Time</div>
-                        <div class="meta-value">15 min</div>
-                    </div>
-                    <div class="meta-item">
-                        <div class="meta-label">Servings</div>
-                        <div class="meta-value" id="servings-display">4</div>
-                    </div>
-                    <div class="meta-item">
-                        <div class="meta-label">Calories</div>
-                        <div class="meta-value">385</div>
-                    </div>
-                </div>
+                <a class="btn btn-outline" href="recipes/honey-garlic-butter-salmon/">See the full recipe</a>
             </div>
-
-            <div class="action-buttons">
-                <button class="action-btn btn-print" onclick="window.print()">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="6 9 6 2 18 2 18 9"></polyline>
-                        <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
-                        <rect x="6" y="14" width="12" height="8"></rect>
-                    </svg>
-                    Print Recipe
-                </button>
-                <button class="action-btn btn-save" onclick="alert('Recipe saved to your cookbook!')">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
-                    </svg>
-                    Save Recipe
-                </button>
-                <button class="action-btn btn-scale" onclick="openScaleModal()">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="4" y1="21" x2="4" y2="14"></line>
-                        <line x1="4" y1="10" x2="4" y2="3"></line>
-                        <line x1="12" y1="21" x2="12" y2="12"></line>
-                        <line x1="12" y1="8" x2="12" y2="3"></line>
-                        <line x1="20" y1="21" x2="20" y2="16"></line>
-                        <line x1="20" y1="12" x2="20" y2="3"></line>
-                        <line x1="1" y1="14" x2="7" y2="14"></line>
-                        <line x1="9" y1="8" x2="15" y2="8"></line>
-                        <line x1="17" y1="16" x2="23" y2="16"></line>
-                    </svg>
-                    Scale Recipe
-                </button>
-            </div>
-
-            <!-- Ingredients -->
-            <section class="recipe-section">
-                <h3>Ingredients</h3>
-                <ul class="ingredients-list">
-                    <li class="ingredient-subheading">For the Salmon</li>
-                    <li>
-                        <input type="checkbox" class="ingredient-checkbox" id="ing1">
-                        <label class="ingredient-text" for="ing1"><span class="ingredient-amount">4</span> salmon fillets (6 oz each), skin-on or skinless</label>
-                    </li>
-                    <li>
-                        <input type="checkbox" class="ingredient-checkbox" id="ing2">
-                        <label class="ingredient-text" for="ing2"><span class="ingredient-amount">1 tablespoon</span> olive oil</label>
-                    </li>
-                    <li>
-                        <input type="checkbox" class="ingredient-checkbox" id="ing3">
-                        <label class="ingredient-text" for="ing3">Salt and freshly ground black pepper, to taste</label>
-                    </li>
-                    <li class="ingredient-subheading">For the Honey Garlic Glaze</li>
-                    <li>
-                        <input type="checkbox" class="ingredient-checkbox" id="ing4">
-                        <label class="ingredient-text" for="ing4"><span class="ingredient-amount">4 tablespoons</span> unsalted butter</label>
-                    </li>
-                    <li>
-                        <input type="checkbox" class="ingredient-checkbox" id="ing5">
-                        <label class="ingredient-text" for="ing5"><span class="ingredient-amount">5 cloves</span> garlic, minced</label>
-                    </li>
-                    <li>
-                        <input type="checkbox" class="ingredient-checkbox" id="ing6">
-                        <label class="ingredient-text" for="ing6"><span class="ingredient-amount">1/4 cup</span> honey</label>
-                    </li>
-                    <li>
-                        <input type="checkbox" class="ingredient-checkbox" id="ing7">
-                        <label class="ingredient-text" for="ing7"><span class="ingredient-amount">3 tablespoons</span> low-sodium soy sauce</label>
-                    </li>
-                    <li>
-                        <input type="checkbox" class="ingredient-checkbox" id="ing8">
-                        <label class="ingredient-text" for="ing8"><span class="ingredient-amount">1 tablespoon</span> fresh lemon juice</label>
-                    </li>
-                    <li>
-                        <input type="checkbox" class="ingredient-checkbox" id="ing9">
-                        <label class="ingredient-text" for="ing9"><span class="ingredient-amount">1/4 teaspoon</span> red pepper flakes (optional)</label>
-                    </li>
-                    <li class="ingredient-subheading">For Garnish</li>
-                    <li>
-                        <input type="checkbox" class="ingredient-checkbox" id="ing10">
-                        <label class="ingredient-text" for="ing10">Fresh parsley or cilantro, chopped</label>
-                    </li>
-                    <li>
-                        <input type="checkbox" class="ingredient-checkbox" id="ing11">
-                        <label class="ingredient-text" for="ing11">Sesame seeds</label>
-                    </li>
-                    <li>
-                        <input type="checkbox" class="ingredient-checkbox" id="ing12">
-                        <label class="ingredient-text" for="ing12">Lemon wedges</label>
-                    </li>
-                </ul>
-            </section>
-
-            <!-- Instructions -->
-            <section class="recipe-section">
-                <h3>Instructions</h3>
-                <ol class="instructions-list">
-                    <li>
-                        <div class="step-title">Prep the Salmon</div>
-                        <div class="step-content">Pat the salmon fillets dry with paper towels and season generously with salt and pepper on both sides. Let them sit at room temperature for about 15 minutes while you prep the other ingredients.</div>
-                    </li>
-                    <li>
-                        <div class="step-title">Sear the Salmon</div>
-                        <div class="step-content">Heat the olive oil in a large skillet over medium-high heat. Once the oil is shimmering, add the salmon fillets presentation-side down (skin-side up if using skin-on). Sear without moving for 4-5 minutes until a golden crust forms. Flip and cook for another 3-4 minutes until the salmon is cooked through. Transfer to a plate and tent with foil.</div>
-                    </li>
-                    <li>
-                        <div class="step-title">Make the Glaze</div>
-                        <div class="step-content">In the same skillet, reduce the heat to medium and add the butter. Once melted and slightly foamy, add the minced garlic and cook for 30-60 seconds until fragrant (don't let it brown). Add the honey, soy sauce, lemon juice, and red pepper flakes if using. Stir to combine.</div>
-                    </li>
-                    <li>
-                        <div class="step-title">Reduce & Glaze</div>
-                        <div class="step-content">Let the sauce simmer for 2-3 minutes, stirring occasionally, until it thickens slightly and becomes glossy. Return the salmon to the pan and spoon the glaze over the fillets generously, basting for about 1 minute.</div>
-                    </li>
-                    <li>
-                        <div class="step-title">Serve</div>
-                        <div class="step-content">Transfer the glazed salmon to plates, spoon any remaining sauce from the pan over the top, and garnish with fresh herbs, sesame seeds, and lemon wedges. Serve immediately over rice, with your favorite vegetables on the side.</div>
-                    </li>
-                </ol>
-            </section>
-
-            <!-- Nutrition -->
-            <section class="nutrition-section">
-                <h3>Nutrition Information</h3>
-                <p style="font-size: 0.85em; color: var(--soft-gray); margin-bottom: 15px;">Per serving (1 fillet with glaze)</p>
-                <div class="nutrition-grid">
-                    <div class="nutrition-item">
-                        <div class="nutrition-value">385</div>
-                        <div class="nutrition-label">Calories</div>
-                    </div>
-                    <div class="nutrition-item">
-                        <div class="nutrition-value">34g</div>
-                        <div class="nutrition-label">Protein</div>
-                    </div>
-                    <div class="nutrition-item">
-                        <div class="nutrition-value">18g</div>
-                        <div class="nutrition-label">Carbs</div>
-                    </div>
-                    <div class="nutrition-item">
-                        <div class="nutrition-value">20g</div>
-                        <div class="nutrition-label">Fat</div>
-                    </div>
-                    <div class="nutrition-item">
-                        <div class="nutrition-value">8g</div>
-                        <div class="nutrition-label">Sat. Fat</div>
-                    </div>
-                    <div class="nutrition-item">
-                        <div class="nutrition-value">580mg</div>
-                        <div class="nutrition-label">Sodium</div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Notes -->
-            <section class="notes-section">
-                <h4>Recipe Notes & Variations</h4>
-                <p><strong>Make it dairy-free:</strong> Swap the butter for olive oil or coconut oil. The sauce won't be quite as rich, but still delicious.</p>
-                <p style="margin-top: 10px;"><strong>Make it gluten-free:</strong> Use coconut aminos or tamari instead of soy sauce.</p>
-                <p style="margin-top: 10px;"><strong>Storage:</strong> Leftovers keep in an airtight container in the fridge for up to 3 days. Reheat gently in a covered pan with a splash of water to keep the salmon moist.</p>
-                <p style="margin-top: 10px;"><strong>Air fryer method:</strong> Season and brush salmon with a little of the glaze, air fry at 400&deg;F for 8-10 minutes. Make the full glaze on the stovetop and drizzle over the cooked salmon.</p>
-            </section>
-        </div>
-
-        <!-- Related Recipes -->
-        <section class="related-section">
-            <h2>You Might Also Love</h2>
-            <div class="related-grid">
-                <a href="#" class="related-card">
-                    <div class="related-image">
-                        <img src="images/lemon-chicken.png" alt="Crispy lemon herb chicken thighs with pan sauce">
-                    </div>
-                    <div class="related-content">
-                        <h3>Crispy Lemon Herb Chicken Thighs</h3>
-                        <p>Golden, juicy chicken with a bright lemon pan sauce</p>
-                        <div class="related-meta">
-                            <span>35 min</span>
-                            <span>&#9733; 4.8</span>
-                        </div>
-                    </div>
-                </a>
-                <a href="#" class="related-card">
-                    <div class="related-image">
-                        <img src="images/shrimp-pasta.png" alt="Garlic butter shrimp pasta on a plate">
-                    </div>
-                    <div class="related-content">
-                        <h3>Garlic Butter Shrimp Pasta</h3>
-                        <p>A 20-minute restaurant-quality pasta night</p>
-                        <div class="related-meta">
-                            <span>20 min</span>
+            <div class="featured-grid">
+                <a class="recipe-card" href="recipes/honey-garlic-butter-salmon/">
+                    <img src="images/featured-salmon.svg" alt="Honey garlic glazed salmon plated with herbs">
+                    <div class="recipe-card-content">
+                        <h3>Honey Garlic Butter Salmon</h3>
+                        <p>Sticky-sweet glaze, tender salmon, and a dinner that feels restaurant-level with pantry staples.</p>
+                        <div class="recipe-meta">
+                            <span>25 min</span>
+                            <span>Serves 4</span>
                             <span>&#9733; 4.9</span>
                         </div>
                     </div>
                 </a>
-                <a href="#" class="related-card">
-                    <div class="related-image">
-                        <img src="images/teriyaki-cod.png" alt="Teriyaki glazed cod with herbs">
-                    </div>
-                    <div class="related-content">
-                        <h3>Teriyaki Glazed Cod</h3>
-                        <p>Flaky white fish in homemade teriyaki</p>
-                        <div class="related-meta">
-                            <span>25 min</span>
-                            <span>&#9733; 4.7</span>
+                <div class="recipe-card" aria-hidden="true">
+                    <img src="images/coming-soon.svg" alt="Upcoming recipes placeholder illustration">
+                    <div class="recipe-card-content">
+                        <h3>More recipes are simmering</h3>
+                        <p>Next up: crispy lemon chicken, garlic butter shrimp pasta, and a dreamy teriyaki cod.</p>
+                        <div class="recipe-meta">
+                            <span>New every week</span>
+                            <span>Subscribe for updates</span>
                         </div>
                     </div>
-                </a>
+                </div>
             </div>
         </section>
 
-        <!-- Newsletter -->
-        <section class="newsletter-section">
+        <section id="meal-prep">
+            <div class="section-header">
+                <div>
+                    <h2>Quick Start Categories</h2>
+                    <p>Jump into the kind of cooking you need tonight, from fast weeknight dinners to freezer-friendly prep.</p>
+                </div>
+            </div>
+            <div class="category-grid">
+                <div class="category-card">
+                    <img src="images/category-weeknight.svg" alt="Illustration of a clock and skillet">
+                    <h4>30-Minute Meals</h4>
+                    <p>Fast, flavorful, and no-fuss.</p>
+                </div>
+                <div class="category-card">
+                    <img src="images/category-seafood.svg" alt="Illustration of a fish with herbs">
+                    <h4>Seafood Favorites</h4>
+                    <p>Bright, buttery, and fresh.</p>
+                </div>
+                <div class="category-card">
+                    <img src="images/category-mealprep.svg" alt="Illustration of meal prep containers">
+                    <h4>Meal Prep</h4>
+                    <p>Make-ahead dinners that reheat beautifully.</p>
+                </div>
+                <div class="category-card">
+                    <img src="images/category-dessert.svg" alt="Illustration of a dessert plate">
+                    <h4>Sweet Finish</h4>
+                    <p>Small-batch treats and cozy bakes.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="shop">
+            <div class="section-header">
+                <div>
+                    <h2>Kitchen Picks We Love</h2>
+                    <p>Affiliate picks that make weeknight cooking smoother. We only share tools we use in our own kitchen.</p>
+                </div>
+            </div>
+            <div class="affiliate-grid">
+                <a class="affiliate-card" href="#">
+                    <img src="images/affiliate-pan.svg" alt="Illustration of a skillet">
+                    <h4>Everyday Nonstick Skillet</h4>
+                    <p>Our go-to pan for quick sears and easy cleanup.</p>
+                </a>
+                <a class="affiliate-card" href="#">
+                    <img src="images/affiliate-thermometer.svg" alt="Illustration of a digital thermometer">
+                    <h4>Instant-Read Thermometer</h4>
+                    <p>Perfectly cooked salmon, every time.</p>
+                </a>
+                <a class="affiliate-card" href="#">
+                    <img src="images/affiliate-board.svg" alt="Illustration of a cutting board">
+                    <h4>Large Prep Board</h4>
+                    <p>More space, less mess, better chopping.</p>
+                </a>
+            </div>
+            <div class="affiliate-disclosure">Affiliate links help support Isla Cooks at no extra cost to you.</div>
+        </section>
+
+        <section id="about" class="about-section">
+            <img src="images/chef-isla.svg" alt="Portrait illustration of Chef Isla Moreno">
+            <div>
+                <h3>Meet Chef Isla Moreno</h3>
+                <p>Isla is a former line cook turned recipe developer who believes in unfussy food and extra lemon. She tests every recipe twice, usually while her corgi naps at her feet and jazz plays in the background.</p>
+                <p>Her cooking style is all about weeknight-friendly recipes with big flavor, flexible swaps, and comforting sauces.</p>
+                <a class="btn btn-primary" href="recipes/honey-garlic-butter-salmon/">Start with her signature salmon</a>
+            </div>
+        </section>
+
+        <section id="newsletter" class="newsletter-section">
             <h2>Get Fresh Recipes Weekly</h2>
-            <p>Join 50,000+ home cooks getting delicious recipes delivered straight to their inbox every Sunday morning.</p>
+            <p>Join the Isla Cooks newsletter for new recipes, shopping lists, and cozy weeknight inspiration.</p>
             <form class="newsletter-form" onsubmit="event.preventDefault(); alert('Thanks for subscribing!');">
                 <input type="email" placeholder="Enter your email" required>
                 <button type="submit">Subscribe</button>
             </form>
         </section>
+    </main>
 
-        <!-- Comments -->
-        <section class="comments-section">
-            <h2>Recipe Reviews (247)</h2>
-
-            <div class="comment">
-                <div class="comment-avatar">SM</div>
-                <div class="comment-body">
-                    <div class="comment-header">
-                        <span class="comment-author">Sarah M.</span>
-                        <span class="comment-date">November 28, 2025</span>
-                        <span class="comment-rating">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
-                    </div>
-                    <p class="comment-text">This has become our go-to weeknight dinner! The sauce is absolutely incredible&mdash;I usually make extra just to drizzle over the rice. My picky husband asks for this at least once a week now.</p>
-                </div>
-            </div>
-
-            <div class="comment">
-                <div class="comment-avatar">JK</div>
-                <div class="comment-body">
-                    <div class="comment-header">
-                        <span class="comment-author">James K.</span>
-                        <span class="comment-date">November 25, 2025</span>
-                        <span class="comment-rating">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
-                    </div>
-                    <p class="comment-text">Made this for a dinner party and everyone was blown away. They couldn't believe how simple it was! Pro tip: I added a splash of rice wine vinegar to the glaze and it was *chef's kiss*.</p>
-                </div>
-            </div>
-
-            <div class="comment">
-                <div class="comment-avatar">LP</div>
-                <div class="comment-body">
-                    <div class="comment-header">
-                        <span class="comment-author">Lisa P.</span>
-                        <span class="comment-date">November 22, 2025</span>
-                        <span class="comment-rating">&#9733;&#9733;&#9733;&#9733;&#9734;</span>
-                    </div>
-                    <p class="comment-text">Delicious! Only 4 stars because I wish there was more sauce. Next time I'm definitely doubling it. Served with coconut rice and it was heavenly.</p>
-                </div>
-            </div>
-
-            <!-- Comment Form -->
-            <div class="comment-form">
-                <h3>Leave a Review</h3>
-                <div class="form-group">
-                    <label>Your Rating</label>
-                    <div class="star-rating-input" id="star-input">
-                        <span data-rating="1">&#9733;</span>
-                        <span data-rating="2">&#9733;</span>
-                        <span data-rating="3">&#9733;</span>
-                        <span data-rating="4">&#9733;</span>
-                        <span data-rating="5">&#9733;</span>
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Name</label>
-                        <input type="text" placeholder="Your name">
-                    </div>
-                    <div class="form-group">
-                        <label>Email</label>
-                        <input type="email" placeholder="your@email.com">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Your Review</label>
-                    <textarea placeholder="Share your experience with this recipe..."></textarea>
-                </div>
-                <button type="submit" class="submit-comment">Post Review</button>
-            </div>
-        </section>
-        </main>
-
-        <aside class="sidebar">
-            <section class="sidebar-card">
-                <div class="chef-profile">
-                    <div class="chef-avatar">
-                        <img src="images/chef-portrait.png" alt="Portrait illustration of Chef Isla">
-                    </div>
-                    <div>
-                        <div class="chef-title">Chef Isla Moreno</div>
-                        <div class="chef-tagline">Sauce whisperer • weeknight hero</div>
-                    </div>
-                </div>
-                <p>Isla is a former line cook turned recipe developer who believes in unfussy food and extra lemon. She tests every recipe twice, usually while her corgi naps at her feet and jazz plays in the background.</p>
-                <div class="chef-stats">
-                    <div class="chef-stat">
-                        <strong>350+</strong>
-                        <span>Recipes</span>
-                    </div>
-                    <div class="chef-stat">
-                        <strong>12</strong>
-                        <span>Years</span>
-                    </div>
-                    <div class="chef-stat">
-                        <strong>5</strong>
-                        <span>Cookbooks</span>
-                    </div>
-                    <div class="chef-stat">
-                        <strong>98%</strong>
-                        <span>Glaze</span>
-                    </div>
-                </div>
-            </section>
-
-            <section class="sidebar-card">
-                <h3>More Cozy Dinners</h3>
-                <a href="#" class="sidebar-recipe">
-                    <img src="images/sidebar-lemon-orzo.png" alt="Lemon orzo with roasted veggies">
-                    <div>
-                        <h4>Lemon Orzo with Roasted Veggies</h4>
-                        <span>30 min · ★ 4.8</span>
-                    </div>
-                </a>
-                <a href="#" class="sidebar-recipe">
-                    <img src="images/sidebar-air-fryer.png" alt="Air fryer garlic green beans">
-                    <div>
-                        <h4>Air Fryer Garlic Green Beans</h4>
-                        <span>12 min · ★ 4.9</span>
-                    </div>
-                </a>
-                <a href="#" class="sidebar-recipe">
-                    <img src="images/sidebar-coconut-curry.png" alt="Coconut curry salmon bowl">
-                    <div>
-                        <h4>Coconut Curry Salmon Bowls</h4>
-                        <span>25 min · ★ 4.7</span>
-                    </div>
-                </a>
-            </section>
-
-            <section class="sidebar-card download-card">
-                <h3>Free 5-Day Dinner Plan</h3>
-                <p>Grab Isla's weeknight dinner blueprint with grocery list, prep tips, and flexible swaps.</p>
-                <button type="button" onclick="alert('Dinner plan sent to your inbox!')">Send me the plan</button>
-            </section>
-
-            <section class="sidebar-card">
-                <h3>Recipe Shortcuts</h3>
-                <p>Looking for something specific? Start here and build your next menu.</p>
-                <ul class="sidebar-links">
-                    <li><a href="#">30-Minute Meals</a></li>
-                    <li><a href="#">Air Fryer Favorites</a></li>
-                    <li><a href="#">Seafood Recipes</a></li>
-                    <li><a href="#">Sauce &amp; Marinade Guide</a></li>
-                </ul>
-            </section>
-        </aside>
-    </div>
-
-    <!-- Footer -->
     <footer class="site-footer">
         <div class="footer-inner">
-            <div class="footer-column">
+            <div>
                 <h4>Explore</h4>
                 <ul>
-                    <li><a href="#">Quick & Easy</a></li>
-                    <li><a href="#">Healthy Dinners</a></li>
-                    <li><a href="#">Comfort Food</a></li>
-                    <li><a href="#">Meal Prep</a></li>
-                    <li><a href="#">Desserts</a></li>
+                    <li><a href="#recipes">Recipe Index</a></li>
+                    <li><a href="#meal-prep">Meal Prep</a></li>
+                    <li><a href="#shop">Kitchen Picks</a></li>
                 </ul>
             </div>
-            <div class="footer-column">
+            <div>
                 <h4>About</h4>
                 <ul>
-                    <li><a href="#">Our Story</a></li>
-                    <li><a href="#">Recipe Index</a></li>
-                    <li><a href="#">Privacy Policy</a></li>
+                    <li><a href="#about">Our Story</a></li>
+                    <li><a href="#newsletter">Newsletter</a></li>
                     <li><a href="#">Contact</a></li>
                 </ul>
             </div>
-            <div class="footer-column">
+            <div>
                 <h4>Connect</h4>
                 <ul>
                     <li><a href="#">Instagram</a></li>
                     <li><a href="#">Pinterest</a></li>
                     <li><a href="#">Facebook</a></li>
-                    <li><a href="#">YouTube</a></li>
                 </ul>
             </div>
         </div>
-        <div class="footer-bottom">
-            <p>&copy; 2025 The Cozy Kitchen. Made with love (and butter).</p>
-            <p style="margin-top: 10px;">Part of <a href="../">Claude Code Tools</a></p>
-        </div>
+        <div class="footer-bottom">&copy; 2025 Isla Cooks. Cook, savor, repeat.</div>
     </footer>
-
-    <!-- Back Link -->
-    <a href="../" class="back-link">&larr; Back to Tools</a>
-
-    <!-- Scale Modal -->
-    <div class="scale-modal" id="scale-modal">
-        <div class="scale-modal-content">
-            <h3>Scale Recipe</h3>
-            <div class="scale-buttons">
-                <button class="scale-btn" data-scale="0.5">&frac12;x</button>
-                <button class="scale-btn active" data-scale="1">1x</button>
-                <button class="scale-btn" data-scale="2">2x</button>
-                <button class="scale-btn" data-scale="3">3x</button>
-            </div>
-            <button class="scale-close" onclick="closeScaleModal()">Close</button>
-        </div>
-    </div>
-
-    <script>
-        // Star rating input
-        const starInput = document.getElementById('star-input');
-        const stars = starInput.querySelectorAll('span');
-        let currentRating = 0;
-
-        stars.forEach(star => {
-            star.addEventListener('click', () => {
-                currentRating = parseInt(star.dataset.rating);
-                updateStars();
-            });
-
-            star.addEventListener('mouseenter', () => {
-                highlightStars(parseInt(star.dataset.rating));
-            });
-
-            star.addEventListener('mouseleave', () => {
-                updateStars();
-            });
-        });
-
-        function highlightStars(rating) {
-            stars.forEach((star, index) => {
-                star.classList.toggle('active', index < rating);
-            });
-        }
-
-        function updateStars() {
-            highlightStars(currentRating);
-        }
-
-        // Scale modal
-        function openScaleModal() {
-            document.getElementById('scale-modal').classList.add('active');
-        }
-
-        function closeScaleModal() {
-            document.getElementById('scale-modal').classList.remove('active');
-        }
-
-        // Scale buttons
-        const scaleButtons = document.querySelectorAll('.scale-btn');
-        const servingsDisplay = document.getElementById('servings-display');
-        const baseServings = 4;
-
-        const baseAmounts = {
-            'salmon fillets': 4,
-            'olive oil': 1,
-            'butter': 4,
-            'garlic': 5,
-            'honey': 0.25,
-            'soy sauce': 3,
-            'lemon juice': 1,
-            'red pepper': 0.25
-        };
-
-        scaleButtons.forEach(btn => {
-            btn.addEventListener('click', () => {
-                scaleButtons.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-
-                const scale = parseFloat(btn.dataset.scale);
-                servingsDisplay.textContent = Math.round(baseServings * scale);
-
-                // Update ingredient amounts
-                const amounts = document.querySelectorAll('.ingredient-amount');
-                amounts.forEach(amount => {
-                    const original = amount.dataset.original || amount.textContent;
-                    amount.dataset.original = original;
-
-                    const match = original.match(/^([\d.\/]+)/);
-                    if (match) {
-                        let num = eval(match[1]) * scale;
-                        if (num % 1 !== 0) {
-                            num = num.toFixed(1).replace(/\.0$/, '');
-                        }
-                        amount.textContent = original.replace(match[1], num);
-                    }
-                });
-
-                closeScaleModal();
-            });
-        });
-
-        // Smooth scroll for jump to recipe
-        document.querySelector('.jump-btn').addEventListener('click', (e) => {
-            e.preventDefault();
-            document.querySelector('#recipe-card').scrollIntoView({
-                behavior: 'smooth',
-                block: 'start'
-            });
-        });
-
-        // Close modal on outside click
-        document.getElementById('scale-modal').addEventListener('click', (e) => {
-            if (e.target === document.getElementById('scale-modal')) {
-                closeScaleModal();
-            }
-        });
-    </script>
 </body>
 </html>

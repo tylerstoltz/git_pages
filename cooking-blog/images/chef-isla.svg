@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="450" viewBox="0 0 600 450">
+  <rect width="600" height="450" rx="32" fill="#FFFCF9"/>
+  <circle cx="300" cy="165" r="95" fill="#E8A889" opacity="0.6"/>
+  <circle cx="300" cy="150" r="70" fill="#FDF8F3"/>
+  <circle cx="275" cy="140" r="8" fill="#3D3D3D"/>
+  <circle cx="325" cy="140" r="8" fill="#3D3D3D"/>
+  <path d="M270 175c18 18 42 18 60 0" stroke="#C67B5C" stroke-width="6" stroke-linecap="round" fill="none"/>
+  <rect x="210" y="240" width="180" height="120" rx="40" fill="#9CAF88" opacity="0.4"/>
+  <rect x="235" y="260" width="130" height="70" rx="30" fill="#FFFCF9"/>
+  <text x="300" y="390" text-anchor="middle" font-family="Cormorant Garamond, Georgia, serif" font-size="28" fill="#3D3D3D">Chef Isla</text>
+</svg>

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="450" viewBox="0 0 600 450">
+  <rect width="600" height="450" rx="32" fill="#FFFCF9"/>
+  <rect x="80" y="120" width="440" height="220" rx="28" fill="#FDF8F3" stroke="#E8E4E0" stroke-width="3"/>
+  <rect x="120" y="160" width="120" height="120" rx="20" fill="#E8A889" opacity="0.5"/>
+  <rect x="260" y="160" width="120" height="120" rx="20" fill="#9CAF88" opacity="0.45"/>
+  <rect x="400" y="160" width="80" height="120" rx="20" fill="#E5A84B" opacity="0.5"/>
+  <circle cx="150" cy="310" r="18" fill="#C67B5C"/>
+  <circle cx="300" cy="310" r="18" fill="#7A9668"/>
+  <circle cx="440" cy="310" r="18" fill="#C48E3A"/>
+  <text x="300" y="92" text-anchor="middle" font-family="Cormorant Garamond, Georgia, serif" font-size="28" fill="#3D3D3D">Isla Cooks</text>
+</svg>

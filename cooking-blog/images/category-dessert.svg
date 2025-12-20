@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="260" height="220" viewBox="0 0 260 220">
+  <rect width="260" height="220" rx="24" fill="#FFFCF9"/>
+  <path d="M70 120h120l-18 38H88z" fill="#E8A889" opacity="0.6"/>
+  <path d="M95 90h70l10 30H85z" fill="#C67B5C" opacity="0.6"/>
+  <circle cx="130" cy="78" r="14" fill="#E5A84B"/>
+  <text x="130" y="185" text-anchor="middle" font-family="Nunito, sans-serif" font-size="18" fill="#3D3D3D">Dessert</text>
+</svg>

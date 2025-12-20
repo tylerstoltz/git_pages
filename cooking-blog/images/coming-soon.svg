@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">
+  <rect width="800" height="600" fill="#FDF8F3"/>
+  <rect x="120" y="140" width="560" height="320" rx="28" fill="#FFFCF9" stroke="#E8E4E0" stroke-width="3"/>
+  <circle cx="260" cy="300" r="70" fill="#E8A889" opacity="0.5"/>
+  <circle cx="540" cy="300" r="70" fill="#9CAF88" opacity="0.4"/>
+  <text x="400" y="325" text-anchor="middle" font-family="Nunito, sans-serif" font-size="36" fill="#3D3D3D">Coming Soon</text>
+</svg>
